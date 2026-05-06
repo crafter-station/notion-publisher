@@ -1,4 +1,6 @@
-const notionToken = process.env.NOTION_TOKEN;
+import { env } from '../config/env';
+
+const notionToken = env.NOTION_TOKEN;
 
 export async function getNotionPage(pageId: string) {
   if (!notionToken) throw new Error('Missing NOTION_TOKEN');

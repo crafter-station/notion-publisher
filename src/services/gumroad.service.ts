@@ -1,7 +1,8 @@
 import crypto from 'crypto';
+import { env } from '../config/env';
 
 const API = 'https://api.gumroad.com/v2';
-const GUMROAD_TOKEN = process.env.GUMROAD_TOKEN;
+const GUMROAD_TOKEN = env.GUMROAD_TOKEN;
 
 /**
  * Creates a digital product on Gumroad directly via API requests according to the v2 Flow.
