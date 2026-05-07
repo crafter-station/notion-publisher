@@ -11,11 +11,16 @@ function startServer(port: number) {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} accessed.`);
 
     if (req.method === 'POST') {
-      if (req.url === '/webhooks/publish-gumroad') {
+      const path = req.url?.split('?')[0];
+
+      if (path === '/webhooks/publish-gumroad') {
         return webhooksController.handlePublishGumroad(req, res);
       }
-      if (req.url === '/webhooks/unpublish-gumroad') {
+      if (path === '/webhooks/unpublish-gumroad') {
         return webhooksController.handleUnpublishGumroad(req, res);
+      }
+      if (path === '/webhooks/publish-postly') {
+        return webhooksController.handlePublishPostly(req, res);
       }
     }
 

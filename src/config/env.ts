@@ -5,11 +5,14 @@ import 'dotenv/config';
  * If a required variable is missing, the process will exit immediately.
  */
 
-const requiredVars = ['NOTION_TOKEN', 'GUMROAD_TOKEN'] as const;
+const requiredVars = ['NOTION_TOKEN', 'GUMROAD_TOKEN', 'POSTLY_API_KEY', 'POSTLY_WORKSPACE_ID', 'POSTLY_TARGET_PLATFORMS'] as const;
 
 export const env = {
   NOTION_TOKEN: process.env.NOTION_TOKEN!,
   GUMROAD_TOKEN: process.env.GUMROAD_TOKEN!,
+  POSTLY_API_KEY: process.env.POSTLY_API_KEY!,
+  POSTLY_WORKSPACE_ID: process.env.POSTLY_WORKSPACE_ID!,
+  POSTLY_TARGET_PLATFORMS: process.env.POSTLY_TARGET_PLATFORMS!,
   PORT: Number(process.env.PORT) || 3000,
 };
 

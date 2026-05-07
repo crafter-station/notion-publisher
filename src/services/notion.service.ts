@@ -161,3 +161,58 @@ export async function updateNotionMetadata(
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
+
+export async function updatePostlyMetadata(
+  notion_page_id: string,
+  data: {
+    instagram_status?: 'Not started' | 'In progress' | 'Failed' | 'Published';
+    instagram_url?: string;
+    post_id?: string;
+  }
+) {
+  if (!notionToken || !notion_page_id) {
+    return { success: false, error: 'Missing notion token or page id' };
+  }
+
+  const properties: any = {};
+
+  if (data.instagram_status) {
+    properties['Instagram Status'] = {
+      status: { name: data.instagram_status }
+    };
+  }
+
+  if (data.instagram_url) {
+    properties['Instagram URL'] = {
+      url: data.instagram_url
+    };
+  }
+
+  if (data.post_id) {
+    properties['Post ID'] = {
+      rich_text: [{ text: { content: data.post_id } }]
+    };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${notion_page_id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28'
+      },
+      body: JSON.stringify({ properties })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      return { success: false, error: err };
+    }
+
+    return { success: true, updated_page_id: notion_page_id };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
+
