@@ -13,40 +13,29 @@ export const webhooksController = {
     req.on('end', async () => {
       try {
         const payload = JSON.parse(body);
-        
-        // Handle native Notion automation payload
+
         const notion_page_id = payload.data?.id;
-        
         if (!notion_page_id) {
           res.writeHead(400);
           return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
         }
 
         const props = payload.data?.properties || {};
-        
-        // Extract Caption
-        let caption = '';
-        if (props['Instagram Caption']?.rich_text?.length > 0) {
-          caption = props['Instagram Caption'].rich_text.map((t: any) => t.plain_text).join('');
-        }
 
-        // Extract Media URL
-        let media_url = '';
-        const videoProp = props['Video']?.files;
-        if (videoProp && videoProp.length > 0) {
-          const fileObj = videoProp[0];
-          media_url = fileObj.type === 'external' ? fileObj.external?.url : fileObj.file?.url;
-        }
+        const { extractPostlyContent, updatePostlyMetadata } = require('../services/notion.service');
+        const content = extractPostlyContent(props);
 
-        if (!caption || !media_url) {
-          console.error(`[ERROR] Missing Instagram Caption or Video for Notion page: ${notion_page_id}`);
-          const { updatePostlyMetadata } = require('../services/notion.service');
-          // Update Notion to Failed so the user knows something was missing
-          updatePostlyMetadata(notion_page_id, { instagram_status: 'Failed' }).catch((err: any) => {
-            console.error('[ERROR] Could not update Notion status to Failed on missing media/caption', err);
+        if (!content.is_complete) {
+          console.error(`[ERROR] Incomplete Postly content for ${notion_page_id}: ${content.missing.join('; ')}`);
+          updatePostlyMetadata(notion_page_id, {
+            instagram_status: 'Failed',
+            final_status: 'Postly Error',
+            post_id: `Missing: ${content.missing.join('; ')}`,
+          }).catch((err: any) => {
+            console.error('[ERROR] Could not update Notion on incomplete content', err);
           });
           res.writeHead(400);
-          return res.end(JSON.stringify({ error: 'Missing Instagram Caption or Video in Notion page' }));
+          return res.end(JSON.stringify({ error: 'Incomplete Notion content', missing: content.missing }));
         }
 
         const { env } = require('../config/env');
@@ -54,35 +43,45 @@ export const webhooksController = {
         const allPlatforms = env.POSTLY_TARGET_PLATFORMS.split(',').map((p: string) => p.trim());
         let target_platforms = allPlatforms;
 
-        // Parse query params to select specific target platforms by index
+        // Optional: `?target=0,2,5` subsets platforms by index
         const reqUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
         const targetQuery = reqUrl.searchParams.get('target');
-
         if (targetQuery) {
           const indices = targetQuery.split(',').map(i => parseInt(i.trim(), 10)).filter(i => !isNaN(i));
           target_platforms = indices.map(i => allPlatforms[i]).filter(Boolean);
-          
           if (target_platforms.length === 0) {
             res.writeHead(400);
             return res.end(JSON.stringify({ error: 'Invalid target indices provided in URL' }));
           }
         }
 
-        const useCaseParams = {
+        console.log(`[INFO] Starting Postly background job (notionPageId: ${notion_page_id}, platforms: ${target_platforms.length})`);
+        executePublishPostlyUseCase({
           workspace_id,
           target_platforms,
-          caption,
-          media_url,
-          notion_page_id
-        };
-
-        console.log(`[INFO] Starting background job for executePublishPostlyUseCase (notionPageId: ${notion_page_id}, platforms: ${target_platforms.length})`);
-        executePublishPostlyUseCase(useCaseParams).catch(err => {
+          content,
+          notion_page_id,
+        }).catch(err => {
           console.error('[ERROR] Postly background job failed', err);
         });
 
+        const overrides = Object.entries({
+          instagram: !!content.caption_instagram,
+          facebook: !!content.caption_facebook,
+          linkedin: !!content.caption_linkedin,
+          tiktok: !!content.caption_tiktok,
+          threads: !!content.caption_threads,
+          pinterest: !!(content.pinterest_title || content.pinterest_description),
+          youtube: !!(content.youtube_title || content.youtube_caption),
+        }).filter(([_, v]) => v).map(([k]) => k);
+
         res.writeHead(202, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: 'Accepted social publishing task', notion_page_id }));
+        res.end(JSON.stringify({
+          message: 'Accepted social publishing task',
+          notion_page_id,
+          platforms_count: target_platforms.length,
+          per_platform_overrides: overrides,
+        }));
       } catch (err: any) {
         console.error('[ERROR] Synchronous error in handlePublishPostly:', err.message);
         res.writeHead(500);

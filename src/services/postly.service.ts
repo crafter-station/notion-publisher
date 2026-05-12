@@ -22,16 +22,24 @@ export class PostlyService {
     target_platforms: string | string[];
     text: string;
     media: PostlyMedia[];
+    platform_posts?: Array<{ identifier: string; settings: Record<string, any> }>;
   }) {
+    const body: any = {
+      workspace: params.workspace,
+      target_platforms: Array.isArray(params.target_platforms)
+        ? params.target_platforms.join(',')
+        : params.target_platforms,
+      text: params.text,
+      media: params.media,
+    };
+    if (params.platform_posts && params.platform_posts.length > 0) {
+      body.platform_posts = params.platform_posts;
+    }
+
     const response = await fetch(`${API_BASE}/posts`, {
       method: 'POST',
       headers: this.headers,
-      body: JSON.stringify({
-        ...params,
-        target_platforms: Array.isArray(params.target_platforms) 
-          ? params.target_platforms.join(',') 
-          : params.target_platforms
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
