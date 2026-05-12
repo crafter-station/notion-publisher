@@ -1,15 +1,7 @@
-# Dependencies
 node_modules/
-
-# Build output
 dist/
-
-# Environment variables
 .env
-
-# OS files
+.env.local
+.env.*.local
+*.log
 .DS_Store
-Thumbs.db
-
-# TypeScript
-*.tsbuildinfo
