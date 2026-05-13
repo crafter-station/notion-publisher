@@ -7,6 +7,18 @@ export interface PostlyMedia {
   type: 'image/png' | 'image/jpeg' | 'video/mp4' | string;
 }
 
+export interface PostlyTargetPlatform {
+  identifier: string;
+  id: string;
+}
+
+export interface PostlyPlatformPost {
+  identifier: string;
+  text_override?: string;
+  media_override?: PostlyMedia[];
+  settings?: Record<string, any>;
+}
+
 export class PostlyService {
   private headers: Record<string, string>;
 
@@ -19,16 +31,14 @@ export class PostlyService {
 
   async createPost(params: {
     workspace: string;
-    target_platforms: string | string[];
+    target_platforms: PostlyTargetPlatform[];
     text: string;
     media: PostlyMedia[];
-    platform_posts?: Array<{ identifier: string; settings: Record<string, any> }>;
+    platform_posts?: PostlyPlatformPost[];
   }) {
     const body: any = {
       workspace: params.workspace,
-      target_platforms: Array.isArray(params.target_platforms)
-        ? params.target_platforms.join(',')
-        : params.target_platforms,
+      target_platforms: params.target_platforms.map(platform => platform.id).join(','),
       text: params.text,
       media: params.media,
     };
@@ -48,7 +58,7 @@ export class PostlyService {
     }
 
     const result = await response.json();
-    return result.data[0]; // Returns the created post object
+    return Array.isArray(result.data) ? result.data[0] : result.data;
   }
 
   async getPost(workspaceId: string, postId: string) {
