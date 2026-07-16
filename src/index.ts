@@ -1,6 +1,8 @@
 import http from 'http';
 import { env } from './config/env';
 import { webhooksController } from './controllers/webhooks.controller';
+import { startGumroadAutopilotScheduler } from './schedulers/gumroad-autopilot.scheduler';
+import { startPostlyQueueScheduler } from './schedulers/postly-queue.scheduler';
 
 let currentPort = env.PORT;
 
@@ -43,3 +45,5 @@ function startServer(port: number) {
 }
 
 startServer(currentPort);
+startGumroadAutopilotScheduler();
+startPostlyQueueScheduler();

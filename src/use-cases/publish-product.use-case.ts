@@ -1,11 +1,25 @@
 import { GumroadService } from '../services/gumroad.service';
 import { getNotionPage, parseNotionPage, updateNotionMetadata } from '../services/notion.service';
+import { downloadGumroadVisuals } from '../services/local-visuals.service';
+
+const DEFAULT_GUMROAD_TAGS = [
+  'prompts',
+  'prompt engineering',
+  'prompts chatgpt',
+  'automation',
+  'n8n',
+];
 
 /**
  * Main orchestrator executing the full business logic using Notion as the source of truth.
  */
-export async function executePublishProductUseCase(notionPageId: string, pageData?: any) {
+export async function executePublishProductUseCase(
+  notionPageId: string,
+  pageData?: any,
+  options: { publishLive?: boolean } = {}
+) {
   const gumroad = new GumroadService();
+  const publishLive = options.publishLive !== false;
 
   let productId: string | undefined;
 
@@ -32,6 +46,8 @@ export async function executePublishProductUseCase(notionPageId: string, pageDat
     console.log(`[USE-CASE] ---> Cover URL: ${record.cover_url ? 'Yes' : 'No'}`);
     console.log(`[USE-CASE] ---> Thumb URL: ${record.thumbnail_url ? 'Yes' : 'No'}`);
     console.log(`[USE-CASE] ---> Is Incomplete: ${record.is_incomplete}`);
+    console.log(`[USE-CASE] ---> Gumroad Tags: ${DEFAULT_GUMROAD_TAGS.join(', ')}`);
+    console.log(`[USE-CASE] ---> Publish Live: ${publishLive ? 'Yes' : 'No'}`);
 
     // Generate JSON buffer
     const fileBuffer = Buffer.from(JSON.stringify(record.chain_json || {}, null, 2), 'utf-8');
@@ -41,7 +57,8 @@ export async function executePublishProductUseCase(notionPageId: string, pageDat
     console.log(`[USE-CASE] Step 3: API Request -> gumroad.createDraft()...`);
     const draft = await gumroad.createDraft(
       record.title,
-      record.description
+      record.description,
+      DEFAULT_GUMROAD_TAGS
     );
 
     console.log(`[USE-CASE] ---> Draft created successfully. ID: ${draft.id}`);
@@ -61,6 +78,19 @@ export async function executePublishProductUseCase(notionPageId: string, pageDat
       slug,
       'publishing'
     );
+
+    console.log(`[USE-CASE] Step 4b: Downloading product visuals locally...`);
+    const visualResult = await downloadGumroadVisuals({
+      title: record.title,
+      slug,
+      assets: [
+        { label: '01-cover', url: record.general_cover_url },
+        { label: '02-icon', url: record.icon_url },
+        { label: '03-gumroad-cover', url: record.cover_url },
+        { label: '04-gumroad-thumbnail', url: record.thumbnail_url },
+      ],
+    });
+    console.log(`[USE-CASE] ---> Visuals saved: ${visualResult.downloaded.length}/4 at ${visualResult.outputDir}`);
 
     // 4. File Upload (multipart S3 API)
     console.log(`[USE-CASE] Step 5: API Request -> gumroad.uploadMainFile() (Multipart S3)...`);
@@ -87,7 +117,7 @@ export async function executePublishProductUseCase(notionPageId: string, pageDat
       await gumroad.setThumbnail(productId!, record.thumbnail_url);
     }
 
-    // 8. Publish to live
+    // 8. Publish to live or leave ready for manual publishing
     if (record.is_incomplete) {
       console.log(`[USE-CASE] Step 9: Missing fields detected. Skipping gumroad.publish()...`);
       // Update final status to unpublished
@@ -99,6 +129,29 @@ export async function executePublishProductUseCase(notionPageId: string, pageDat
         'unpublished'
       );
       console.log(`[USE-CASE] ---> Pipeline complete. Created as Draft (Unpublished) at ${shortUrl}`);
+      return {
+        status: 'unpublished' as const,
+        product_id: productId!,
+        url: shortUrl,
+        slug,
+      };
+    } else if (!publishLive) {
+      console.log(`[USE-CASE] Step 9: publishLive=false. Leaving Gumroad product ready as Draft (Unpublished)...`);
+      await updateNotionMetadata(
+        notionPageId,
+        productId!,
+        shortUrl,
+        slug,
+        'unpublished'
+      );
+
+      console.log(`[USE-CASE] ---> Pipeline complete. Draft ready for manual publish at ${shortUrl}`);
+      return {
+        status: 'draft-ready' as const,
+        product_id: productId!,
+        url: shortUrl,
+        slug,
+      };
     } else {
       console.log(`[USE-CASE] Step 9: API Request -> gumroad.publish()...`);
       const liveProd = await gumroad.publish(productId!);
@@ -115,6 +168,12 @@ export async function executePublishProductUseCase(notionPageId: string, pageDat
       );
 
       console.log(`[USE-CASE] ---> Pipeline complete. Live at ${liveProd.short_url}`);
+      return {
+        status: 'published' as const,
+        product_id: productId!,
+        url: liveProd.short_url,
+        slug,
+      };
     }
 
   } catch (error: any) {

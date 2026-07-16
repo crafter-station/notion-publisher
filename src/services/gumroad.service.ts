@@ -30,7 +30,7 @@ export class GumroadService {
   }
 
   // 1. Create a draft product
-  async createDraft(name: string, description: string) {
+  async createDraft(name: string, description: string, tags: string[] = []) {
     const params = this.getAuthBody({
       native_type: 'digital',
       name,
@@ -38,6 +38,9 @@ export class GumroadService {
       price: 0,
       currency: 'usd'
     });
+    for (const tag of tags.slice(0, 5)) {
+      params.append('tags[]', tag);
+    }
 
     const res = await fetch(`${API}/products`, {
       method: 'POST',
@@ -184,5 +187,18 @@ export class GumroadService {
     });
     const data = await this.safeJson(res, 'updateProductReceipt');
     if (!data.success) console.warn('Update receipt failed', data.message);
+  }
+
+  // 9. Update product landing page copy / description
+  async updateProductDescription(productId: string, description: string) {
+    const params = this.getAuthBody({ description });
+    const res = await fetch(`${API}/products/${encodeURIComponent(productId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    });
+    const data = await this.safeJson(res, 'updateProductDescription');
+    if (!data.success) throw new Error(`Update description failed: ${data.message}`);
+    return data.product;
   }
 }

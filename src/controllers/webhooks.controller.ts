@@ -4,47 +4,7 @@ import { executeUnpublishProductUseCase } from '../use-cases/unpublish-product.u
 import { executePublishExistingProductUseCase } from '../use-cases/publish-existing.use-case';
 import { executePublishPostlyUseCase } from '../use-cases/publish-postly.use-case';
 import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
-import { PostlyTargetPlatform } from '../services/postly.service';
-
-const knownPostlyPlatformIds: Record<string, string> = {
-  '10045131488904663': 'instagram',
-  '730157560180777': 'facebook',
-  '98388542': 'linkedin',
-  '891290651194686446': 'pinterest',
-  '891290651194686441': 'pinterest',
-  '35535330302781477': 'threads',
-  'fba637c7-08d9-5f27-970e-6112077f590d': 'tiktok',
-  'UC7DghILGdjZcovZJo6l9mqg': 'youtube',
-};
-
-const legacyPlatformOrder = [
-  'instagram',
-  'facebook',
-  'linkedin',
-  'pinterest',
-  'pinterest',
-  'threads',
-  'tiktok',
-  'youtube',
-];
-
-function parsePostlyTargetPlatforms(raw: string): PostlyTargetPlatform[] {
-  const entries = raw.split(',').map(p => p.trim()).filter(Boolean);
-
-  return entries.map((entry, index) => {
-    const explicit = entry.match(/^([a-z_]+):(.+)$/i);
-    if (explicit) {
-      return { identifier: explicit[1].toLowerCase(), id: explicit[2].trim() };
-    }
-
-    const identifier = knownPostlyPlatformIds[entry] || legacyPlatformOrder[index];
-    if (!identifier) {
-      throw new Error(`Cannot infer Postly platform identifier for target "${entry}". Use "identifier:id" in POSTLY_TARGET_PLATFORMS.`);
-    }
-
-    return { identifier, id: entry };
-  });
-}
+import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 
 function getHeaderValue(req: IncomingMessage, name: string) {
   const value = req.headers[name.toLowerCase()];
@@ -89,7 +49,7 @@ export const webhooksController = {
 
         const { env } = require('../config/env');
         const workspace_id = getHeaderValue(req, 'workspace_id') || env.POSTLY_WORKSPACE_ID;
-        const allPlatforms = parsePostlyTargetPlatforms(env.POSTLY_TARGET_PLATFORMS);
+        const allPlatforms = resolveDefaultPostlyTargetPlatforms();
         let target_platforms = allPlatforms;
 
         // Optional: `?target=0,2,5` subsets platforms by index
@@ -104,7 +64,7 @@ export const webhooksController = {
           }
         }
 
-        console.log(`[INFO] Starting Postly background job (notionPageId: ${notion_page_id}, platforms: ${target_platforms.length})`);
+        console.log(`[INFO] Starting Postly background job (notionPageId: ${notion_page_id}, brand: ${content.brand || 'n/a'}, targetSource: POSTLY_TARGET_PLATFORMS, platforms: ${target_platforms.length})`);
         executePublishPostlyUseCase({
           workspace_id,
           target_platforms,

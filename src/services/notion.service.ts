@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import { markdownToGumroadHtml } from './markdown.service';
 
 const notionToken = env.NOTION_TOKEN;
 
@@ -59,8 +60,10 @@ export function parseNotionPage(pageData: any) {
 
   // Extract Description (Landing Page Copy)
   let description = 'Auto-published dataset';
+  let landing_page_copy_markdown = '';
   if (props['Landing Page Copy'] && props['Landing Page Copy'].rich_text && props['Landing Page Copy'].rich_text.length > 0) {
-    description = props['Landing Page Copy'].rich_text.map((t: any) => t.plain_text).join('');
+    landing_page_copy_markdown = props['Landing Page Copy'].rich_text.map((t: any) => t.plain_text).join('');
+    description = markdownToGumroadHtml(landing_page_copy_markdown);
   } else {
     is_incomplete = true;
   }
@@ -74,6 +77,8 @@ export function parseNotionPage(pageData: any) {
     return undefined;
   };
 
+  const general_cover_url = getFileUrl(props['Cover']?.files);
+  const icon_url = getFileUrl(props['Icon']?.files);
   const cover_url = getFileUrl(props['Gumroad Cover']?.files);
   const thumbnail_url = getFileUrl(props['Gumroad Thumbnail']?.files);
 
@@ -84,7 +89,10 @@ export function parseNotionPage(pageData: any) {
     id: pageData.id,
     title,
     description,
+    landing_page_copy_markdown,
     chain_json,
+    general_cover_url,
+    icon_url,
     cover_url,
     thumbnail_url,
     gumroad_product_id,
@@ -169,6 +177,9 @@ export type FinalStatus =
   | 'Postly Error' | 'Render Error' | 'Done';
 
 export interface PostlyContent {
+  brand: string;
+  select: string;
+  source_url: string;
   caption_instagram: string;
   caption_facebook: string;
   caption_linkedin: string;
@@ -188,6 +199,7 @@ export interface PostlyContent {
 
 const _richText = (p: any): string =>
   (p?.rich_text?.length ? p.rich_text.map((t: any) => t.plain_text).join('') : '').trim();
+const _selectName = (p: any): string => (p?.select?.name || '').trim();
 const _fileUrl = (p: any): string | undefined => {
   const files = p?.files;
   if (!files || files.length === 0) return undefined;
@@ -216,6 +228,9 @@ export function extractPostlyContent(props: any): PostlyContent {
   const youtube_caption = _richText(props['YouTube Caption']);
   const first_comment = _richText(props['Universal First Comment']);
   const pov_text = _richText(props['POV Text']);
+  const brand = _selectName(props['Brand']);
+  const select = _selectName(props['Select']);
+  const source_url = props['url']?.url || '';
 
   // Global fallback: POV Text → else first non-empty caption
   const global_text =
@@ -253,6 +268,9 @@ export function extractPostlyContent(props: any): PostlyContent {
   }
 
   return {
+    brand,
+    select,
+    source_url,
     caption_instagram,
     caption_facebook,
     caption_linkedin,
@@ -269,6 +287,91 @@ export function extractPostlyContent(props: any): PostlyContent {
     is_complete: missing.length === 0,
     missing,
   };
+}
+
+export async function queryNextPostlyQueueCandidates(databaseId: string, pageSize = 10) {
+  if (!notionToken || !databaseId) {
+    throw new Error('Missing notion token or Postly queue database id');
+  }
+
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${notionToken}`,
+      'Content-Type': 'application/json',
+      'Notion-Version': '2022-06-28',
+    },
+    body: JSON.stringify({
+      page_size: pageSize,
+      filter: {
+        and: [
+          { property: 'url', url: { is_not_empty: true } },
+          { property: 'Select', select: { is_not_empty: true } },
+          { property: 'Brand', select: { is_not_empty: true } },
+          { property: 'Status', status: { equals: 'Not started' } },
+          { property: 'Instagram Status', status: { equals: 'Not started' } },
+        ],
+      },
+      sorts: [
+        { property: 'Date', direction: 'ascending' },
+        { property: 'Created', direction: 'ascending' },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Failed to query Postly queue candidates: ${err}`);
+  }
+
+  const result = await response.json();
+  return result.results || [];
+}
+
+export async function queryNextGumroadAutopilotCandidates(databaseId: string, pageSize = 10) {
+  if (!notionToken || !databaseId) {
+    throw new Error('Missing notion token or Gumroad autopilot database id');
+  }
+
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${notionToken}`,
+      'Content-Type': 'application/json',
+      'Notion-Version': '2022-06-28',
+    },
+    body: JSON.stringify({
+      page_size: pageSize,
+      filter: {
+        and: [
+          { property: 'Gumroad URL', url: { is_empty: true } },
+          { property: 'Gumroad Product ID', rich_text: { is_empty: true } },
+          { property: 'Gumroad Publish Status', status: { equals: 'Not started' } },
+          { property: 'Template', rich_text: { is_not_empty: true } },
+          { property: 'Landing Page Copy', rich_text: { is_not_empty: true } },
+          { property: 'Gumroad Cover', files: { is_not_empty: true } },
+          { property: 'Gumroad Thumbnail', files: { is_not_empty: true } },
+          {
+            or: [
+              { property: 'Gumroad Title', rich_text: { is_not_empty: true } },
+              { property: 'Prompt Chain Template Name', title: { is_not_empty: true } },
+            ],
+          },
+        ],
+      },
+      sorts: [
+        { property: 'Created time', direction: 'ascending' },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Failed to query Gumroad autopilot candidates: ${err}`);
+  }
+
+  const result = await response.json();
+  return result.results || [];
 }
 
 /**
@@ -337,4 +440,3 @@ export async function updatePostlyMetadata(
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
-

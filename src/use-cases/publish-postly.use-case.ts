@@ -411,6 +411,11 @@ function logPublishDiagnostics(
   platformPosts: Array<{ identifier: string; text_override?: string; settings?: Record<string, any> }>
 ) {
   const contentFields = {
+    queue: {
+      brand: content.brand || undefined,
+      select: content.select || undefined,
+      source_url_host: content.source_url ? safeHost(content.source_url) : undefined,
+    },
     captions: {
       instagram: content.caption_instagram.length,
       facebook: content.caption_facebook.length,
