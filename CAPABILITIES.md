@@ -103,6 +103,6 @@ See README per-source Notion contracts (event fields, Releases, group posts).
 
 SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-- **Live:** Gumroad + Postly · Skool discover  
-- **Next:** Phase A CMS hygiene (#1–#3, `status:ready`)  
-- **Later:** clients + Postly opts · Skool write (#4, `status:blocked`)
+- **Completed:** [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) Gumroad · [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) Postly · [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) Skool discover  
+- **Next:** Phase A CMS hygiene (#1–#3) — before Skool write  
+- **Later:** clients + Postly opts · Skool write (#4, blocked)

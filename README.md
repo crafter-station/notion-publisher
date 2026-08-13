@@ -480,9 +480,9 @@ npm run publisher:report
 
 Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-- **Live:** Gumroad + Postly · Skool discover · CMS contract docs  
-- **Next (Phase A):** [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1)–[#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) CMS hygiene (`status:ready`)  
-- **Later:** product/social/events/music clients · Postly opts · [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write (`status:blocked` on MySkool)
+- **Completed:** [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) Gumroad live · [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) Postly live · [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) Skool discover (read only)  
+- **Next (Phase A):** [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1)–[#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) CMS hygiene — **before** Skool write  
+- **Later:** other clients · Postly opts · [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write (`status:blocked` on MySkool)
 
 ---
 
