@@ -7,6 +7,7 @@ import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
 import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { getCapabilitiesSnapshot } from '../capabilities/registry';
 import { PostlyService } from '../services/postly.service';
+import { isSkoolConfigured, SkoolService } from '../services/skool.service';
 import { env } from '../config/env';
 
 function getHeaderValue(req: IncomingMessage, name: string) {
@@ -23,6 +24,69 @@ export const webhooksController = {
   /** Static distributor + Postly platform catalog (no network). */
   async handleCapabilities(_req: IncomingMessage, res: ServerResponse) {
     json(res, 200, getCapabilitiesSnapshot());
+  },
+
+  /** MySkool read/discover (no publish). */
+  async handleCapabilitiesSkool(_req: IncomingMessage, res: ServerResponse) {
+    if (!isSkoolConfigured()) {
+      return json(res, 200, {
+        status: 'stub',
+        distributor: 'myskool',
+        message: 'Set SKOOL_API_KEY (sk_live_…) from https://myskool.xyz to enable discover.',
+        implemented: [
+          'GET /v1/groups',
+          'GET /v1/groups/:gid',
+          'GET /v1/groups/:gid/posts',
+          'GET /v1/posts/:id',
+          'GET /v1/posts/:id/comments',
+        ],
+        planned_upstream: ['POST /v1/posts', 'POST comments', 'members', 'courses/events'],
+        docs: 'https://myskool.xyz/docs',
+      });
+    }
+
+    try {
+      const skool = new SkoolService();
+      const groupsRaw = await skool.listGroups();
+      const groups = (Array.isArray(groupsRaw) ? groupsRaw : []).map((g: any) => ({
+        id: g.id || g.gid || g.group_id,
+        name: g.name || g.title || g.slug,
+        slug: g.slug,
+      }));
+
+      const preferred =
+        env.SKOOL_GROUP_ID ||
+        groups[0]?.id ||
+        null;
+
+      let sample_posts: any[] | undefined;
+      if (preferred) {
+        const postsRaw = await skool.listGroupPosts(String(preferred), 1);
+        const posts = Array.isArray(postsRaw) ? postsRaw : [];
+        sample_posts = posts.slice(0, 5).map((p: any) => ({
+          id: p.id || p.post_id,
+          title: p.title || p.name,
+          created_at: p.created_at || p.createdAt,
+        }));
+      }
+
+      json(res, 200, {
+        status: 'discover',
+        distributor: 'myskool',
+        groups_count: groups.length,
+        groups,
+        sample_group_id: preferred,
+        sample_posts,
+        note: 'Read-only. Create/publish to Skool is upstream Phase 2 — no webhook yet.',
+        docs: 'https://myskool.xyz/docs',
+      });
+    } catch (err: any) {
+      json(res, 502, {
+        status: 'error',
+        distributor: 'myskool',
+        error: err.message || String(err),
+      });
+    }
   },
 
   /** Live Postly socials + audience groups (read-only, no publish). */

@@ -20,6 +20,9 @@ function startServer(port: number) {
       if (path === '/capabilities/postly') {
         return webhooksController.handleCapabilitiesPostly(req, res);
       }
+      if (path === '/capabilities/skool') {
+        return webhooksController.handleCapabilitiesSkool(req, res);
+      }
     }
 
     if (req.method === 'POST') {

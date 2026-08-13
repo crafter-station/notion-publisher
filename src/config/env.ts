@@ -16,8 +16,10 @@ export const env = {
   POSTLY_TARGET_PLATFORMS: process.env.POSTLY_TARGET_PLATFORMS!,
   /** Optional. Documented for future opt-in; publish path does not use it yet. */
   POSTLY_AUDIENCE_GROUP: process.env.POSTLY_AUDIENCE_GROUP || '',
-  /** Optional stub for MySkool (not required to boot). */
+  /** Optional MySkool (Skool) — not required to boot. Enables GET /capabilities/skool. */
   SKOOL_API_KEY: process.env.SKOOL_API_KEY || '',
+  /** Optional default Skool group id for discover posts sample. */
+  SKOOL_GROUP_ID: process.env.SKOOL_GROUP_ID || '',
   POSTLY_QUEUE_ENABLED: process.env.POSTLY_QUEUE_ENABLED === 'true',
   POSTLY_QUEUE_DATABASE_ID: process.env.POSTLY_QUEUE_DATABASE_ID || process.env.NOTION_DATABASE_ID,
   POSTLY_QUEUE_INTERVAL_MS: Number(process.env.POSTLY_QUEUE_INTERVAL_MS) || 6 * 60 * 60 * 1000,

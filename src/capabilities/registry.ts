@@ -1,13 +1,28 @@
 import { POSTLY_PLATFORM_CATALOG } from '../services/postly-platforms.catalog';
 import { DistributorCapability } from './types';
 
+/**
+ * Distributors by layer:
+ * - Products: gumroad (live), myskool (discover)
+ * - Social: postly (live), postiz (stub), typefully (stub)
+ * - Music: once (stub)
+ * - Events: luma (stub)
+ */
 export const DISTRIBUTORS: DistributorCapability[] = [
   {
     id: 'gumroad',
     kind: 'marketplace',
     status: 'live',
     envKeys: ['GUMROAD_TOKEN'],
-    notes: 'Product create/publish/unpublish via Notion webhooks + optional autopilot.',
+    notes: 'Products layer. Digital storefront: draft/create/upload/publish/unpublish + autopilot.',
+  },
+  {
+    id: 'myskool',
+    kind: 'community',
+    status: 'discover',
+    envKeys: ['SKOOL_API_KEY', 'SKOOL_GROUP_ID'],
+    notes:
+      'Products/community layer via MySkool (https://api.myskool.xyz/v1). Read groups/posts/comments. Create post still upstream Phase 2 — no publish webhook.',
   },
   {
     id: 'postly',
@@ -15,15 +30,14 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'live',
     envKeys: ['POSTLY_API_KEY', 'POSTLY_WORKSPACE_ID', 'POSTLY_TARGET_PLATFORMS'],
     notes:
-      'Multi-channel social publish. Optional POSTLY_AUDIENCE_GROUP (unused by default). Discover socials + audience groups via GET /capabilities/postly.',
+      'Social layer. Multi-channel + audience groups. Optional POSTLY_AUDIENCE_GROUP unused by default publish.',
   },
   {
-    id: 'myskool',
-    kind: 'community',
+    id: 'postiz',
+    kind: 'social',
     status: 'stub',
-    envKeys: ['SKOOL_API_KEY'],
-    notes:
-      'MySkool unofficial Skool API (https://api.myskool.xyz/v1). Read groups/posts/comments live upstream; create post still Phase 2. Not wired.',
+    envKeys: ['POSTIZ_API_KEY'],
+    notes: 'Social layer. Alternate multi-platform scheduler. Mapped only — wire when account ready.',
   },
   {
     id: 'typefully',
@@ -31,21 +45,21 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'stub',
     envKeys: ['TYPEFULLY_API_KEY'],
     notes:
-      'External X/Twitter path. Not part of Postly. Audience group name "GPT Chain - Postly + Typefully" means X stays on Typefully.',
+      'Social layer. X/Twitter drafts & threads. Complements Postly (audience group name "Postly + Typefully").',
   },
   {
-    id: 'nce',
+    id: 'once',
     kind: 'music',
     status: 'stub',
-    envKeys: ['NCE_API_KEY'],
-    notes: 'Music distribution (planned). Placeholder only.',
+    envKeys: ['ONCE_API_KEY'],
+    notes: 'Music layer (ONCE.app). DSP distribution. Mapped only.',
   },
   {
-    id: 'postis',
+    id: 'luma',
     kind: 'other',
     status: 'stub',
-    envKeys: ['POSTIS_API_KEY'],
-    notes: 'Future distribution connector (planned). Placeholder only.',
+    envKeys: ['LUMA_API_KEY'],
+    notes: 'Events layer (Luma / lu.ma). Mapped only — wire when account ready.',
   },
 ];
 
@@ -59,7 +73,14 @@ export function getDistributor(id: string): DistributorCapability | undefined {
 
 export function getCapabilitiesSnapshot() {
   return {
-    intent: 'portable publisher kit — new channels are capability-only until opted in',
+    intent:
+      'Notion CMS orchestrator — products (Gumroad, Skool), social (Postly, Postiz, Typefully), music (ONCE.app), events (Luma)',
+    layers: {
+      products: ['gumroad', 'myskool'],
+      social: ['postly', 'postiz', 'typefully'],
+      music: ['once'],
+      events: ['luma'],
+    },
     distributors: listDistributors(),
     postly_platforms: POSTLY_PLATFORM_CATALOG,
   };
@@ -67,7 +88,7 @@ export function getCapabilitiesSnapshot() {
 
 /** Throws if registry invariants break. */
 export function checkRegistryHealthy(): void {
-  if (DISTRIBUTORS.length < 6) throw new Error('expected at least 6 distributors');
+  if (DISTRIBUTORS.length < 7) throw new Error('expected at least 7 distributors');
   const ids = new Set<string>();
   for (const d of DISTRIBUTORS) {
     if (!d.id) throw new Error('distributor missing id');
@@ -84,7 +105,13 @@ export function checkRegistryHealthy(): void {
   }
   if (getDistributor('gumroad')?.status !== 'live') throw new Error('gumroad must be live');
   if (getDistributor('postly')?.status !== 'live') throw new Error('postly must be live');
-  if (getDistributor('myskool')?.status !== 'stub') throw new Error('myskool must be stub');
+  if (getDistributor('myskool')?.status !== 'discover') throw new Error('myskool must be discover');
+  if (!getDistributor('postiz')) throw new Error('postiz stub missing');
+  if (!getDistributor('once')) throw new Error('once stub missing');
+  if (!getDistributor('luma')) throw new Error('luma stub missing');
+  if (getDistributor('nce') || getDistributor('postis')) {
+    throw new Error('legacy nce/postis ids must be removed');
+  }
   if (!POSTLY_PLATFORM_CATALOG.some(p => p.identifier === 'bluesky')) throw new Error('catalog missing bluesky');
   if (!POSTLY_PLATFORM_CATALOG.some(p => p.identifier === 'telegram')) throw new Error('catalog missing telegram');
   if (!POSTLY_PLATFORM_CATALOG.some(p => p.identifier === 'x')) throw new Error('catalog missing x');
