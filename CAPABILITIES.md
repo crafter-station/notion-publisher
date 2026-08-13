@@ -1,6 +1,6 @@
 # Publisher Capability Kit
 
-**Notion is the CMS.** Repo: [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher).
+<img src="docs/assets/logos/notion.png" width="22" alt=""> **Notion is the CMS.** Repo: [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher).
 
 | Layer | Surfaces |
 |---|---|
@@ -10,7 +10,7 @@
 | **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**stub**) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
 
-**CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#notion-db-setup--one-database-views-by-source)**.
+**CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#-notion-db-setup--one-database-views-by-source)**.
 
 | Status | Meaning |
 |---|---|

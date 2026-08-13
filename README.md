@@ -88,7 +88,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
 
-## Notion DB setup — one database, views by source
+## <img src="docs/assets/logos/notion.png" width="22" alt=""> Notion DB setup — one database, views by source
 
 **Target CMS contract:** one Notion database (`Publisher`) + views filtered by `Source Tags`. Production may still use separate Gumroad/Postly DBs today; unification is a follow-up (docs only this pass — no parser/webhook changes).
 
