@@ -31,6 +31,7 @@
 [![License](https://img.shields.io/badge/License-Private-lightgrey)](#license)
 
 <p>
+  <img src="docs/assets/logos/notion.png" width="28" height="28" alt="Notion"/>
   <img src="docs/assets/logos/luma.png" width="28" height="28" alt="Luma"/>
   <img src="docs/assets/logos/gumroad.png" width="28" height="28" alt="Gumroad"/>
   <img src="docs/assets/logos/github.png" width="28" height="28" alt="GitHub"/>
@@ -73,8 +74,9 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ## Status matrix
 
-| | Distributor | Site | Layer | Status |
+| | Name | Site | Layer | Status |
 |---|---|---|---|---|
+| <img src="docs/assets/logos/notion.png" width="20" alt=""> | **Notion** | [notion.so](https://www.notion.so/) | CMS | **live** |
 | <img src="docs/assets/logos/luma.png" width="20" alt=""> | **Luma** | [luma.com](https://luma.com/) | Events | stub |
 | <img src="docs/assets/logos/gumroad.png" width="20" alt=""> | **Gumroad** | [gumroad.com](https://gumroad.com/) | Products | **live** |
 | <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | stub |
@@ -86,24 +88,70 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
 
-## Notion DB setup — shared fields
+## Notion DB setup — one database, views by source
 
-Canonical CMS contract for every publish row. Live Gumroad/Postly parsers still use their existing property names (below); stubs and future wiring should align here.
+**Target CMS contract:** one Notion database (`Publisher`) + views filtered by `Source Tags`. Production may still use separate Gumroad/Postly DBs today; unification is a follow-up (docs only this pass — no parser/webhook changes).
 
-### Minimum shared schema
+### One database
+
+| | |
+|---|---|
+| Recommended name | `Publisher` |
+| Control field | `Source Tags` (multi-select) |
+| Tags | `Luma`, `Gumroad`, `GitHub`, `Skool`, `Postly`, `Typefully`, `Postiz`, `ONCE` |
+
+### Recommended views
+
+| View | Filter (`Source Tags` contains) | Purpose |
+|---|---|---|
+| All | — | Master board |
+| Social — All | `Postly` **or** `Typefully` **or** `Postiz` | Shared social workbench |
+| Social — Postly | `Postly` | Live social publish |
+| Social — Typefully | `Typefully` | Text drafts / threads |
+| Social — Postiz | `Postiz` | Self-hosted scheduler |
+| Products — All | `Gumroad` **or** `GitHub` **or** `Skool` | Same product, multi-target |
+| Products — Gumroad | `Gumroad` | Live storefront |
+| Products — GitHub | `GitHub` | Releases (planned) |
+| Products — Skool | `Skool` | Community / product (discover → write) |
+| Events — Luma | `Luma` | Events |
+| Music — ONCE | `ONCE` | DSP |
+
+### Shared properties (all views)
 
 | Property | Type | Role |
 |---|---|---|
 | `Name` | Title | Row identity |
-| `Source Tags` | Multi-select | Target distributors: `Luma`, `Gumroad`, `GitHub`, `Skool`, `Postly`, `Typefully`, `Postiz`, `ONCE` |
-| `Body` / `POV Text` | Rich text | Global caption / description fallback |
-| `Video` | Files & media | Video asset |
-| `Image` / `Screenshot` | Files & media | Still image |
-| `GIF` | Files & media | Animated |
+| `Source Tags` | Multi-select | Which distributors receive the row |
+| `Caption` | Rich text | Shared caption / description (social + fallback) |
+| `Video` | Files & media | Shared video |
+| `Image` / `Screenshot` | Files & media | Shared still |
+| `GIF` | Files & media | Shared animated |
 | `Audio` | Files & media | Podcast / music (ONCE) |
 | `File` / `Template` | Files & media **or** rich text | Product payload (Gumroad / GitHub) |
 | `Topics` | Multi-select | Content taxonomy (not a distributor) |
 | `Status` | Status | Aggregate publish state |
+
+**Alias (live Postly today):** parser still reads `POV Text`. Treat `Caption` as the canonical shared name; `POV Text` remains accepted until a code migration.
+
+### Social — shared media + optional channel overrides
+
+One `Caption` / `Video` / `Image` / `GIF` set for Social — All / Postly / Postiz / Typefully. Fill a channel override only when copy must differ; empty override → fall back to `Caption`.
+
+| Property | Type | Role |
+|---|---|---|
+| `Instagram Caption` | Rich text | Instagram override |
+| `Facebook Post` | Rich text | Facebook override |
+| `LinkedIn Post` | Rich text | LinkedIn override |
+| `TikTok Caption` | Rich text | TikTok override |
+| `Twitter Post` / `X Post` | Rich text | X / Threads-related override |
+| `YouTube Title` / `YouTube Caption` | Rich text | YouTube |
+| `Pinterest Title` / `Pinterest Description` | Rich text | Pinterest |
+| `Universal First Comment` | Rich text | First comment when supported |
+| `Typefully Thread` / `Typefully Account` | Rich text / select | Typefully-only |
+| `Postiz Targets` | Multi-select | Postiz destinations |
+| `Postiz {Channel}` | Rich text | Postiz-only extras (Discord, Slack, …) |
+
+Live Postly property names stay case-sensitive as listed under Postly below. Stubs reuse the same shared + override model.
 
 ### Multimedia support
 
@@ -115,7 +163,7 @@ Canonical CMS contract for every publish row. Live Gumroad/Postly parsers still 
 | Audio | `Audio` | ONCE (music / podcast) |
 | Document / JSON | `Template` / `File` | Gumroad, GitHub Releases |
 
-Use **`Source Tags`** to mark which distributors should receive the row; channel-specific caption overrides live under each source below.
+Per-source product/event/music fields stay under each distributor section below.
 
 ---
 
@@ -250,9 +298,11 @@ Live targets: `POSTLY_TARGET_PLATFORMS` (`identifier:id`). `POSTLY_AUDIENCE_GROU
 
 #### Notion property contract (case-sensitive, live)
 
+Uses the **shared Social model** above. Live parser keys today:
+
 | Property | Type | Role |
 |---|---|---|
-| `POV Text` | Rich text | Global fallback caption |
+| `POV Text` | Rich text | Shared caption alias (canonical docs name: `Caption`) |
 | `Instagram Caption` | Rich text | Instagram override |
 | `Facebook Post` | Rich text | Facebook override |
 | `LinkedIn Post` | Rich text | LinkedIn override |
@@ -279,11 +329,11 @@ Cheaper **text-first** path with strong per-account granularity. Env: `TYPEFULLY
 
 #### Channels
 
-| Channel | Suggested override field |
+| Channel | Suggested override (empty → `Caption`) |
 |---|---|
-| X (Twitter) | `Typefully Body` (default) |
-| LinkedIn | `Typefully LinkedIn` (optional) |
-| Threads | `Typefully Threads` (optional) |
+| X (Twitter) | `X Post` / `Twitter Post` |
+| LinkedIn | `LinkedIn Post` |
+| Threads | `Twitter Post` (or Threads-specific later) |
 | Mastodon | `Typefully Mastodon` (optional) |
 | Bluesky | `Typefully Bluesky` (optional) |
 
@@ -291,7 +341,7 @@ Cheaper **text-first** path with strong per-account granularity. Env: `TYPEFULLY
 
 | Property | Type | Role |
 |---|---|---|
-| `Typefully Body` | Rich text | Primary draft / thread start |
+| `Caption` | Rich text | Shared draft (same as Social) |
 | `Typefully Thread` | Rich text | Multi-tweet / thread continuation |
 | `Typefully Account` | Rich text / select | Which connected account |
 | `Typefully Publish Status` | Status | Output |
@@ -309,7 +359,7 @@ Provider list from official [`postiz-app` social integrations](https://github.co
 
 #### Channels by family → suggested Notion overrides
 
-Global: `Postiz Caption` + `Postiz Targets` (multi-select) + shared `Video` / `Image` / `GIF`.
+Global: shared `Caption` + `Postiz Targets` (multi-select) + shared `Video` / `Image` / `GIF`. Empty channel override → `Caption`.
 
 | Family | Channels | Suggested overrides |
 |---|---|---|

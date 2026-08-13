@@ -2,18 +2,19 @@
 
 **Notion is the CMS.** Repo: [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher).
 
-| Layer | Distributors |
+| Layer | Surfaces |
 |---|---|
+| **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
 | **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**stub**) |
 | **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**stub**), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool / MySkool (**discover**) |
 | **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**stub**) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
 
-Notion shared schema + per-source field maps: **[README.md](./README.md#notion-db-setup--shared-fields)**.
+**CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#notion-db-setup--one-database-views-by-source)**.
 
 | Status | Meaning |
 |---|---|
-| **live** | Publish path wired today |
+| **live** | Publish path wired today (or CMS in production use) |
 | **discover** | API readable; no publish webhook yet |
 | **stub** | Mapped only |
 
@@ -23,6 +24,7 @@ Self-check: `npm run capabilities:check`
 
 | | ID | Layer | Status | Site |
 |---|---|---|---|---|
+| <img src="docs/assets/logos/notion.png" width="18" alt=""> | `notion` *(CMS)* | CMS | **live** | [notion.so](https://www.notion.so/) |
 | <img src="docs/assets/logos/luma.png" width="18" alt=""> | `luma` | Events | stub | [luma.com](https://luma.com/) |
 | <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | `gumroad` | Products | **live** | [gumroad.com](https://gumroad.com/) |
 | <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | stub | [github.com](https://github.com/) |
@@ -54,15 +56,15 @@ Self-check: `npm run capabilities:check`
 
 ### Typefully (stub)
 
+Shared `Caption` + optional channel overrides (empty → `Caption`). Plus `Typefully Thread`, `Typefully Account`. See [README Social model](./README.md#social--shared-media--optional-channel-overrides).
+
 | Channel | Suggested Notion field |
 |---|---|
-| X | `Typefully Body` |
-| LinkedIn | `Typefully LinkedIn` |
-| Threads | `Typefully Threads` |
+| X | `X Post` / `Twitter Post` |
+| LinkedIn | `LinkedIn Post` |
+| Threads | `Twitter Post` |
 | Mastodon | `Typefully Mastodon` |
 | Bluesky | `Typefully Bluesky` |
-
-Plus `Typefully Thread`, `Typefully Account`.
 
 ### Postiz (stub — prefer self-hosted)
 
@@ -78,7 +80,7 @@ Source: [`postiz-app` social providers](https://github.com/gitroomhq/postiz-app/
 | Blog / newsletters | Medium, Dev.to, Hashnode, WordPress, Listmonk |
 | Local | Google Business (GMB) |
 
-Notion: `Postiz Caption` + `Postiz Targets` + optional `Postiz {Channel}` overrides (see [README](./README.md)).
+Notion: shared `Caption` + `Postiz Targets` + optional `Postiz {Channel}` overrides (see [README](./README.md)).
 
 ### ONCE.app (stub — music / podcast DSP)
 
