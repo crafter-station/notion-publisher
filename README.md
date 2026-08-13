@@ -1,11 +1,17 @@
 <div align="center">
 
 ```
-            _   _                   ____        _     _ _     _
- _ __   ___| |_(_) ___  _ __       |  _ \ _   _| |__ | (_)___| |__   ___ _ __
-| '_ \ / _ \ __| |/ _ \| '_ \ _____| |_) | | | | '_ \| | / __| '_ \ / _ \ '__|
-| | | | (_) | |_| | (_) | | | |_____|  __/| |_| | |_) | | \__ \ | | |  __/ |
-|_| |_|\___/ \__|_|\___/|_| |_|     |_|    \__,_|_.__/|_|_|___/_| |_|\___|_|
+╔══════════════════════════════════════════════════════════╗
+║                                                          ║
+║   ██████╗ ██╗   ██╗██████╗ ██╗     ██╗███████╗██╗  ██╗   ║
+║   ██╔══██╗██║   ██║██╔══██╗██║     ██║██╔════╝██║  ██║   ║
+║   ██████╔╝██║   ██║██████╔╝██║     ██║███████╗███████║   ║
+║   ██╔═══╝ ██║   ██║██╔══██╗██║     ██║╚════██║██╔══██║   ║
+║   ██║     ╚██████╔╝██████╔╝███████╗██║███████║██║  ██║   ║
+║   ╚═╝      ╚═════╝ ╚═════╝ ╚══════╝╚═╝╚══════╝╚═╝  ╚═╝   ║
+║                                                          ║
+║              notion-publisher · Nucleo Lab               ║
+╚══════════════════════════════════════════════════════════╝
 ```
 
 **Notion CMS orchestrator** — publish **events**, **products**, **social**, and **music/podcast** from Notion pages + automations.
@@ -50,7 +56,7 @@ Notion CMS  →  notion-publisher (this repo · no UI)
                     └─ Music/Podcast  → ONCE.app (stub)
 ```
 
-Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social stack: Postly = broad cloud; Typefully = cheaper text accounts (X / LinkedIn / Threads / Mastodon); Postiz = widest surface, prefer **self-hosted**.
+Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social stack: Postly = broad cloud; Typefully = cheaper text accounts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**.
 
 **Live publish today:** Gumroad + Postly only.  
 **Discover:** Skool via MySkool read API.  
@@ -73,25 +79,75 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
 
+## Notion DB setup — shared fields
+
+Canonical CMS contract for every publish row. Live Gumroad/Postly parsers still use their existing property names (below); stubs and future wiring should align here.
+
+### Minimum shared schema
+
+| Property | Type | Role |
+|---|---|---|
+| `Name` | Title | Row identity |
+| `Source Tags` | Multi-select | Target distributors: `Luma`, `Gumroad`, `GitHub`, `Skool`, `Postly`, `Typefully`, `Postiz`, `ONCE` |
+| `Body` / `POV Text` | Rich text | Global caption / description fallback |
+| `Video` | Files & media | Video asset |
+| `Image` / `Screenshot` | Files & media | Still image |
+| `GIF` | Files & media | Animated |
+| `Audio` | Files & media | Podcast / music (ONCE) |
+| `File` / `Template` | Files & media **or** rich text | Product payload (Gumroad / GitHub) |
+| `Topics` | Multi-select | Content taxonomy (not a distributor) |
+| `Status` | Status | Aggregate publish state |
+
+### Multimedia support
+
+| Kind | Typical property | Used by |
+|---|---|---|
+| Video | `Video` | Postly, Postiz, Skool, Luma cover/reel |
+| Image | `Image` / `Screenshot` / covers | All layers |
+| GIF | `GIF` | Postly / Postiz |
+| Audio | `Audio` | ONCE (music / podcast) |
+| Document / JSON | `Template` / `File` | Gumroad, GitHub Releases |
+
+Use **`Source Tags`** to mark which distributors should receive the row; channel-specific caption overrides live under each source below.
+
+---
+
 ## <img src="docs/assets/logos/luma.png" width="22" alt=""> Luma (stub, events)
 
-Workshops, launches, calendar events. **Mapped only.** Env: `LUMA_API_KEY`. No client, no webhook.
+Workshops, launches, calendar. **Mapped only.** Env: `LUMA_API_KEY`.
 
-**Notion fields:** TBD when wired.
+**Channels:** Luma event page (single surface).
+
+#### Suggested Notion fields
+
+| Property | Type | Role |
+|---|---|---|
+| `Luma Title` | Rich text | Event title (or reuse `Name`) |
+| `Luma Start` | Date | Start datetime |
+| `Luma End` | Date | End datetime |
+| `Luma Location` | Rich text | Place or `Online` |
+| `Luma Description` | Rich text | Event body (or reuse `Body`) |
+| `Luma Cover` | Files & media | Hero image (or shared `Image`) |
+| `Luma Event URL` | URL | Output when wired |
+| `Luma Publish Status` | Status | Output when wired |
+
+Tag row with `Source Tags` → `Luma`.
 
 ---
 
 ## Products layer
 
-One digital product → optionally **Gumroad + GitHub + Skool**.
+One digital product → optionally **Gumroad + GitHub + Skool**. Set `Source Tags` accordingly.
 
 ### <img src="docs/assets/logos/gumroad.png" width="22" alt=""> Gumroad (live)
 
 Digital storefront for GPT-Chain JSON (and similar) files.
 
+**Channels:** Gumroad product listing / storefront.
+
 **What we implement:** create draft · multipart file/cover upload · publish / unpublish · daily autopilot.
 
-#### Notion property contract (case-sensitive)
+#### Notion property contract (case-sensitive, live)
 
 **Inputs (you fill):**
 
@@ -114,61 +170,52 @@ Digital storefront for GPT-Chain JSON (and similar) files.
 
 **Daily flow:** fill title / landing / cover / thumbnail + paste JSON into `Template` → Notion automation → `POST /webhooks/publish-gumroad` → status + URLs sync back.
 
-**Draft safety:** missing/invalid `Template` (or other completeness gates) → Gumroad **draft** only; Notion `Unpublished`. Fix and re-run.
+**Draft safety:** missing/invalid `Template` → Gumroad **draft** only; Notion `Unpublished`.
 
-**Unpublish:** `POST /webhooks/unpublish-gumroad` (reads `Gumroad Product ID`).
-
-**Autopilot (optional):** `GUMROAD_AUTOPILOT_ENABLED=true` polls a Notion DB with daily quota / timezone / `GUMROAD_AUTOPILOT_PUBLISH_LIVE`.
+**Unpublish:** `POST /webhooks/unpublish-gumroad`. **Autopilot:** `GUMROAD_AUTOPILOT_ENABLED=true`.
 
 ---
 
 ### <img src="docs/assets/logos/github.png" width="22" alt=""> GitHub (stub, products)
 
-Ship the same product as a **GitHub Release** (assets + notes). **Mapped only** — no publish webhook yet. Env: `GITHUB_TOKEN`.
+Ship the same product as a **GitHub Release** (assets + notes). Env: `GITHUB_TOKEN`.
+
+**Channels:** GitHub Releases (downloadable assets).
 
 #### Notion property contract (**planned**)
-
-**Inputs (proposed):**
 
 | Property | Type | Role |
 |---|---|---|
 | `GitHub Repo` | Rich text / URL | `owner/repo` or repo URL |
 | `Release Tag` | Rich text | e.g. `v1.2.0` |
 | `Release Notes` | Rich text | Release body (markdown) |
-| `Template` | Rich text | Same product JSON/file source as Gumroad (when wired) |
+| `Template` | Rich text | Same product JSON/file source as Gumroad |
 | `GitHub Asset` | Files & media | Optional override file for the release asset |
-
-**Outputs (proposed):**
-
-| Property | Type | Role |
-|---|---|---|
-| `GitHub Publish Status` | Status | `Not started` / `Published` / `Failed` |
-| `GitHub Release URL` | URL | Public release page |
-| `GitHub Release ID` | Rich text | API id for updates |
+| `GitHub Publish Status` | Status | Output |
+| `GitHub Release URL` | URL | Output |
+| `GitHub Release ID` | Rich text | Output |
 
 ---
 
 ### <img src="docs/assets/logos/skool.png" width="22" alt=""> <img src="docs/assets/logos/myskool.png" width="22" alt=""> Skool / MySkool (discover)
 
-Community posts and groups. **Channels** = Skool groups attached to the MySkool API key. Product + community in one place.
+**Channels:** Skool **groups/communities** attached to the MySkool API key (product drop + community post).
 
 Docs: https://myskool.xyz/docs · API: `https://api.myskool.xyz/v1` · Auth: `Bearer sk_live_…`
 
-**Implemented (read):** `listGroups`, `getGroup`, `listGroupPosts`, `getPost`, `listComments` → `GET /capabilities/skool`.
-
-**Planned upstream:** `POST /v1/posts` (Phase 2) — then a Notion → Skool publish webhook.
+**Implemented (read):** groups / posts / comments → `GET /capabilities/skool`.  
+**Planned upstream:** `POST /v1/posts` (Phase 2).
 
 #### Notion property contract (**planned** for write)
 
 | Property | Type | Role |
 |---|---|---|
-| `Skool Group ID` | Rich text | Target group (`gid`) — or use env `SKOOL_GROUP_ID` |
+| `Skool Group ID` | Rich text | Target group (`gid`) — or env `SKOOL_GROUP_ID` |
 | `Skool Title` | Rich text | Post title |
 | `Skool Body` | Rich text | Post body / markdown |
+| `Skool Media` | Files & media | Optional (or shared `Video` / `Image`) |
 | `Skool Publish Status` | Status | Output when write ships |
 | `Skool Post URL` | URL | Output when write ships |
-
-Mint a fresh key at https://myskool.xyz if you see `401`. **Never commit** `SKOOL_API_KEY`.
 
 ```bash
 curl -s localhost:3000/capabilities/skool | jq .
@@ -180,15 +227,21 @@ curl -s localhost:3000/capabilities/skool | jq .
 
 ### <img src="docs/assets/logos/postly.png" width="22" alt=""> Postly (live)
 
-Broad multi-platform cloud distribution. OpenAPI: https://docs.postly.ai/openapi.yaml
+Broad multi-platform cloud. OpenAPI: https://docs.postly.ai/openapi.yaml
 
-**Catalog families:** social (`instagram`, `facebook`, `linkedin`, `x`, `threads`, `tiktok`, `youtube`, `pinterest`, `bluesky`, `googleMyBusiness`) · messaging (`telegram`, `whatsapp`) · blog · email · `reddit` (`docs_only`).
+#### Channels (catalog)
 
-Live targets still come from `POSTLY_TARGET_PLATFORMS` (`identifier:id`). New catalog channels are **not** auto-published until you opt in. `POSTLY_AUDIENCE_GROUP` documented, unused by default publish.
+| Family | Channels |
+|---|---|
+| Social | Instagram, Facebook, LinkedIn, X, Threads, TikTok, YouTube, Pinterest, Bluesky, Google Business Profile |
+| Messaging | Telegram, WhatsApp |
+| Blog | WordPress, Ghost, Hashnode, Dev.to, Blogger |
+| Email | Email (+ providers) |
+| Docs-only | Reddit |
 
-#### Notion property contract (case-sensitive)
+Live targets: `POSTLY_TARGET_PLATFORMS` (`identifier:id`). `POSTLY_AUDIENCE_GROUP` unused by default publish.
 
-**Inputs (you fill)** — AI POVs / social DB:
+#### Notion property contract (case-sensitive, live)
 
 | Property | Type | Role |
 |---|---|---|
@@ -202,48 +255,100 @@ Live targets still come from `POSTLY_TARGET_PLATFORMS` (`identifier:id`). New ca
 | `Pinterest Description` | Rich text | Pinterest description |
 | `YouTube Title` | Rich text | YouTube title |
 | `YouTube Caption` | Rich text | YouTube description |
-| `Universal First Comment` | Rich text | First-comment text when supported |
+| `Universal First Comment` | Rich text | First-comment when supported |
 | `Video` / `GIF` / `Screenshot` | Files & media | Media (priority: Video → GIF → Screenshot) |
 
-**Outputs (bot fills):**
+**Optional future overrides (catalog-ready, not required today):** `X Post`, `Bluesky Post`, `Telegram Post`, `WhatsApp Post`.
 
-| Property | Type | Role |
-|---|---|---|
-| `Status` | Status | Aggregate (`Published` / `Postly Error` / in-progress states) |
-| `Instagram Status` | Status | Legacy/per-row IG status when present |
-| `Instagram URL` | URL | Live post URL(s) |
-| `Post ID` | Rich text | Multi-line `<platform>: <id>` |
-| `Postly Error` | Rich text / status | Failure detail when used |
+**Outputs:** `Status`, `Instagram Status`, `Instagram URL`, `Post ID`, `Postly Error`.
 
-**Targeting:** default = all `POSTLY_TARGET_PLATFORMS`. Selective: `?target=0` or `?target=0,2`.
-
-**Async polling:** create post → `202` to Notion → backoff `[30s, 10s, 20s, 30s, 40s, 50s, 60s]` → write URLs + IDs back.
-
-**Queue (optional):** `POSTLY_QUEUE_ENABLED=true`.
+**Targeting:** `?target=0` / `?target=0,2`. **Polling:** backoff `[30s, 10s, 20s, 30s, 40s, 50s, 60s]`. **Queue:** `POSTLY_QUEUE_ENABLED=true`.
 
 ---
 
 ### <img src="docs/assets/logos/typefully.png" width="22" alt=""> Typefully (stub)
 
-Cheaper **text-first** path: X, LinkedIn, Threads, Mastodon — strong per-account granularity. Complements Postly. Env: `TYPEFULLY_API_KEY`.
+Cheaper **text-first** path with strong per-account granularity. Env: `TYPEFULLY_API_KEY`.
 
-**Notion fields:** TBD when wired.
+#### Channels
+
+| Channel | Suggested override field |
+|---|---|
+| X (Twitter) | `Typefully Body` (default) |
+| LinkedIn | `Typefully LinkedIn` (optional) |
+| Threads | `Typefully Threads` (optional) |
+| Mastodon | `Typefully Mastodon` (optional) |
+| Bluesky | `Typefully Bluesky` (optional) |
+
+#### Suggested Notion fields
+
+| Property | Type | Role |
+|---|---|---|
+| `Typefully Body` | Rich text | Primary draft / thread start |
+| `Typefully Thread` | Rich text | Multi-tweet / thread continuation |
+| `Typefully Account` | Rich text / select | Which connected account |
+| `Typefully Publish Status` | Status | Output |
+| `Typefully URL` | URL | Output |
+
+Media: usually text-only; optional shared `Image` when the channel supports it. Tag `Source Tags` → `Typefully`.
 
 ---
 
 ### <img src="docs/assets/logos/postiz.png" width="22" alt=""> Postiz (stub)
 
-Widest scheduler surface. Cloud can be expensive — prefer **self-hosted**. Env: `POSTIZ_API_KEY`.
+Widest scheduler surface. Prefer **self-hosted** over expensive cloud. Env: `POSTIZ_API_KEY`.
 
-**Notion fields:** TBD when wired.
+#### Channels → suggested Notion fields
+
+Global: `Postiz Caption` (rich text) + shared `Video` / `Image` / `GIF`.
+
+| Channel | Suggested override |
+|---|---|
+| X / Twitter | `Postiz X` |
+| Instagram | `Postiz Instagram` |
+| Facebook | `Postiz Facebook` |
+| LinkedIn | `Postiz LinkedIn` |
+| TikTok | `Postiz TikTok` |
+| YouTube | `Postiz YouTube` |
+| Threads | `Postiz Threads` |
+| Mastodon | `Postiz Mastodon` |
+| Bluesky | `Postiz Bluesky` |
+| Pinterest | `Postiz Pinterest` |
+| Reddit | `Postiz Reddit` |
+| Telegram | `Postiz Telegram` |
+| Discord | `Postiz Discord` |
+| Slack | `Postiz Slack` |
+| Google Business | `Postiz Google` |
+
+| Property | Type | Role |
+|---|---|---|
+| `Postiz Caption` | Rich text | Default caption for all selected channels |
+| `Postiz Targets` | Multi-select | Subset of channels above |
+| `Postiz Publish Status` | Status | Output |
+| `Postiz URLs` | Rich text / URL | Output (per-channel lines) |
+
+Tag `Source Tags` → `Postiz`. Full matrix also in [CAPABILITIES.md](./CAPABILITIES.md).
 
 ---
 
 ## <img src="docs/assets/logos/once.png" width="22" alt=""> ONCE.app (stub, music / podcast)
 
-DSP distribution for music and podcast. **Mapped only.** Env: `ONCE_API_KEY`.
+DSP distribution. Env: `ONCE_API_KEY`.
 
-**Notion fields:** TBD when wired.
+**Channels:** DSP storefronts via ONCE (music + podcast).
+
+#### Suggested Notion fields
+
+| Property | Type | Role |
+|---|---|---|
+| `ONCE Title` | Rich text | Track / episode title (or `Name`) |
+| `ONCE Audio` | Files & media | Master audio (or shared `Audio`) |
+| `ONCE Artwork` | Files & media | Cover art (or shared `Image`) |
+| `ONCE Metadata` | Rich text | JSON or credits / ISRC notes |
+| `ONCE Publish Status` | Status | Output |
+| `ONCE URL` | URL | Output |
+
+Tag `Source Tags` → `ONCE`.
 
 ---
 
@@ -286,11 +391,9 @@ POSTLY_API_KEY=
 POSTLY_WORKSPACE_ID=
 POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
 
-# Optional discover
 SKOOL_API_KEY=sk_live_xxxxxxxxxxxx
 SKOOL_GROUP_ID=
 
-# Optional stubs (not wired)
 GITHUB_TOKEN=
 TYPEFULLY_API_KEY=
 POSTIZ_API_KEY=
@@ -303,8 +406,7 @@ Full knobs: [`.env.example`](./.env.example). Matrices: [CAPABILITIES.md](./CAPA
 ### Scripts
 
 ```bash
-npm run build
-npm run dev
+npm run build && npm run dev
 npm run capabilities:check
 npm run publisher:report
 ```
