@@ -2,13 +2,20 @@ import { POSTLY_PLATFORM_CATALOG } from '../services/postly-platforms.catalog';
 import { DistributorCapability } from './types';
 
 /**
- * Distributors by layer:
- * - Products: gumroad (live), myskool (discover)
- * - Social: postly (live), postiz (stub), typefully (stub)
- * - Music: once (stub)
+ * Distributors by layer (publish channels):
  * - Events: luma (stub)
+ * - Products: gumroad (live), github (stub), myskool (discover)
+ * - Social: postly (live), typefully (stub), postiz (stub)
+ * - Music/Podcast: once (stub)
  */
 export const DISTRIBUTORS: DistributorCapability[] = [
+  {
+    id: 'luma',
+    kind: 'other',
+    status: 'stub',
+    envKeys: ['LUMA_API_KEY'],
+    notes: 'Events layer (Luma / lu.ma). Workshops, launches, calendar. Mapped only.',
+  },
   {
     id: 'gumroad',
     kind: 'marketplace',
@@ -17,12 +24,20 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     notes: 'Products layer. Digital storefront: draft/create/upload/publish/unpublish + autopilot.',
   },
   {
+    id: 'github',
+    kind: 'marketplace',
+    status: 'stub',
+    envKeys: ['GITHUB_TOKEN'],
+    notes:
+      'Products layer. Ship the same digital product via GitHub Releases/assets. Mapped only — no publish webhook yet.',
+  },
+  {
     id: 'myskool',
     kind: 'community',
     status: 'discover',
     envKeys: ['SKOOL_API_KEY', 'SKOOL_GROUP_ID'],
     notes:
-      'Products/community layer via MySkool (https://api.myskool.xyz/v1). Read groups/posts/comments. Create post still upstream Phase 2 — no publish webhook.',
+      'Products + community via MySkool (https://api.myskool.xyz/v1). Read groups/posts/comments. Create post still upstream Phase 2 — no publish webhook.',
   },
   {
     id: 'postly',
@@ -30,14 +45,7 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'live',
     envKeys: ['POSTLY_API_KEY', 'POSTLY_WORKSPACE_ID', 'POSTLY_TARGET_PLATFORMS'],
     notes:
-      'Social layer. Multi-channel + audience groups. Optional POSTLY_AUDIENCE_GROUP unused by default publish.',
-  },
-  {
-    id: 'postiz',
-    kind: 'social',
-    status: 'stub',
-    envKeys: ['POSTIZ_API_KEY'],
-    notes: 'Social layer. Alternate multi-platform scheduler. Mapped only — wire when account ready.',
+      'Social layer. Broad multi-channel cloud. Optional POSTLY_AUDIENCE_GROUP unused by default publish.',
   },
   {
     id: 'typefully',
@@ -45,21 +53,22 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'stub',
     envKeys: ['TYPEFULLY_API_KEY'],
     notes:
-      'Social layer. X/Twitter drafts & threads. Complements Postly (audience group name "Postly + Typefully").',
+      'Social layer. Cheaper text-first path: X, LinkedIn, Threads, Mastodon — strong per-account granularity. Mapped only.',
+  },
+  {
+    id: 'postiz',
+    kind: 'social',
+    status: 'stub',
+    envKeys: ['POSTIZ_API_KEY'],
+    notes:
+      'Social layer. Widest scheduler surface; prefer self-hosted over expensive cloud. Mapped only.',
   },
   {
     id: 'once',
     kind: 'music',
     status: 'stub',
     envKeys: ['ONCE_API_KEY'],
-    notes: 'Music layer (ONCE.app). DSP distribution. Mapped only.',
-  },
-  {
-    id: 'luma',
-    kind: 'other',
-    status: 'stub',
-    envKeys: ['LUMA_API_KEY'],
-    notes: 'Events layer (Luma / lu.ma). Mapped only — wire when account ready.',
+    notes: 'Music / Podcast layer (ONCE.app). DSP distribution. Mapped only.',
   },
 ];
 
@@ -74,12 +83,12 @@ export function getDistributor(id: string): DistributorCapability | undefined {
 export function getCapabilitiesSnapshot() {
   return {
     intent:
-      'Notion CMS orchestrator — products (Gumroad, Skool), social (Postly, Postiz, Typefully), music (ONCE.app), events (Luma)',
+      'Notion CMS orchestrator — events (Luma), products (Gumroad, GitHub, Skool), social (Postly, Typefully, Postiz), music/podcast (ONCE.app)',
     layers: {
-      products: ['gumroad', 'myskool'],
-      social: ['postly', 'postiz', 'typefully'],
-      music: ['once'],
       events: ['luma'],
+      products: ['gumroad', 'github', 'myskool'],
+      social: ['postly', 'typefully', 'postiz'],
+      music: ['once'],
     },
     distributors: listDistributors(),
     postly_platforms: POSTLY_PLATFORM_CATALOG,
@@ -88,7 +97,7 @@ export function getCapabilitiesSnapshot() {
 
 /** Throws if registry invariants break. */
 export function checkRegistryHealthy(): void {
-  if (DISTRIBUTORS.length < 7) throw new Error('expected at least 7 distributors');
+  if (DISTRIBUTORS.length < 8) throw new Error('expected at least 8 distributors');
   const ids = new Set<string>();
   for (const d of DISTRIBUTORS) {
     if (!d.id) throw new Error('distributor missing id');
@@ -106,7 +115,11 @@ export function checkRegistryHealthy(): void {
   if (getDistributor('gumroad')?.status !== 'live') throw new Error('gumroad must be live');
   if (getDistributor('postly')?.status !== 'live') throw new Error('postly must be live');
   if (getDistributor('myskool')?.status !== 'discover') throw new Error('myskool must be discover');
+  if (!getDistributor('github') || getDistributor('github')?.status !== 'stub') {
+    throw new Error('github stub missing');
+  }
   if (!getDistributor('postiz')) throw new Error('postiz stub missing');
+  if (!getDistributor('typefully')) throw new Error('typefully stub missing');
   if (!getDistributor('once')) throw new Error('once stub missing');
   if (!getDistributor('luma')) throw new Error('luma stub missing');
   if (getDistributor('nce') || getDistributor('postis')) {

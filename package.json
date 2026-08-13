@@ -1,7 +1,7 @@
 {
-  "name": "gumroad-publisher-service",
+  "name": "notion-publisher",
   "version": "1.0.0",
-  "description": "Webhook service for automating Gumroad product publishing via API",
+  "description": "Notion CMS orchestrator — products, social, events, music/podcast publish channels",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
