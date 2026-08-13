@@ -373,7 +373,7 @@ Global: shared `Caption` + `Postiz Targets` (multi-select) + shared `Video` / `I
 
 | Property | Type | Role |
 |---|---|---|
-| `Postiz Caption` | Rich text | Default caption for all selected channels |
+| `Caption` | Rich text | Shared default (same Social model) |
 | `Postiz Targets` | Multi-select | Subset of channels above |
 | `Postiz Publish Status` | Status | Output |
 | `Postiz URLs` | Rich text / URL | Output (per-channel lines) |
