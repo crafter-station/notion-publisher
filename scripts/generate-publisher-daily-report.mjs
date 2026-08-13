@@ -6,7 +6,7 @@ import path from 'path';
 const REPO_ROOT = process.cwd();
 const REPORT_DIR = path.join(REPO_ROOT, 'reports', 'publisher-daily');
 const STATE_PATH = path.join(REPO_ROOT, 'data', 'gumroad-autopilot-state.json');
-const SERVER_LOG_PATH = '/tmp/gumroad-published-server.log';
+const SERVER_LOG_PATH = '/tmp/notion-publisher-server.log';
 const NGROK_API_URL = 'http://127.0.0.1:4040/api/tunnels';
 const TIME_ZONE = process.env.PUBLISHER_REPORT_TIMEZONE || 'America/Lima';
 
