@@ -44,7 +44,7 @@
 </p>
 
 Hosted at [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher) *(private)*.  
-Matrices · channels · discovery → **[CAPABILITIES.md](./CAPABILITIES.md)**
+Matrices · channels · discovery → **[CAPABILITIES.md](./CAPABILITIES.md)** · progress → **[docs/PROGRESS.md](./docs/PROGRESS.md)**
 
 </div>
 
@@ -478,11 +478,19 @@ npm run publisher:report
 
 ## Roadmap
 
-1. Skool read / discover ← current
-2. Skool write when MySkool `POST /v1/posts` ships
-3. GitHub Releases product publish
-4. Typefully / Postiz (self-hosted) / ONCE / Luma clients
-5. Optional Postly `audience_group` on the live publish path
+Full ledger (shipped + remaining): **[docs/PROGRESS.md](./docs/PROGRESS.md)** · tracker: [GitHub Issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
+
+**Current:** Skool read / discover · CMS contract docs (1 DB + Social Caption model)
+
+**Open:**
+
+1. [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Unify Notion DBs → `Publisher`
+2. [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Parser: `Caption` alias of `POV Text`
+3. [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Notion MCP for this project
+4. [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write (MySkool `POST /v1/posts`)
+5. [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) GitHub Releases publish
+6. [#6](https://github.com/Nucleo-Lab/notion-publisher/issues/6) · [#7](https://github.com/Nucleo-Lab/notion-publisher/issues/7) · [#8](https://github.com/Nucleo-Lab/notion-publisher/issues/8) · [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Typefully / Postiz / ONCE / Luma clients
+7. [#10](https://github.com/Nucleo-Lab/notion-publisher/issues/10) · [#11](https://github.com/Nucleo-Lab/notion-publisher/issues/11) Postly `audience_group` + expand `POSTLY_TARGET_PLATFORMS`
 
 ---
 

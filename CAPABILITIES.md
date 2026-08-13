@@ -101,6 +101,8 @@ See README per-source Notion contracts (event fields, Releases, group posts).
 
 ## Roadmap
 
-1. Skool discover ← current  
-2. Skool write · GitHub Releases · Typefully / Postiz / ONCE / Luma clients  
-3. Optional Postly `audience_group` opt-in
+SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [open issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
+
+1. Skool discover ← current · CMS docs shipped  
+2. [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write · [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) GitHub Releases · [#6](https://github.com/Nucleo-Lab/notion-publisher/issues/6)–[#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Typefully / Postiz / ONCE / Luma  
+3. [#10](https://github.com/Nucleo-Lab/notion-publisher/issues/10) Postly `audience_group` · [#11](https://github.com/Nucleo-Lab/notion-publisher/issues/11) expand targets · [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1)–[#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) CMS hygiene
