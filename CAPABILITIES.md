@@ -101,8 +101,8 @@ See README per-source Notion contracts (event fields, Releases, group posts).
 
 ## Roadmap
 
-SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
+SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-- **Completed:** [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) Gumroad · [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) Postly · [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) Skool discover  
-- **Next:** Phase A CMS hygiene (#1–#3, `status:next`) — before Skool write  
-- **Later:** clients + Postly opts · Skool write (#4, blocked)
+- **Completed:** milestone Shipped (#12–#14)  
+- **Next:** milestone Phase A (#1–#3, `status:next`)  
+- **Later:** Phases B–D · Skool write (#4, blocked)

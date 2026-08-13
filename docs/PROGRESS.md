@@ -1,7 +1,14 @@
 # Progress + backlog
 
-How to read this file: **completed work first** (Gumroad + Postly), then what’s live, then what’s left.  
-Tracker: [GitHub Issues](https://github.com/Nucleo-Lab/notion-publisher/issues) on [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher).
+How to read this file: **completed work first** (Gumroad + Postly), then what’s live, then what’s left.
+
+| Layer | Link |
+|---|---|
+| **Project** | [Nucleo-Lab/projects/2 — notion-publisher](https://github.com/orgs/Nucleo-Lab/projects/2) |
+| **Issues** | [Nucleo-Lab/notion-publisher/issues](https://github.com/Nucleo-Lab/notion-publisher/issues) |
+| **Milestones** | Shipped · Phase A CMS · Phase B Products · Phase C Social · Phase D Events/Music |
+
+Tracking model: **Project** (board) → **Milestones** (phases) → **Issues** (work units).
 
 Do **not** invent publish webhooks for stub/discover connectors.  
 **Do not start Skool write (#4)** until completed live work is clearly tracked (this section) and Phase A CMS hygiene is in motion. #4 stays **blocked** on MySkool upstream anyway.
