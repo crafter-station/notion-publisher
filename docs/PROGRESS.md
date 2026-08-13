@@ -60,15 +60,24 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 ## Backlog by phase
 
-Status labels: `status:ready` · `status:blocked` · `status:later` · `status:done` (closed).
+### Status labels (important)
+
+| Label | Issue state | Meaning |
+|---|---|---|
+| `status:done` | **CLOSED** | Ya hecho / shipped (#12 Gumroad, #13 Postly, #14 Skool discover) |
+| `status:next` | OPEN | Siguiente — se puede empezar (**no** significa “completado”) |
+| `status:blocked` | OPEN | Esperando a terceros (#4 MySkool write) |
+| `status:later` | OPEN | Backlog después de Phase A |
+
+`status:ready` was retired — too easy to read as Spanish “listo” = done.
 
 ### Phase A — CMS hygiene (next open work)
 
 | Issue | Status | In plain words |
 |---|---|---|
-| [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Migrate live Notion DBs → one Publisher | ready | Unify production DBs to the documented schema |
-| [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Accept `Caption` (+ `POV Text` fallback) | ready | Parser matches the docs name for shared caption |
-| [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Enable Notion MCP | ready | Agents can inspect Publisher schema safely |
+| [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Migrate live Notion DBs → one Publisher | next | Unify production DBs to the documented schema |
+| [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Accept `Caption` (+ `POV Text` fallback) | next | Parser matches the docs name for shared caption |
+| [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Enable Notion MCP | next | Agents can inspect Publisher schema safely |
 
 ### Phase B — Products (after Phase A; Skool write last among these)
 
