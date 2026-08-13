@@ -32,10 +32,11 @@ These are **shipped**. Closed on GitHub with label `status:done`.
 | [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) *(closed)* | Products | **Gumroad live** — publish/unpublish webhooks, Notion contract, autopilot, visuals, markdown→HTML |
 | [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) *(closed)* | Social | **Postly live** — multi-platform webhook, per-platform captions, media, queue, `GET /capabilities/postly` |
 | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) *(closed)* | Products | **Skool discover only** — MySkool read client + `GET /capabilities/skool` (**not** write; write = #4 blocked) |
+| [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) *(closed)* | CMS/Social | **Caption** preferred; `POV Text` legacy fallback (PR [#15](https://github.com/Nucleo-Lab/notion-publisher/pull/15)) |
 
 Open follow-ups on the live stack (not “not done”, just next polish):
 
-- Postly: [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Caption alias · [#10](https://github.com/Nucleo-Lab/notion-publisher/issues/10) audience_group · [#11](https://github.com/Nucleo-Lab/notion-publisher/issues/11) expand targets  
+- Postly: [#10](https://github.com/Nucleo-Lab/notion-publisher/issues/10) audience_group · [#11](https://github.com/Nucleo-Lab/notion-publisher/issues/11) expand targets  
 - Skool **write**: [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) — **blocked** on MySkool POST; do this **after** Phase A, not instead of documenting #12/#13
 
 ---
@@ -71,7 +72,7 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 | Label | Issue state | Meaning |
 |---|---|---|
-| `status:done` | **CLOSED** | Ya hecho / shipped (#12 Gumroad, #13 Postly, #14 Skool discover) |
+| `status:done` | **CLOSED** | Ya hecho / shipped (#12 Gumroad, #13 Postly, #14 Skool discover, #2 Caption) |
 | `status:next` | OPEN | Siguiente — se puede empezar (**no** significa “completado”) |
 | `status:blocked` | OPEN | Esperando a terceros (#4 MySkool write) |
 | `status:later` | OPEN | Backlog después de Phase A |
