@@ -478,19 +478,11 @@ npm run publisher:report
 
 ## Roadmap
 
-Full ledger (shipped + remaining): **[docs/PROGRESS.md](./docs/PROGRESS.md)** · tracker: [GitHub Issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
+Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-**Current:** Skool read / discover · CMS contract docs (1 DB + Social Caption model)
-
-**Open:**
-
-1. [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Unify Notion DBs → `Publisher`
-2. [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Parser: `Caption` alias of `POV Text`
-3. [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Notion MCP for this project
-4. [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write (MySkool `POST /v1/posts`)
-5. [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) GitHub Releases publish
-6. [#6](https://github.com/Nucleo-Lab/notion-publisher/issues/6) · [#7](https://github.com/Nucleo-Lab/notion-publisher/issues/7) · [#8](https://github.com/Nucleo-Lab/notion-publisher/issues/8) · [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Typefully / Postiz / ONCE / Luma clients
-7. [#10](https://github.com/Nucleo-Lab/notion-publisher/issues/10) · [#11](https://github.com/Nucleo-Lab/notion-publisher/issues/11) Postly `audience_group` + expand `POSTLY_TARGET_PLATFORMS`
+- **Live:** Gumroad + Postly · Skool discover · CMS contract docs  
+- **Next (Phase A):** [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1)–[#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) CMS hygiene (`status:ready`)  
+- **Later:** product/social/events/music clients · Postly opts · [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write (`status:blocked` on MySkool)
 
 ---
 
