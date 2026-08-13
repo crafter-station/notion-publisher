@@ -66,29 +66,29 @@ Plus `Typefully Thread`, `Typefully Account`.
 
 ### Postiz (stub — prefer self-hosted)
 
-| Channel | Suggested Notion field |
+Source: [`postiz-app` social providers](https://github.com/gitroomhq/postiz-app/tree/main/libraries/nestjs-libraries/src/integrations/social).
+
+| Family | Channels |
 |---|---|
-| X / Twitter | `Postiz X` |
-| Instagram | `Postiz Instagram` |
-| Facebook | `Postiz Facebook` |
-| LinkedIn | `Postiz LinkedIn` |
-| TikTok | `Postiz TikTok` |
-| YouTube | `Postiz YouTube` |
-| Threads | `Postiz Threads` |
-| Mastodon | `Postiz Mastodon` |
-| Bluesky | `Postiz Bluesky` |
-| Pinterest | `Postiz Pinterest` |
-| Reddit | `Postiz Reddit` |
-| Telegram | `Postiz Telegram` |
-| Discord | `Postiz Discord` |
-| Slack | `Postiz Slack` |
-| Google Business | `Postiz Google` |
+| Social | X, Instagram (+ standalone), Facebook, LinkedIn (+ Page), TikTok, YouTube, Threads, Pinterest, Reddit, Bluesky, Mastodon (+ custom), Tumblr, VK, MeWe |
+| Communities / forums | Lemmy, Skool, Whop, Farcaster, Nostr |
+| Messaging | Telegram, Discord, Slack |
+| Live / creator | Twitch, Kick |
+| Design | Dribbble |
+| Blog / newsletters | Medium, Dev.to, Hashnode, WordPress, Listmonk |
+| Local | Google Business (GMB) |
 
-Global: `Postiz Caption` + `Postiz Targets` (multi-select) + shared media.
+Notion: `Postiz Caption` + `Postiz Targets` + optional `Postiz {Channel}` overrides (see [README](./README.md)).
 
-### Luma / GitHub / Skool / ONCE
+### ONCE.app (stub — music / podcast DSP)
 
-See README per-source Notion contracts (event fields, Releases, group posts, audio/artwork).
+Documented destinations: **Spotify**, **Apple Music**, **YouTube Music**, **Amazon Music**, **Tidal**, **Deezer**, **Pandora**, plus other DSPs via the ONCE network.
+
+Notion: `ONCE Title`, `ONCE Audio`, `ONCE Artwork`, `ONCE Metadata`, `ONCE Targets` (multi-select of the majors above).
+
+### Luma / GitHub / Skool
+
+See README per-source Notion contracts (event fields, Releases, group posts).
 
 ## Code map
 

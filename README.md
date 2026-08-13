@@ -1,17 +1,24 @@
 <div align="center">
 
 ```
-╔══════════════════════════════════════════════════════════╗
-║                                                          ║
-║   ██████╗ ██╗   ██╗██████╗ ██╗     ██╗███████╗██╗  ██╗   ║
-║   ██╔══██╗██║   ██║██╔══██╗██║     ██║██╔════╝██║  ██║   ║
-║   ██████╔╝██║   ██║██████╔╝██║     ██║███████╗███████║   ║
-║   ██╔═══╝ ██║   ██║██╔══██╗██║     ██║╚════██║██╔══██║   ║
-║   ██║     ╚██████╔╝██████╔╝███████╗██║███████║██║  ██║   ║
-║   ╚═╝      ╚═════╝ ╚═════╝ ╚══════╝╚═╝╚══════╝╚═╝  ╚═╝   ║
-║                                                          ║
-║              notion-publisher · Nucleo Lab               ║
-╚══════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════════════╗
+║                                                                        ║
+║           ███╗   ██╗ ██████╗ ████████╗██╗ ██████╗ ███╗   ██╗           ║
+║           ████╗  ██║██╔═══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║           ║
+║           ██╔██╗ ██║██║   ██║   ██║   ██║██║   ██║██╔██╗ ██║           ║
+║           ██║╚██╗██║██║   ██║   ██║   ██║██║   ██║██║╚██╗██║           ║
+║           ██║ ╚████║╚██████╔╝   ██║   ██║╚██████╔╝██║ ╚████║           ║
+║           ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝           ║
+║                                                                        ║
+║  ██████╗ ██╗   ██╗██████╗ ██╗     ██╗███████╗██╗  ██╗███████╗██████╗   ║
+║  ██╔══██╗██║   ██║██╔══██╗██║     ██║██╔════╝██║  ██║██╔════╝██╔══██╗  ║
+║  ██████╔╝██║   ██║██████╔╝██║     ██║███████╗███████║█████╗  ██████╔╝  ║
+║  ██╔═══╝ ██║   ██║██╔══██╗██║     ██║╚════██║██╔══██║██╔══╝  ██╔══██╗  ║
+║  ██║     ╚██████╔╝██████╔╝███████╗██║███████║██║  ██║███████╗██║  ██║  ║
+║  ╚═╝      ╚═════╝ ╚═════╝ ╚══════╝╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ║
+║                                                                        ║
+║                     notion-publisher · Nucleo Lab                      ║
+╚════════════════════════════════════════════════════════════════════════╝
 ```
 
 **Notion CMS orchestrator** — publish **events**, **products**, **social**, and **music/podcast** from Notion pages + automations.
@@ -296,29 +303,23 @@ Media: usually text-only; optional shared `Image` when the channel supports it. 
 
 ### <img src="docs/assets/logos/postiz.png" width="22" alt=""> Postiz (stub)
 
-Widest scheduler surface. Prefer **self-hosted** over expensive cloud. Env: `POSTIZ_API_KEY`.
+Widest scheduler surface (open-source). Prefer **self-hosted** over expensive cloud. Env: `POSTIZ_API_KEY`.
 
-#### Channels → suggested Notion fields
+Provider list from official [`postiz-app` social integrations](https://github.com/gitroomhq/postiz-app/tree/main/libraries/nestjs-libraries/src/integrations/social).
 
-Global: `Postiz Caption` (rich text) + shared `Video` / `Image` / `GIF`.
+#### Channels by family → suggested Notion overrides
 
-| Channel | Suggested override |
-|---|---|
-| X / Twitter | `Postiz X` |
-| Instagram | `Postiz Instagram` |
-| Facebook | `Postiz Facebook` |
-| LinkedIn | `Postiz LinkedIn` |
-| TikTok | `Postiz TikTok` |
-| YouTube | `Postiz YouTube` |
-| Threads | `Postiz Threads` |
-| Mastodon | `Postiz Mastodon` |
-| Bluesky | `Postiz Bluesky` |
-| Pinterest | `Postiz Pinterest` |
-| Reddit | `Postiz Reddit` |
-| Telegram | `Postiz Telegram` |
-| Discord | `Postiz Discord` |
-| Slack | `Postiz Slack` |
-| Google Business | `Postiz Google` |
+Global: `Postiz Caption` + `Postiz Targets` (multi-select) + shared `Video` / `Image` / `GIF`.
+
+| Family | Channels | Suggested overrides |
+|---|---|---|
+| Social | X, Instagram (+ standalone), Facebook, LinkedIn (+ Page), TikTok, YouTube, Threads, Pinterest, Reddit, Bluesky, Mastodon (+ custom), Tumblr, VK, MeWe | `Postiz X`, `Postiz Instagram`, `Postiz Facebook`, `Postiz LinkedIn`, `Postiz TikTok`, `Postiz YouTube`, `Postiz Threads`, `Postiz Pinterest`, `Postiz Reddit`, `Postiz Bluesky`, `Postiz Mastodon`, `Postiz Tumblr`, `Postiz VK`, `Postiz MeWe` |
+| Communities / forums | Lemmy, Skool, Whop, Farcaster, Nostr | `Postiz Lemmy`, `Postiz Skool`, `Postiz Whop`, `Postiz Farcaster`, `Postiz Nostr` |
+| Messaging | Telegram, Discord, Slack | `Postiz Telegram`, `Postiz Discord`, `Postiz Slack` |
+| Live / creator | Twitch, Kick | `Postiz Twitch`, `Postiz Kick` |
+| Design | Dribbble | `Postiz Dribbble` |
+| Blog / newsletters | Medium, Dev.to, Hashnode, WordPress, Listmonk | `Postiz Medium`, `Postiz Devto`, `Postiz Hashnode`, `Postiz WordPress`, `Postiz Listmonk` |
+| Local | Google Business (GMB) | `Postiz Google` |
 
 | Property | Type | Role |
 |---|---|---|
@@ -333,9 +334,20 @@ Tag `Source Tags` → `Postiz`. Full matrix also in [CAPABILITIES.md](./CAPABILI
 
 ## <img src="docs/assets/logos/once.png" width="22" alt=""> ONCE.app (stub, music / podcast)
 
-DSP distribution. Env: `ONCE_API_KEY`.
+Music DSP distribution via [ONCE.app](https://once.app/) / [beta.once.app](https://beta.once.app/). Env: `ONCE_API_KEY`.
 
-**Channels:** DSP storefronts via ONCE (music + podcast).
+#### DSP destinations (documented)
+
+| DSP | Notes |
+|---|---|
+| Spotify | Major streaming |
+| Apple Music | Major streaming |
+| YouTube Music | Major streaming |
+| Amazon Music | Major streaming |
+| Tidal | Hi-fi / streaming |
+| Deezer | Streaming |
+| Pandora | Streaming (US-focused) |
+| Other DSPs | Via ONCE network (do not assume a fixed extra list in Notion) |
 
 #### Suggested Notion fields
 
@@ -345,6 +357,7 @@ DSP distribution. Env: `ONCE_API_KEY`.
 | `ONCE Audio` | Files & media | Master audio (or shared `Audio`) |
 | `ONCE Artwork` | Files & media | Cover art (or shared `Image`) |
 | `ONCE Metadata` | Rich text | JSON or credits / ISRC notes |
+| `ONCE Targets` | Multi-select | Spotify, Apple Music, YouTube Music, Amazon Music, Tidal, Deezer, Pandora |
 | `ONCE Publish Status` | Status | Output |
 | `ONCE URL` | URL | Output |
 
