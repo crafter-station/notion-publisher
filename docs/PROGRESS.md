@@ -83,7 +83,6 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 | Issue | Status | In plain words |
 |---|---|---|
 | [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Migrate live Notion DBs → one Publisher | next | Unify production DBs to the documented schema |
-| [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Accept `Caption` (+ `POV Text` fallback) | next | Parser matches the docs name for shared caption |
 | [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Enable Notion MCP | next | Agents can inspect Publisher schema safely |
 
 ### Phase B — Products (after Phase A; Skool write last among these)
