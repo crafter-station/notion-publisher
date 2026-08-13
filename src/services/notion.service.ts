@@ -227,13 +227,16 @@ export function extractPostlyContent(props: any): PostlyContent {
   const youtube_title = _richText(props['YouTube Title']);
   const youtube_caption = _richText(props['YouTube Caption']);
   const first_comment = _richText(props['Universal First Comment']);
+  // ponytail: Caption preferred when set; POV Text kept as legacy alias
+  const caption = _richText(props['Caption']);
   const pov_text = _richText(props['POV Text']);
   const brand = _selectName(props['Brand']);
   const select = _selectName(props['Select']);
   const source_url = props['url']?.url || '';
 
-  // Global fallback: POV Text → else first non-empty caption
+  // Global fallback: Caption → POV Text → else first non-empty platform caption
   const global_text =
+    caption ||
     pov_text ||
     caption_instagram ||
     caption_facebook ||
@@ -244,7 +247,7 @@ export function extractPostlyContent(props: any): PostlyContent {
     caption_tiktok ||
     '';
 
-  if (!global_text) missing.push('All caption fields empty (POV Text + per-platform)');
+  if (!global_text) missing.push('All caption fields empty (Caption/POV Text + per-platform)');
 
   // Media priority: Video → GIF → Screenshot
   const videoUrl = _fileUrl(props['Video']);
