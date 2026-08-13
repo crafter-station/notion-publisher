@@ -230,6 +230,12 @@ async function buildPlatformPosts(content: PostlyContent, targetPlatforms: Postl
     ...firstCommentSettings,
   });
 
+  // Capability stubs: only emit when identifier is in resolved targets (env unchanged today).
+  const socialFallback = content.global_text || content.caption_threads || content.caption_instagram;
+  push('bluesky', socialFallback, {});
+  push('telegram', socialFallback, {});
+  push('x', socialFallback, {});
+
   return out;
 }
 

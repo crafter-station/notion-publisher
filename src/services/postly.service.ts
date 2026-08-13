@@ -29,19 +29,66 @@ export class PostlyService {
     };
   }
 
+  async listSocials(workspaceId: string = env.POSTLY_WORKSPACE_ID) {
+    const response = await fetch(`${API_BASE}/workspaces/${workspaceId}/socials`, {
+      method: 'GET',
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Postly listSocials failed: ${err}`);
+    }
+
+    const result = await response.json();
+    return result.data || [];
+  }
+
+  async listAudienceGroups(workspaceId: string = env.POSTLY_WORKSPACE_ID) {
+    const response = await fetch(`${API_BASE}/workspaces/${workspaceId}/audience-groups`, {
+      method: 'GET',
+      headers: this.headers,
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Postly listAudienceGroups failed: ${err}`);
+    }
+
+    const result = await response.json();
+    return result.data || [];
+  }
+
+  /**
+   * Create a post. OpenAPI anyOf: provide `target_platforms` and/or `audience_group`.
+   * Existing callers keep passing target_platforms only.
+   */
   async createPost(params: {
     workspace: string;
-    target_platforms: PostlyTargetPlatform[];
+    target_platforms?: PostlyTargetPlatform[];
+    audience_group?: string;
     text: string;
     media: PostlyMedia[];
     platform_posts?: PostlyPlatformPost[];
   }) {
-    const body: any = {
+    const hasTargets = !!(params.target_platforms && params.target_platforms.length > 0);
+    const hasAudience = !!params.audience_group?.trim();
+    if (!hasTargets && !hasAudience) {
+      throw new Error('Postly createPost requires target_platforms or audience_group');
+    }
+
+    const body: Record<string, unknown> = {
       workspace: params.workspace,
-      target_platforms: params.target_platforms.map(platform => platform.id).join(','),
       text: params.text,
       media: params.media,
     };
+
+    if (hasTargets) {
+      body.target_platforms = params.target_platforms!.map(platform => platform.id).join(',');
+    }
+    if (hasAudience) {
+      body.audience_group = params.audience_group!.trim();
+    }
     if (params.platform_posts && params.platform_posts.length > 0) {
       body.platform_posts = params.platform_posts;
     }
@@ -73,7 +120,6 @@ export class PostlyService {
     }
 
     const result = await response.json();
-    // Depending on Postly's single post response structure, the post might be in `data` or at the root.
     return result.data ? result.data : result;
   }
 

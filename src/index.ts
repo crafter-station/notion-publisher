@@ -11,10 +11,18 @@ function startServer(port: number) {
   // Create a fresh server instance for each attempt
   const server = http.createServer(async (req, res) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} accessed.`);
+    const path = req.url?.split('?')[0];
+
+    if (req.method === 'GET') {
+      if (path === '/capabilities') {
+        return webhooksController.handleCapabilities(req, res);
+      }
+      if (path === '/capabilities/postly') {
+        return webhooksController.handleCapabilitiesPostly(req, res);
+      }
+    }
 
     if (req.method === 'POST') {
-      const path = req.url?.split('?')[0];
-
       if (path === '/webhooks/publish-gumroad') {
         return webhooksController.handlePublishGumroad(req, res);
       }
