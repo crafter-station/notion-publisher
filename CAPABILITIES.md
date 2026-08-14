@@ -58,6 +58,13 @@ Self-check: `npm run capabilities:check`
 
 Source Tag **`Composio`**. Transport for **Reddit** (Social) and **Eventbrite** (Events channel — not a Source Tag). Shared Notion view with Typefully: `Social — Composio / Typefully`. Events: `Events — All` includes Composio+Eventbrite. Env: `COMPOSIO_API_KEY` (not wired). No write webhook yet.
 
+| Property | Role |
+|---|---|
+| `Composio Publish Status` / `Composio URL` | Source writebacks |
+| `Reddit Title` / `Body` / `Reddit URL` | Reddit channel |
+| `Eventbrite Title` / `Start` / `End` / `Location` / `Description` / `Cover` | Eventbrite inputs |
+| `Eventbrite URL` / `Eventbrite Event ID` | Eventbrite writebacks |
+
 ### Typefully (stub)
 
 Shared `Caption` + optional channel overrides (empty → `Caption`). Plus `Typefully Thread`, `Typefully Account`. See [README Social model](./README.md#social--shared-media--optional-channel-overrides).
