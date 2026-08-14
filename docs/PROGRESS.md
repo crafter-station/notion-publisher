@@ -37,6 +37,7 @@ These are **shipped**. Closed on GitHub with label `status:done`.
 
 Open follow-ups on the live stack (not “not done”, just next polish):
 
+- Postly naming (2026-08-13): `Instagram Status/URL` → `Postly Publish Status` / `Postly URL`; aggregate `Postly Error` → `Error` (see [`notion-property-map.md`](./notion-property-map.md))
 - Postly: [#10](https://github.com/Nucleo-Lab/notion-publisher/issues/10) audience_group · [#11](https://github.com/Nucleo-Lab/notion-publisher/issues/11) expand targets  
 - Skool **write**: [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) — **blocked** on MySkool POST; do this **after** Phase A, not instead of documenting #12/#13
 
@@ -49,7 +50,8 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 | CMS | Notion `Publisher` (one DB) | **live** | [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) |
 | Products | Gumroad | **live** | [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) |
 | Social | Postly | **live** | [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) |
-| Products | Skool / MySkool | **discover** | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) |
+| Products | Skool / MySkool | **discover** (key in `.env`; smoke 401 until valid `sk_live_…`) | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) · write [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) blocked |
+| Events | Luma | **live** (`POST /webhooks/publish-luma`) | [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) |
 
 Everything else in the kit is **mapped (stub)** — docs + registry, no publish client yet.
 
@@ -61,10 +63,13 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 |---|---|
 | Capability registry | `src/capabilities/registry.ts` · `npm run capabilities:check` |
 | Discovery HTTP | `GET /capabilities` (+ postly / skool) |
-| Stub maps + logos | Luma, GitHub, Typefully, Postiz, ONCE |
+| Stub maps + logos | GitHub, Typefully, Postiz, ONCE |
+| Luma create webhook | `luma.service` + cover CDN upload + `/webhooks/publish-luma` + Notion writeback |
+| Luma TNC import | `npm run luma:import-tnc` — five Aug-29 The Next Craft mirrored to Publisher |
 | Repo rename | `notion-publisher` under Nucleo Lab |
 | CMS contract docs | One DB `Publisher`, views by **Layer** + `Source Tags`, Social shared `Caption`/media + overrides |
 | Publisher unify cutover | Schema + row migration + env triple-ID; archive old Templates DB |
+| Postly output rename | `Postly Publish Status` / `Postly URL`; Status option `Error`; Notion API stays `2022-06-28` |
 
 ---
 
@@ -108,7 +113,7 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 | Issue | Status | In plain words |
 |---|---|---|
-| [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Luma events client | later | Create/update events from Notion |
+| [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Luma events client | **done (create + cover)** | Create + CDN cover + writeback; update/tickets later |
 | [#8](https://github.com/Nucleo-Lab/notion-publisher/issues/8) ONCE.app DSP client | later | Audio distribution to major DSPs |
 
 ---

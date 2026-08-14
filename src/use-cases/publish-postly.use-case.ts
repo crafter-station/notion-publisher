@@ -1,5 +1,5 @@
 import { PostlyService, PostlyTargetPlatform } from '../services/postly.service';
-import { updatePostlyMetadata, PostlyContent, FinalStatus, InstagramStatus } from '../services/notion.service';
+import { updatePostlyMetadata, PostlyContent, FinalStatus, PostlyPublishStatus } from '../services/notion.service';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
@@ -249,7 +249,7 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     console.log(`[POSTLY-USE-CASE] Media: ${content.media_type} ${content.media_url}`);
 
     // PHASE 1 — Mark in-progress on Notion
-    await updatePostlyMetadata(notion_page_id, { instagram_status: 'In progress' });
+    await updatePostlyMetadata(notion_page_id, { postly_status: 'In progress' });
 
     // PHASE 2 — Build payload and send
     const platform_posts = await buildPlatformPosts(content, target_platforms);
@@ -326,19 +326,19 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     const publishedResults = finalResults.filter(r => r.status === 'published');
     const failedResults = finalResults.filter(r => r.status === 'failed');
 
-    let instagramStatus: InstagramStatus = 'Published';
+    let postlyStatus: PostlyPublishStatus = 'Published';
     let finalStatus: FinalStatus = 'Published (EN)';
 
     if (publishedResults.length === 0) {
-      instagramStatus = 'Failed';
-      finalStatus = 'Postly Error';
+      postlyStatus = 'Failed';
+      finalStatus = 'Error';
     } else if (failedResults.length > 0 || publishedResults.length < target_platforms.length) {
       // Partial — at least one published, at least one failed/pending. No "Partial" enum, mark Failed.
-      instagramStatus = 'Failed';
-      finalStatus = 'Postly Error';
+      postlyStatus = 'Failed';
+      finalStatus = 'Error';
     }
 
-    // First IG URL goes to `Instagram URL`; fallback to any first published URL
+    // First IG URL goes to `Postly URL`; fallback to any first published URL
     const igResult = publishedResults.find(r => r.platform_name === 'instagram');
     const firstUrl = igResult?.url || publishedResults[0]?.url;
 
@@ -351,20 +351,20 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
       .join('\n');
 
     await updatePostlyMetadata(notion_page_id, {
-      instagram_status: instagramStatus,
-      instagram_url: firstUrl,
+      postly_status: postlyStatus,
+      postly_url: firstUrl,
       post_id: postIdLog,
       final_status: finalStatus,
     });
 
-    console.log(`[POSTLY-USE-CASE] Pipeline finished. instagram_status=${instagramStatus} final=${finalStatus}`);
+    console.log(`[POSTLY-USE-CASE] Pipeline finished. postly_status=${postlyStatus} final=${finalStatus}`);
     return { status: finalStatus, results: finalResults, attempts: currentAttempt };
 
   } catch (error: any) {
     console.error(`[POSTLY-USE-CASE] Critical failure:`, error);
     await updatePostlyMetadata(notion_page_id, {
-      instagram_status: 'Failed',
-      final_status: 'Postly Error',
+      postly_status: 'Failed',
+      final_status: 'Error',
     });
     throw error;
   }

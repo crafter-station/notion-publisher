@@ -5,7 +5,7 @@
 | Layer | Surfaces |
 |---|---|
 | **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
-| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**stub**) |
+| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**) |
 | **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**stub**), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool / MySkool (**discover**) |
 | **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**stub**) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
@@ -25,7 +25,7 @@ Self-check: `npm run capabilities:check`
 | | ID | Layer | Status | Site |
 |---|---|---|---|---|
 | <img src="docs/assets/logos/notion.png" width="18" alt=""> | `notion` *(CMS)* | CMS | **live** | [notion.so](https://www.notion.so/) |
-| <img src="docs/assets/logos/luma.png" width="18" alt=""> | `luma` | Events | stub | [luma.com](https://luma.com/) |
+| <img src="docs/assets/logos/luma.png" width="18" alt=""> | `luma` | Events | **live** | [luma.com](https://luma.com/) |
 | <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | `gumroad` | Products | **live** | [gumroad.com](https://gumroad.com/) |
 | <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | stub | [github.com](https://github.com/) |
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | `myskool` | Products | **discover** | [myskool.xyz](https://myskool.xyz/) |
@@ -88,21 +88,33 @@ Documented destinations: **Spotify**, **Apple Music**, **YouTube Music**, **Amaz
 
 Notion: `ONCE Title`, `ONCE Audio`, `ONCE Artwork`, `ONCE Metadata`, `ONCE Targets` (multi-select of the majors above).
 
-### Luma / GitHub / Skool
+### Luma (live)
 
-See README per-source Notion contracts (event fields, Releases, group posts).
+Env: `LUMA_API_KEY` · webhook `POST /webhooks/publish-luma` · client `src/services/luma.service.ts`.
+
+Creates event from `Luma Title` / `Luma Start` (+ optional End / Location / Description / **Cover** via CDN upload). Writeback: `Luma Publish Status`, `Luma Event URL`. Update / tickets = out of v1.
+
+Import mirror: `npm run luma:import-tnc`.
+
+Ngrok checklist: see README Luma section (button → `/webhooks/publish-luma`).
+
+### GitHub / Skool
+
+- GitHub Releases: stub ([#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5)).
+- Skool: discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts` ([#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4)). Key must be `sk_live_…`.
 
 ## Code map
 
 - Registry: `src/capabilities/registry.ts`
 - Postly catalog: `src/services/postly-platforms.catalog.ts`
 - Skool client: `src/services/skool.service.ts`
+- Luma client: `src/services/luma.service.ts`
 - Logos: `docs/assets/logos/`
 
 ## Roadmap
 
 SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-- **Completed:** milestone Shipped (#12–#14)  
-- **Next:** milestone Phase A (#1–#3, `status:next`)  
+- **Completed:** milestone Shipped (#12–#14) · Luma create webhook (#9 path)
+- **Next:** milestone Phase A leftovers (#3)
 - **Later:** Phases B–D · Skool write (#4, blocked)

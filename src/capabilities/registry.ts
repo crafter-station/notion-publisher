@@ -3,7 +3,7 @@ import { DistributorCapability } from './types';
 
 /**
  * Distributors by layer (publish channels):
- * - Events: luma (stub)
+ * - Events: luma (live)
  * - Products: gumroad (live), github (stub), myskool (discover)
  * - Social: postly (live), typefully (stub), postiz (stub)
  * - Music/Podcast: once (stub)
@@ -12,9 +12,10 @@ export const DISTRIBUTORS: DistributorCapability[] = [
   {
     id: 'luma',
     kind: 'other',
-    status: 'stub',
+    status: 'live',
     envKeys: ['LUMA_API_KEY'],
-    notes: 'Events layer (Luma / lu.ma). Workshops, launches, calendar. Mapped only.',
+    notes:
+      'Events layer (Luma / lu.ma). POST /webhooks/publish-luma creates events + optional cover via /v1/images/create-upload-url. Update/tickets out of v1.',
   },
   {
     id: 'gumroad',
@@ -121,7 +122,7 @@ export function checkRegistryHealthy(): void {
   if (!getDistributor('postiz')) throw new Error('postiz stub missing');
   if (!getDistributor('typefully')) throw new Error('typefully stub missing');
   if (!getDistributor('once')) throw new Error('once stub missing');
-  if (!getDistributor('luma')) throw new Error('luma stub missing');
+  if (getDistributor('luma')?.status !== 'live') throw new Error('luma must be live');
   if (getDistributor('nce') || getDistributor('postis')) {
     throw new Error('legacy nce/postis ids must be removed');
   }

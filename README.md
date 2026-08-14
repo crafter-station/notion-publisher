@@ -58,7 +58,7 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 
 ```text
 Notion CMS  →  notion-publisher (this repo · no UI)
-                    ├─ Events         → Luma (stub)
+                    ├─ Events         → Luma (live)
                     ├─ Products       → Gumroad (live) · GitHub (stub) · Skool/MySkool (discover)
                     ├─ Social         → Postly (live) · Typefully (stub) · Postiz (stub)
                     └─ Music/Podcast  → ONCE.app (stub)
@@ -66,8 +66,8 @@ Notion CMS  →  notion-publisher (this repo · no UI)
 
 Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social stack: Postly = broad cloud; Typefully = cheaper text accounts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**.
 
-**Live publish today:** Gumroad + Postly only.  
-**Discover:** Skool via MySkool read API.  
+**Live publish today:** Gumroad + Postly + Luma.  
+**Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) blocked).  
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
@@ -77,7 +77,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | | Name | Site | Layer | Status |
 |---|---|---|---|---|
 | <img src="docs/assets/logos/notion.png" width="20" alt=""> | **Notion** | [notion.so](https://www.notion.so/) | CMS | **live** |
-| <img src="docs/assets/logos/luma.png" width="20" alt=""> | **Luma** | [luma.com](https://luma.com/) | Events | stub |
+| <img src="docs/assets/logos/luma.png" width="20" alt=""> | **Luma** | [luma.com](https://luma.com/) | Events | **live** |
 | <img src="docs/assets/logos/gumroad.png" width="20" alt=""> | **Gumroad** | [gumroad.com](https://gumroad.com/) | Products | **live** |
 | <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | stub |
 | <img src="docs/assets/logos/skool.png" width="20" alt=""> <img src="docs/assets/logos/myskool.png" width="20" alt=""> | **Skool (MySkool)** | [skool.com](https://www.skool.com/) · [myskool.xyz](https://myskool.xyz/) | Products + community | **discover** |
@@ -148,6 +148,8 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | Publish Instagram / Publish *brand* (existing) | `/webhooks/publish-postly` |
 | Publish in Gumroad *(recreate on Publisher if missing — API cannot create buttons)* | existing Gumroad publish webhook |
 | Publish in Social *(optional)* | `/webhooks/publish-postly` |
+| Publish in Luma *(add in Notion UI)* | `/webhooks/publish-luma` |
+| Publish in Skool | **not wired** — MySkool write Planned (#4) |
 
 Product writebacks on the same DB: `Gumroad Publish Status`, `Gumroad Product ID`, `Gumroad URL`, `Gumroad Edit URL`.
 
@@ -185,26 +187,42 @@ Per-source product/event/music fields stay under each distributor section below.
 
 ---
 
-## <img src="docs/assets/logos/luma.png" width="22" alt=""> Luma (stub, events)
+## <img src="docs/assets/logos/luma.png" width="22" alt=""> Luma (live, events)
 
-Workshops, launches, calendar. **Mapped only.** Env: `LUMA_API_KEY`.
+Workshops, launches, calendar. Env: `LUMA_API_KEY` · webhook `POST /webhooks/publish-luma`.
 
 **Channels:** Luma event page (single surface).
 
-#### Suggested Notion fields
+**What we implement:** create event (`name`, `start_at`, `timezone`, optional `end_at` / `description_md` / location / **cover**) + Notion writeback. **Out of v1:** update-existing, invitations, tickets.
+
+#### Notion property contract (case-sensitive, live)
 
 | Property | Type | Role |
 |---|---|---|
-| `Luma Title` | Rich text | Event title (or reuse `Name`) |
-| `Luma Start` | Date | Start datetime |
+| `Luma Title` | Rich text | Event title (fallback `Luma Name` / `Name`) |
+| `Luma Start` | Date | Start datetime (required) |
 | `Luma End` | Date | End datetime |
-| `Luma Location` | Rich text | Place or `Online` |
-| `Luma Description` | Rich text | Event body (or reuse `Body`) |
-| `Luma Cover` | Files & media | Hero image (or shared `Image`) |
-| `Luma Event URL` | URL | Output when wired |
-| `Luma Publish Status` | Status | Output when wired |
+| `Luma Location` | Rich text | Place → manual geo; `http(s)` → `meeting_url` |
+| `Luma Description` | Rich text | Markdown → Luma `description_md` |
+| `Luma Cover` | Files & media | Uploaded to Luma CDN on publish (`/v1/images/create-upload-url`) |
+| `Luma Event URL` | URL | Writeback after create / import mirror |
+| `Luma Publish Status` | Status | Not started / In progress / Published / Failed |
 
-Tag row with `Source Tags` → `Luma`.
+Timezone: `GUMROAD_AUTOPILOT_TIMEZONE` (default `America/Lima`). Tag row with `Source Tags` → `Luma`.
+
+#### Import existing calendar events
+
+```bash
+npm run luma:import-tnc   # mirrors five Aug-29 The Next Craft events → Publisher (idempotent)
+```
+
+#### Ngrok + Notion button checklist (same pattern as Gumroad/Postly)
+
+1. `unset NOTION_DATABASE_ID …` if shell has stale IDs; `set -a && source .env && set +a`
+2. `npm run build && npm run dev` (note listening port)
+3. `ngrok http <port>`
+4. Notion → Publisher button **Publish in Luma** → automation → `POST https://<ngrok>/webhooks/publish-luma` (body must include `data.id` = page id)
+5. Fill `Luma Title` + `Luma Start` (+ optional cover) → click button → confirm `Luma Publish Status=Published` + `Luma Event URL`
 
 ---
 
@@ -274,10 +292,11 @@ Ship the same product as a **GitHub Release** (assets + notes). Env: `GITHUB_TOK
 
 **Channels:** Skool **groups/communities** attached to the MySkool API key (product drop + community post).
 
-Docs: https://myskool.xyz/docs · API: `https://api.myskool.xyz/v1` · Auth: `Bearer sk_live_…`
+Docs: https://myskool.xyz/docs · API: `https://api.myskool.xyz/v1` · Auth: `Bearer sk_live_…`  
+Env: `SKOOL_API_KEY` (must be MySkool `sk_live_…`) · optional `SKOOL_GROUP_ID` for sample posts.
 
 **Implemented (read):** groups / posts / comments → `GET /capabilities/skool`.  
-**Planned upstream:** `POST /v1/posts` (Phase 2).
+**Planned upstream:** `POST /v1/posts` (Phase 2) — write stays GitHub [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4); no invent success webhook.
 
 #### Notion property contract (**planned** for write)
 
@@ -335,7 +354,7 @@ Uses the **shared Social model** above. Live parser keys today:
 
 **Optional future overrides (catalog-ready, not required today):** `X Post`, `Bluesky Post`, `Telegram Post`, `WhatsApp Post`.
 
-**Outputs:** `Status`, `Instagram Status`, `Instagram URL`, `Post ID`, `Postly Error`.
+**Outputs:** `Status` (aggregate; errors → `Error`), `Postly Publish Status` (pipeline), `Postly URL` (first published URL), `Post ID` (multi-platform log). Legacy names `Instagram Status` / `Instagram URL` / option `Postly Error` were renamed in Publisher.
 
 **Targeting:** `?target=0` / `?target=0,2`. **Polling:** backoff `[30s, 10s, 20s, 30s, 40s, 50s, 60s]`. **Queue:** `POSTLY_QUEUE_ENABLED=true`.
 
@@ -440,6 +459,7 @@ Tag `Source Tags` → `ONCE`.
 | `POST` | `/webhooks/publish-gumroad` | Create / publish product |
 | `POST` | `/webhooks/unpublish-gumroad` | Unpublish product |
 | `POST` | `/webhooks/publish-postly` | Social publish (`?target=` optional) |
+| `POST` | `/webhooks/publish-luma` | Create Luma event from Notion |
 | `GET` | `/capabilities` | Registry + layers + Postly catalog |
 | `GET` | `/capabilities/postly` | Live socials + audience groups |
 | `GET` | `/capabilities/skool` | MySkool discover (or stub message if no key) |

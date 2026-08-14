@@ -39,7 +39,7 @@ export async function processNextPostlyQueueItem() {
     console.log(`[POSTLY-QUEUE] Publishing ${label} using POSTLY_TARGET_PLATFORMS (${target_platforms.length} target(s)).`);
 
     await updatePostlyMetadata(page.id, {
-      instagram_status: 'In progress',
+      postly_status: 'In progress',
       final_status: 'In progress',
       post_id: `Auto queue started at ${new Date().toISOString()}`,
     });

@@ -2,6 +2,8 @@ import { env } from '../config/env';
 import { markdownToGumroadHtml } from './markdown.service';
 
 const notionToken = env.NOTION_TOKEN;
+// ponytail: stay on 2022-06-28 — DB query/properties work; 2025-09-03 data_sources needs separate query path
+export const NOTION_VERSION = '2022-06-28';
 
 export async function getNotionPage(pageId: string) {
   if (!notionToken) throw new Error('Missing NOTION_TOKEN');
@@ -10,7 +12,7 @@ export async function getNotionPage(pageId: string) {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${notionToken}`,
-      'Notion-Version': '2022-06-28'
+      'Notion-Version': NOTION_VERSION
     }
   });
 
@@ -48,11 +50,13 @@ export function parseNotionPage(pageData: any) {
     is_incomplete = true;
   }
 
-  // Extract Title
+  // Extract Title — Publisher uses Name; archive used Prompt Chain Template Name
   let title = 'Untitled Chain';
   if (props['Gumroad Title'] && props['Gumroad Title'].rich_text && props['Gumroad Title'].rich_text.length > 0) {
     title = props['Gumroad Title'].rich_text.map((t: any) => t.plain_text).join('');
-  } else if (props['Prompt Chain Template Name'] && props['Prompt Chain Template Name'].title && props['Prompt Chain Template Name'].title.length > 0) {
+  } else if (props['Name']?.title?.length) {
+    title = props['Name'].title.map((t: any) => t.plain_text).join('');
+  } else if (props['Prompt Chain Template Name']?.title?.length) {
     title = props['Prompt Chain Template Name'].title.map((t: any) => t.plain_text).join('');
   } else {
     is_incomplete = true;
@@ -77,10 +81,11 @@ export function parseNotionPage(pageData: any) {
     return undefined;
   };
 
-  const general_cover_url = getFileUrl(props['Cover']?.files);
-  const icon_url = getFileUrl(props['Icon']?.files);
+  // Cover/Icon lived on archive Templates DB; Publisher keeps Gumroad Cover/Thumbnail (+ optional Cover/Icon if re-added)
   const cover_url = getFileUrl(props['Gumroad Cover']?.files);
   const thumbnail_url = getFileUrl(props['Gumroad Thumbnail']?.files);
+  const general_cover_url = getFileUrl(props['Cover']?.files) || cover_url;
+  const icon_url = getFileUrl(props['Icon']?.files) || thumbnail_url;
 
   const gumroad_product_id = props['Gumroad Product ID']?.rich_text?.[0]?.plain_text || undefined;
   const public_url = props['Gumroad URL']?.url || undefined;
@@ -149,7 +154,7 @@ export async function updateNotionMetadata(
       headers: {
         'Authorization': `Bearer ${notionToken}`,
         'Content-Type': 'application/json',
-        'Notion-Version': '2022-06-28'
+        'Notion-Version': NOTION_VERSION
       },
       body: JSON.stringify({ properties })
     });
@@ -170,11 +175,13 @@ export async function updateNotionMetadata(
   }
 }
 
-export type InstagramStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
+export type PostlyPublishStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
 export type FinalStatus =
   | 'Not started' | 'In progress' | 'Published'
   | 'Published (EN)' | 'Published (ES)' | 'Published (PT)'
-  | 'Postly Error' | 'Render Error' | 'Done';
+  | 'Error' | 'Render Error' | 'Done';
+/** @deprecated use PostlyPublishStatus */
+export type InstagramStatus = PostlyPublishStatus;
 
 export interface PostlyContent {
   brand: string;
@@ -249,9 +256,10 @@ export function extractPostlyContent(props: any): PostlyContent {
 
   if (!global_text) missing.push('All caption fields empty (Caption/POV Text + per-platform)');
 
-  // Media priority: Video → GIF → Screenshot
+  // Media priority: Video → GIF → Image → Screenshot
   const videoUrl = _fileUrl(props['Video']);
   const gifUrl = _fileUrl(props['GIF']);
+  const imageUrl = _fileUrl(props['Image']);
   const screenshotUrl = _fileUrl(props['Screenshot']);
 
   let media_url: string | undefined;
@@ -263,11 +271,14 @@ export function extractPostlyContent(props: any): PostlyContent {
   } else if (gifUrl) {
     media_url = gifUrl;
     media_type = 'image/gif';
+  } else if (imageUrl) {
+    media_url = imageUrl;
+    media_type = /\.png(\?|$)/i.test(imageUrl) ? 'image/png' : 'image/jpeg';
   } else if (screenshotUrl) {
     media_url = screenshotUrl;
     media_type = /\.png(\?|$)/i.test(screenshotUrl) ? 'image/png' : 'image/jpeg';
   } else {
-    missing.push('Video / GIF / Screenshot (no media file attached)');
+    missing.push('Video / GIF / Image / Screenshot (no media file attached)');
   }
 
   return {
@@ -302,17 +313,24 @@ export async function queryNextPostlyQueueCandidates(databaseId: string, pageSiz
     headers: {
       'Authorization': `Bearer ${notionToken}`,
       'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28',
+      'Notion-Version': NOTION_VERSION,
     },
     body: JSON.stringify({
       page_size: pageSize,
       filter: {
         and: [
+          // Unified Publisher: only social rows
+          {
+            or: [
+              { property: 'Source Tags', multi_select: { contains: 'Postly' } },
+              { property: 'Layer', select: { equals: 'Social' } },
+            ],
+          },
           { property: 'url', url: { is_not_empty: true } },
           { property: 'Select', select: { is_not_empty: true } },
           { property: 'Brand', select: { is_not_empty: true } },
           { property: 'Status', status: { equals: 'Not started' } },
-          { property: 'Instagram Status', status: { equals: 'Not started' } },
+          { property: 'Postly Publish Status', status: { equals: 'Not started' } },
         ],
       },
       sorts: [
@@ -341,12 +359,19 @@ export async function queryNextGumroadAutopilotCandidates(databaseId: string, pa
     headers: {
       'Authorization': `Bearer ${notionToken}`,
       'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28',
+      'Notion-Version': NOTION_VERSION,
     },
     body: JSON.stringify({
       page_size: pageSize,
       filter: {
         and: [
+          // Unified Publisher: only product rows
+          {
+            or: [
+              { property: 'Source Tags', multi_select: { contains: 'Gumroad' } },
+              { property: 'Layer', select: { equals: 'Products' } },
+            ],
+          },
           { property: 'Gumroad URL', url: { is_empty: true } },
           { property: 'Gumroad Product ID', rich_text: { is_empty: true } },
           { property: 'Gumroad Publish Status', status: { equals: 'Not started' } },
@@ -357,13 +382,13 @@ export async function queryNextGumroadAutopilotCandidates(databaseId: string, pa
           {
             or: [
               { property: 'Gumroad Title', rich_text: { is_not_empty: true } },
-              { property: 'Prompt Chain Template Name', title: { is_not_empty: true } },
+              { property: 'Name', title: { is_not_empty: true } },
             ],
           },
         ],
       },
       sorts: [
-        { property: 'Created time', direction: 'ascending' },
+        { property: 'Created', direction: 'ascending' },
       ],
     }),
   });
@@ -378,11 +403,11 @@ export async function queryNextGumroadAutopilotCandidates(databaseId: string, pa
 }
 
 /**
- * Writes Postly publishing status back to Notion AI POVs page.
- * - `Instagram Status` (status): granular task state during the 6-phase loop
- * - `Instagram URL` (url): first published URL
+ * Writes Postly publishing status back to Publisher Notion page.
+ * - `Postly Publish Status` (status): pipeline phase (Not started / In progress / Published / Failed)
+ * - `Postly URL` (url): first published URL (IG preferred, else any platform)
  * - `Post ID` (rich_text): multi-line `<platform>: <id>`
- * - `Status` (status): final aggregate — Published (EN) on full success, Postly Error otherwise
+ * - `Status` (status): aggregate — Published (EN) on full success, Error otherwise
  *
  * Each field is sent independently; a single property error doesn't abort the whole patch
  * (we log warnings but never throw).
@@ -390,10 +415,14 @@ export async function queryNextGumroadAutopilotCandidates(databaseId: string, pa
 export async function updatePostlyMetadata(
   notion_page_id: string,
   data: {
-    instagram_status?: InstagramStatus;
-    instagram_url?: string;
+    postly_status?: PostlyPublishStatus;
+    postly_url?: string;
     post_id?: string;
     final_status?: FinalStatus;
+    /** @deprecated use postly_status */
+    instagram_status?: PostlyPublishStatus;
+    /** @deprecated use postly_url */
+    instagram_url?: string;
   }
 ) {
   if (!notionToken || !notion_page_id) {
@@ -402,11 +431,14 @@ export async function updatePostlyMetadata(
 
   const properties: any = {};
 
-  if (data.instagram_status) {
-    properties['Instagram Status'] = { status: { name: data.instagram_status } };
+  const postlyStatus = data.postly_status ?? data.instagram_status;
+  const postlyUrl = data.postly_url ?? data.instagram_url;
+
+  if (postlyStatus) {
+    properties['Postly Publish Status'] = { status: { name: postlyStatus } };
   }
-  if (data.instagram_url) {
-    properties['Instagram URL'] = { url: data.instagram_url };
+  if (postlyUrl) {
+    properties['Postly URL'] = { url: postlyUrl };
   }
   if (data.post_id !== undefined) {
     properties['Post ID'] = {
@@ -427,7 +459,7 @@ export async function updatePostlyMetadata(
       headers: {
         'Authorization': `Bearer ${notionToken}`,
         'Content-Type': 'application/json',
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': NOTION_VERSION,
       },
       body: JSON.stringify({ properties }),
     });
@@ -440,6 +472,228 @@ export async function updatePostlyMetadata(
     return { success: true, updated_page_id: notion_page_id };
   } catch (error: any) {
     console.warn(`[NOTION] updatePostlyMetadata exception: ${error.message}`);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
+
+export type LumaPublishStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
+
+export interface LumaContent {
+  name: string;
+  start_at: string;
+  end_at: string;
+  timezone: string;
+  location: string;
+  description_md: string;
+  /** Notion Luma Cover file URL (Notion/S3); upload to Luma CDN before create */
+  cover_url?: string;
+  is_complete: boolean;
+  missing: string[];
+}
+
+const _titleText = (p: any): string =>
+  (p?.title?.length ? p.title.map((t: any) => t.plain_text).join('') : '').trim();
+
+const _dateStart = (p: any): string => (p?.date?.start || '').trim();
+const _dateEnd = (p: any): string => (p?.date?.end || '').trim();
+
+/**
+ * Publisher Luma props → create payload.
+ * Cover: local Notion file URL; use-case uploads to Luma CDN.
+ */
+export function extractLumaContent(props: any): LumaContent {
+  const missing: string[] = [];
+  const name =
+    _richText(props['Luma Title']) ||
+    _richText(props['Luma Name']) ||
+    _titleText(props['Name']) ||
+    '';
+  const start_at = _dateStart(props['Luma Start']);
+  const end_at = _dateEnd(props['Luma End']) || _dateStart(props['Luma End']) || '';
+  const location = _richText(props['Luma Location']);
+  const description_md = _richText(props['Luma Description']);
+  const cover_url = _fileUrl(props['Luma Cover']);
+  const timezone = env.GUMROAD_AUTOPILOT_TIMEZONE || 'America/Lima';
+
+  if (!name) missing.push('Luma Title (or Name)');
+  if (!start_at) missing.push('Luma Start');
+
+  return {
+    name,
+    start_at,
+    end_at,
+    timezone,
+    location,
+    description_md,
+    cover_url,
+    is_complete: missing.length === 0,
+    missing,
+  };
+}
+
+export async function updateLumaMetadata(
+  notion_page_id: string,
+  data: {
+    luma_status?: LumaPublishStatus;
+    luma_url?: string;
+    final_status?: FinalStatus;
+  }
+) {
+  if (!notionToken || !notion_page_id) {
+    return { success: false, error: 'Missing notion token or page id' };
+  }
+
+  const properties: any = {};
+  if (data.luma_status) {
+    properties['Luma Publish Status'] = { status: { name: data.luma_status } };
+  }
+  if (data.luma_url) {
+    properties['Luma Event URL'] = { url: data.luma_url };
+  }
+  if (data.final_status) {
+    properties['Status'] = { status: { name: data.final_status } };
+  }
+
+  if (Object.keys(properties).length === 0) {
+    return { success: true, updated_page_id: notion_page_id, noop: true };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${notion_page_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({ properties }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] updateLumaMetadata patch failed: ${err}`);
+      return { success: false, error: err };
+    }
+    return { success: true, updated_page_id: notion_page_id };
+  } catch (error: any) {
+    console.warn(`[NOTION] updateLumaMetadata exception: ${error.message}`);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
+
+export async function findPublisherPageByLumaUrl(lumaUrl: string): Promise<string | null> {
+  const databaseId = env.NOTION_DATABASE_ID;
+  if (!notionToken || !databaseId || !lumaUrl) return null;
+
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Content-Type': 'application/json',
+      'Notion-Version': NOTION_VERSION,
+    },
+    body: JSON.stringify({
+      page_size: 1,
+      filter: { property: 'Luma Event URL', url: { equals: lumaUrl } },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.warn(`[NOTION] findPublisherPageByLumaUrl failed: ${err}`);
+    return null;
+  }
+  const result = await response.json();
+  return result.results?.[0]?.id || null;
+}
+
+export async function createPublisherLumaPage(input: {
+  name: string;
+  start_at?: string;
+  end_at?: string;
+  location?: string;
+  description_md?: string;
+  cover_url?: string;
+  luma_url: string;
+  luma_status?: LumaPublishStatus;
+  final_status?: FinalStatus;
+}) {
+  const databaseId = env.NOTION_DATABASE_ID;
+  if (!notionToken || !databaseId) {
+    return { success: false, error: 'Missing NOTION_TOKEN or NOTION_DATABASE_ID' };
+  }
+
+  const properties: any = {
+    Name: { title: [{ text: { content: input.name.slice(0, 2000) } }] },
+    'Luma Title': {
+      rich_text: [{ text: { content: input.name.slice(0, 2000) } }],
+    },
+    'Luma Event URL': { url: input.luma_url },
+    'Luma Publish Status': {
+      status: { name: input.luma_status || 'Published' },
+    },
+    'Source Tags': { multi_select: [{ name: 'Luma' }] },
+    Layer: { select: { name: 'Events' } },
+  };
+
+  if (input.final_status) {
+    properties['Status'] = { status: { name: input.final_status } };
+  }
+  if (input.start_at) {
+    properties['Luma Start'] = {
+      date: {
+        start: input.start_at,
+        ...(input.end_at ? { end: input.end_at } : {}),
+      },
+    };
+  }
+  if (input.end_at) {
+    properties['Luma End'] = { date: { start: input.end_at } };
+  }
+  if (input.location) {
+    properties['Luma Location'] = {
+      rich_text: [{ text: { content: input.location.slice(0, 2000) } }],
+    };
+  }
+  if (input.description_md) {
+    properties['Luma Description'] = {
+      rich_text: [{ text: { content: input.description_md.slice(0, 2000) } }],
+    };
+  }
+  if (input.cover_url) {
+    properties['Luma Cover'] = {
+      files: [
+        {
+          name: 'cover',
+          type: 'external',
+          external: { url: input.cover_url },
+        },
+      ],
+    };
+  }
+
+  try {
+    const response = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({
+        parent: { database_id: databaseId },
+        properties,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] createPublisherLumaPage failed: ${err}`);
+      return { success: false, error: err };
+    }
+    const page = await response.json();
+    return { success: true, page_id: page.id as string };
+  } catch (error: any) {
     return { success: false, error: error.message || 'Unknown error' };
   }
 }

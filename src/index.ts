@@ -35,6 +35,9 @@ function startServer(port: number) {
       if (path === '/webhooks/publish-postly') {
         return webhooksController.handlePublishPostly(req, res);
       }
+      if (path === '/webhooks/publish-luma') {
+        return webhooksController.handlePublishLuma(req, res);
+      }
     }
 
     res.writeHead(404);

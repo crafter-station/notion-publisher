@@ -3,11 +3,13 @@ import { executePublishProductUseCase } from '../use-cases/publish-product.use-c
 import { executeUnpublishProductUseCase } from '../use-cases/unpublish-product.use-case';
 import { executePublishExistingProductUseCase } from '../use-cases/publish-existing.use-case';
 import { executePublishPostlyUseCase } from '../use-cases/publish-postly.use-case';
+import { executePublishLumaUseCase } from '../use-cases/publish-luma.use-case';
 import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
 import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { getCapabilitiesSnapshot } from '../capabilities/registry';
 import { PostlyService } from '../services/postly.service';
 import { isSkoolConfigured, SkoolService } from '../services/skool.service';
+import { isLumaConfigured } from '../services/luma.service';
 import { env } from '../config/env';
 
 function getHeaderValue(req: IncomingMessage, name: string) {
@@ -155,8 +157,8 @@ export const webhooksController = {
         if (!content.is_complete) {
           console.error(`[ERROR] Incomplete Postly content for ${notion_page_id}: ${content.missing.join('; ')}`);
           updatePostlyMetadata(notion_page_id, {
-            instagram_status: 'Failed',
-            final_status: 'Postly Error',
+            postly_status: 'Failed',
+            final_status: 'Error',
             post_id: `Missing: ${content.missing.join('; ')}`,
           }).catch((err: any) => {
             console.error('[ERROR] Could not update Notion on incomplete content', err);
@@ -267,6 +269,81 @@ export const webhooksController = {
         res.writeHead(202, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'Accepted publish task', notionPageId }));
       } catch (err: any) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  },
+
+  async handlePublishLuma(req: IncomingMessage, res: ServerResponse) {
+    let body = '';
+    req.on('data', chunk => (body += chunk.toString()));
+    req.on('end', async () => {
+      try {
+        if (!isLumaConfigured()) {
+          res.writeHead(503);
+          return res.end(
+            JSON.stringify({
+              error: 'LUMA_API_KEY not configured',
+              docs: 'https://docs.luma.com/reference/getting-started-with-your-api',
+            })
+          );
+        }
+
+        const payload = JSON.parse(body || '{}');
+        const notion_page_id = payload.data?.id;
+        if (!notion_page_id) {
+          res.writeHead(400);
+          return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
+        }
+
+        const {
+          extractLumaContent,
+          getNotionPage,
+          updateLumaMetadata,
+        } = require('../services/notion.service');
+        const pageData = await getNotionPage(notion_page_id).catch((err: any) => {
+          console.warn(
+            `[WARN] Could not fetch full Notion page for ${notion_page_id}; using webhook payload properties.`,
+            err
+          );
+          return payload.data;
+        });
+        const props = pageData?.properties || payload.data?.properties || {};
+        const content = extractLumaContent(props);
+
+        if (!content.is_complete) {
+          console.error(
+            `[ERROR] Incomplete Luma content for ${notion_page_id}: ${content.missing.join('; ')}`
+          );
+          updateLumaMetadata(notion_page_id, {
+            luma_status: 'Failed',
+            final_status: 'Error',
+          }).catch((err: any) => {
+            console.error('[ERROR] Could not update Notion on incomplete Luma content', err);
+          });
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({ error: 'Incomplete Notion content', missing: content.missing })
+          );
+        }
+
+        console.log(`[INFO] Starting Luma background job (notionPageId: ${notion_page_id})`);
+        executePublishLumaUseCase(notion_page_id).catch(err => {
+          console.error('[ERROR] Luma background job failed', err);
+        });
+
+        res.writeHead(202, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: 'Accepted Luma event create task',
+            notion_page_id,
+            name: content.name,
+            start_at: content.start_at,
+          })
+        );
+      } catch (err: any) {
+        console.error('[ERROR] Synchronous error in handlePublishLuma:', err.message);
         res.writeHead(500);
         res.end(JSON.stringify({ error: err.message }));
       }

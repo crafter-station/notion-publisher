@@ -20,6 +20,8 @@ export const env = {
   SKOOL_API_KEY: process.env.SKOOL_API_KEY || '',
   /** Optional default Skool group id for discover posts sample. */
   SKOOL_GROUP_ID: process.env.SKOOL_GROUP_ID || '',
+  /** Optional Luma calendar API key — not required to boot. Enables publish-luma. */
+  LUMA_API_KEY: process.env.LUMA_API_KEY || '',
   POSTLY_QUEUE_ENABLED: process.env.POSTLY_QUEUE_ENABLED === 'true',
   POSTLY_QUEUE_DATABASE_ID: process.env.POSTLY_QUEUE_DATABASE_ID || process.env.NOTION_DATABASE_ID,
   POSTLY_QUEUE_INTERVAL_MS: Number(process.env.POSTLY_QUEUE_INTERVAL_MS) || 6 * 60 * 60 * 1000,
