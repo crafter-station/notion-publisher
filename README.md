@@ -42,8 +42,6 @@
   <img src="docs/assets/logos/typefully.png" width="28" height="28" alt="Typefully"/>
   <img src="docs/assets/logos/postiz.png" width="28" height="28" alt="Postiz"/>
   <img src="docs/assets/logos/once.png" width="28" height="28" alt="ONCE"/>
-  <img src="docs/assets/logos/reddit.png" width="28" height="28" alt="Reddit"/>
-  <img src="docs/assets/logos/eventbrite.png" width="28" height="28" alt="Eventbrite"/>
 </p>
 
 Hosted at [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher) *(private)*.  

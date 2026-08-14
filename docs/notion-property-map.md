@@ -32,6 +32,7 @@ Constant: `src/services/notion.service.ts` → `export const NOTION_VERSION`.
 | **GitHub** (live) | `GitHub Publish Status` | `GitHub Release URL` (+ ID) | TheVeller Releases only; catalog import |
 | **Skool** (discover) | `Skool Publish Status` | `Skool Post URL` | props exist; **no** publish webhook until MySkool `POST /v1/posts` (#4) |
 | Typefully / Postiz / ONCE | `* Publish Status` (props present) | `* URL` where present | stubs — no code write yet |
+| **Composio** (stub) | `Composio Publish Status` | `Composio URL` | Source Tag; channels Reddit + Eventbrite |
 
 Aggregate row `Status` uses evergreen **`Error`** (was `Postly Error`; 41 rows migrated).
 
@@ -107,6 +108,23 @@ Publish also seeds repo meta (description, topics `gpt-chain`/`gumroad`/`prompt-
 Catalog import: `npm run github:import-repos -- --owner=TheVeller` (idempotent; status → `Mapped`).
 
 Ngrok: button → `POST /webhooks/publish-github` (optional `?draft=true`).
+
+## Composio (stub) — Source Tag + channel fields
+
+Row recipe: `Source Tags`∋`Composio` + `Channels`∋`Reddit`|`Eventbrite` + matching `Layer`.
+
+| Notion property | Role |
+|-----------------|------|
+| `Composio Publish Status` | writeback (Not started / In progress / Failed / Published) |
+| `Composio URL` | aggregate writeback URL |
+| `Reddit Title` / `Reddit Body` | Reddit inputs (pre-existing) |
+| `Reddit URL` | Reddit writeback |
+| `Eventbrite Title` | required-ish when Channel=Eventbrite |
+| `Eventbrite Start` / `End` | dates |
+| `Eventbrite Location` / `Description` / `Cover` | optional |
+| `Eventbrite URL` / `Eventbrite Event ID` | writebacks |
+
+No publish webhook yet — props mapped only.
 
 ## Skool (discover only)
 
