@@ -555,28 +555,37 @@ ngrok http 3000
 #   https://<ngrok>/webhooks/publish-gumroad
 #   https://<ngrok>/webhooks/unpublish-gumroad
 #   https://<ngrok>/webhooks/publish-postly
+#   https://<ngrok>/webhooks/publish-luma
+#   https://<ngrok>/webhooks/publish-github   # optional ?draft=true
 ```
 
 ### Environment (minimal)
 
 ```env
+# Required to boot
 NOTION_TOKEN=
+NOTION_DATABASE_ID=
 GUMROAD_TOKEN=
 POSTLY_API_KEY=
 POSTLY_WORKSPACE_ID=
 POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
 
-SKOOL_API_KEY=sk_live_xxxxxxxxxxxx
-SKOOL_GROUP_ID=
+# Optional · live
+# LUMA_API_KEY=
+# GITHUB_TOKEN=          # TheVeller Releases + catalog
 
-GITHUB_TOKEN=
-TYPEFULLY_API_KEY=
-POSTIZ_API_KEY=
-ONCE_API_KEY=
-LUMA_API_KEY=
+# Optional · discover
+# SKOOL_API_KEY=sk_live_xxxxxxxxxxxx
+# SKOOL_GROUP_ID=
+
+# Optional · stubs (not wired)
+# COMPOSIO_API_KEY=      # Reddit + Eventbrite via Composio
+# TYPEFULLY_API_KEY=
+# POSTIZ_API_KEY=
+# ONCE_API_KEY=
 ```
 
-Full knobs: [`.env.example`](./.env.example). Matrices: [CAPABILITIES.md](./CAPABILITIES.md).
+Full knobs (queues, autopilot, comments): [`.env.example`](./.env.example). Matrices: [CAPABILITIES.md](./CAPABILITIES.md).
 
 ### Scripts
 
