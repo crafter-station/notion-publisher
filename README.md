@@ -36,7 +36,6 @@
   <img src="docs/assets/logos/gumroad.png" width="28" height="28" alt="Gumroad"/>
   <img src="docs/assets/logos/github.png" width="28" height="28" alt="GitHub"/>
   <img src="docs/assets/logos/skool.png" width="28" height="28" alt="Skool"/>
-  <img src="docs/assets/logos/myskool.png" width="28" height="28" alt="MySkool"/>
   <img src="docs/assets/logos/postly.png" width="28" height="28" alt="Postly"/>
   <img src="docs/assets/logos/composio.png" width="28" height="28" alt="Composio"/>
   <img src="docs/assets/logos/typefully.png" width="28" height="28" alt="Typefully"/>
