@@ -34,6 +34,7 @@ These are **shipped**. Closed on GitHub with label `status:done`.
 | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) *(closed)* | Products | **Skool discover only** — MySkool read client + `GET /capabilities/skool` (**not** write; write = #4 blocked) |
 | [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) *(closed)* | CMS/Social | **Caption** preferred; `POV Text` legacy fallback (PR [#15](https://github.com/Nucleo-Lab/notion-publisher/pull/15)) |
 | [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) *(closed)* | CMS | **One Publisher DB** — AI POVs renamed+extended; 163 Gumroad rows migrated; env IDs unified; inventory in [`notion-schema-inventory.md`](./notion-schema-inventory.md) |
+| [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) *(closed)* | Products | **GitHub live** — catalog import + Releases under **TheVeller** only; asset from Template/File; `POST /webhooks/publish-github` |
 
 Open follow-ups on the live stack (not “not done”, just next polish):
 
@@ -52,6 +53,7 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 | Social | Postly | **live** | [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) |
 | Products | Skool / MySkool | **discover** (key in `.env`; smoke 401 until valid `sk_live_…`) | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) · write [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) blocked |
 | Events | Luma | **live** (`POST /webhooks/publish-luma`) | [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) |
+| Products | GitHub | **live** (catalog + Releases under **TheVeller** only) | [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) |
 
 Everything else in the kit is **mapped (stub)** — docs + registry, no publish client yet.
 
@@ -62,8 +64,9 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 | Done | Notes |
 |---|---|
 | Capability registry | `src/capabilities/registry.ts` · `npm run capabilities:check` |
-| Discovery HTTP | `GET /capabilities` (+ postly / skool) |
-| Stub maps + logos | GitHub, Typefully, Postiz, ONCE |
+| Discovery HTTP | `GET /capabilities` (+ postly / skool / github) |
+| Stub maps + logos | Typefully, Postiz, ONCE |
+| GitHub catalog + Releases | `github.service` + import script + `/webhooks/publish-github` (TheVeller only) |
 | Luma create webhook | `luma.service` + cover CDN upload + `/webhooks/publish-luma` + Notion writeback |
 | Luma TNC import | `npm run luma:import-tnc` — five Aug-29 The Next Craft mirrored to Publisher |
 | Repo rename | `notion-publisher` under Nucleo Lab |
@@ -97,7 +100,7 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 | Issue | Status | In plain words |
 |---|---|---|
-| [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) GitHub Releases publish | later | Ship product files as Releases from Notion |
+| [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) GitHub Releases publish | **done** (ship) | Catalog + create Release under TheVeller; no update/delete |
 | [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write via MySkool | **blocked** | Needs upstream write API — **not** the next action after #12/#13 |
 
 ### Phase C — Social (clients + Postly opts)

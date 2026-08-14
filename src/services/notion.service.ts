@@ -697,3 +697,329 @@ export async function createPublisherLumaPage(input: {
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
+
+export type GithubPublishStatus = 'Not started' | 'Mapped' | 'In progress' | 'Failed' | 'Published';
+
+export interface GithubPublishContent {
+  owner: string;
+  repo: string;
+  full_name: string;
+  tag: string;
+  /** Raw Notion Release Notes (may be empty / smoke stub). */
+  release_notes: string;
+  /** Landing Page Copy markdown from Gumroad row. */
+  landing_page_md: string;
+  asset_url?: string;
+  template_json: string;
+  gumroad_url: string;
+  cover_url?: string;
+  thumbnail_url?: string;
+  title: string;
+  is_complete: boolean;
+  missing: string[];
+}
+
+/** True when Release Notes look like prior smoke / placeholder, not product copy. */
+export function isGithubSmokeStubNotes(notes: string): boolean {
+  const s = (notes || '').trim().toLowerCase();
+  if (!s) return true;
+  return (
+    s.startsWith('draft smoke') ||
+    s.includes('via notion-publisher (phase c)') ||
+    s === 'published via notion-publisher.'
+  );
+}
+
+/** Prefer real Release Notes; else Landing Page + Gumroad link. */
+export function buildGithubReleaseBody(content: {
+  release_notes: string;
+  landing_page_md: string;
+  gumroad_url: string;
+}): string {
+  const notes = (content.release_notes || '').trim();
+  if (notes && !isGithubSmokeStubNotes(notes)) return notes;
+
+  const landing = (content.landing_page_md || '').trim();
+  const parts: string[] = [];
+  if (landing) parts.push(landing);
+  if (content.gumroad_url) {
+    parts.push(`## Product\n\n[Buy on Gumroad](${content.gumroad_url})`);
+  }
+  if (parts.length === 0) {
+    return content.gumroad_url
+      ? `Gumroad: ${content.gumroad_url}\n\nPublished via notion-publisher.`
+      : 'Published via notion-publisher.';
+  }
+  return parts.join('\n\n');
+}
+
+/** Minimal gpt-chain/gumroad-product README (English). */
+export function buildGithubProductReadme(content: {
+  title: string;
+  landing_page_md: string;
+  gumroad_url: string;
+  cover_path?: string;
+}): string {
+  const landing = (content.landing_page_md || '').trim();
+  // Drop leading H1 — we already emit product title.
+  const body = landing.replace(/^#\s+[^\n]+\n+/, '').trim();
+  const oneLiner =
+    body
+      .split('\n')
+      .map(l => l.trim())
+      .find(l => l && !l.startsWith('#')) || content.title;
+
+  const lines: string[] = [`# ${content.title}`, '', oneLiner, ''];
+
+  if (content.cover_path) {
+    lines.push(`![Cover](${content.cover_path})`, '');
+  }
+
+  // Rest of landing after the one-liner paragraph (avoid duplicate).
+  if (body) {
+    const rest = body.startsWith(oneLiner)
+      ? body.slice(oneLiner.length).replace(/^\n+/, '').trim()
+      : body;
+    if (rest) lines.push(rest, '');
+  }
+
+  if (content.gumroad_url) {
+    lines.push('## Product', '', `[Buy on Gumroad](${content.gumroad_url})`, '');
+  }
+
+  lines.push(
+    '## Files',
+    '',
+    '- `template.json` — GPT Chain prompt workflow (same payload as Gumroad)',
+    '- GitHub Release asset — downloadable copy of the template',
+    '',
+    '## Scope',
+    '',
+    'Digital product mirror for GPT Chain. Not a runnable app — open `template.json` in your GPT Chain / prompt workflow tooling.',
+    ''
+  );
+
+  return lines.join('\n');
+}
+
+/** Parse owner/repo from Notion GitHub Repo rich_text (accepts URL or owner/repo). */
+export function parseGithubRepoField(raw: string): { owner: string; repo: string } | null {
+  const s = (raw || '').trim();
+  if (!s) return null;
+  const urlMatch = s.match(/github\.com[/:]([^/\s]+)\/([^/\s#?]+)/i);
+  if (urlMatch) {
+    return { owner: urlMatch[1], repo: urlMatch[2].replace(/\.git$/, '') };
+  }
+  const parts = s.split('/').filter(Boolean);
+  if (parts.length === 2) return { owner: parts[0], repo: parts[1] };
+  return null;
+}
+
+export function extractGithubPublishContent(props: any): GithubPublishContent {
+  const missing: string[] = [];
+  const repoRaw = _richText(props['GitHub Repo']);
+  const parsed = parseGithubRepoField(repoRaw);
+  const owner = parsed?.owner || '';
+  const repo = parsed?.repo || '';
+  const full_name = owner && repo ? `${owner}/${repo}` : '';
+  let tag = _richText(props['Release Tag']);
+  const release_notes = _richText(props['Release Notes']);
+  const landing_page_md = _richText(props['Landing Page Copy']);
+  const asset_url = _fileUrl(props['GitHub Asset']) || _fileUrl(props['File']);
+  const template_json = _richText(props['Template']);
+  const gumroad_url = props['Gumroad URL']?.url || '';
+  const cover_url = _fileUrl(props['Gumroad Cover']) || undefined;
+  const thumbnail_url = _fileUrl(props['Gumroad Thumbnail']) || undefined;
+  const title =
+    _richText(props['Gumroad Title']) ||
+    _titleText(props['Name']) ||
+    repo ||
+    'release';
+
+  if (!owner || !repo) missing.push('GitHub Repo (owner/repo)');
+  if (!tag) {
+    const slug = (repo || title)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 40);
+    const day = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+    tag = `v${day}-${slug || 'product'}`;
+  }
+  if (!template_json && !asset_url) missing.push('Template or GitHub Asset / File');
+
+  return {
+    owner,
+    repo,
+    full_name,
+    tag,
+    release_notes,
+    landing_page_md,
+    asset_url,
+    template_json,
+    gumroad_url,
+    cover_url,
+    thumbnail_url,
+    title,
+    is_complete: missing.length === 0,
+    missing,
+  };
+}
+
+export async function updateGithubMetadata(
+  notion_page_id: string,
+  data: {
+    github_status?: GithubPublishStatus;
+    release_url?: string;
+    release_id?: string;
+    github_repo?: string;
+    final_status?: FinalStatus;
+  }
+) {
+  if (!notionToken || !notion_page_id) {
+    return { success: false, error: 'Missing notion token or page id' };
+  }
+
+  const properties: any = {};
+  if (data.github_status) {
+    properties['GitHub Publish Status'] = { status: { name: data.github_status } };
+  }
+  if (data.release_url) {
+    properties['GitHub Release URL'] = { url: data.release_url };
+  }
+  if (data.release_id !== undefined) {
+    properties['GitHub Release ID'] = {
+      rich_text: [{ text: { content: String(data.release_id).slice(0, 2000) } }],
+    };
+  }
+  if (data.github_repo) {
+    properties['GitHub Repo'] = {
+      rich_text: [{ text: { content: data.github_repo.slice(0, 2000) } }],
+    };
+  }
+  if (data.final_status) {
+    properties['Status'] = { status: { name: data.final_status } };
+  }
+
+  if (Object.keys(properties).length === 0) {
+    return { success: true, updated_page_id: notion_page_id, noop: true };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${notion_page_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({ properties }),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] updateGithubMetadata patch failed: ${err}`);
+      return { success: false, error: err };
+    }
+    return { success: true, updated_page_id: notion_page_id };
+  } catch (error: any) {
+    console.warn(`[NOTION] updateGithubMetadata exception: ${error.message}`);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
+
+export async function findPublisherPageByGithubRepo(fullNameOrUrl: string): Promise<string | null> {
+  const databaseId = env.NOTION_DATABASE_ID;
+  if (!notionToken || !databaseId || !fullNameOrUrl) return null;
+
+  const needle = fullNameOrUrl.trim();
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Content-Type': 'application/json',
+      'Notion-Version': NOTION_VERSION,
+    },
+    body: JSON.stringify({
+      page_size: 5,
+      filter: {
+        property: 'GitHub Repo',
+        rich_text: { equals: needle },
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.warn(`[NOTION] findPublisherPageByGithubRepo failed: ${err}`);
+    return null;
+  }
+  const result = await response.json();
+  return result.results?.[0]?.id || null;
+}
+
+export async function createPublisherGithubCatalogPage(input: {
+  full_name: string;
+  html_url: string;
+  description?: string;
+  owner: string;
+}) {
+  const databaseId = env.NOTION_DATABASE_ID;
+  if (!notionToken || !databaseId) {
+    return { success: false, error: 'Missing NOTION_TOKEN or NOTION_DATABASE_ID' };
+  }
+
+  const properties: any = {
+    Name: { title: [{ text: { content: input.full_name.slice(0, 2000) } }] },
+    'GitHub Repo': {
+      rich_text: [{ text: { content: input.full_name.slice(0, 2000) } }],
+    },
+    'GitHub Publish Status': { status: { name: 'Mapped' } },
+    'Source Tags': { multi_select: [{ name: 'GitHub' }] },
+    Layer: { select: { name: 'Products' } },
+  };
+
+  // Catalog owner selector (TheVeller | orgs). Optional if prop missing.
+  if (input.owner) {
+    properties['GitHub Org'] = { select: { name: input.owner } };
+  }
+
+  if (input.description) {
+    properties['Release Notes'] = {
+      rich_text: [
+        {
+          text: {
+            content: `${input.html_url}\n\n${input.description}`.slice(0, 2000),
+          },
+        },
+      ],
+    };
+  } else {
+    properties['Release Notes'] = {
+      rich_text: [{ text: { content: input.html_url.slice(0, 2000) } }],
+    };
+  }
+
+  try {
+    const response = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({
+        parent: { database_id: databaseId },
+        properties,
+      }),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] createPublisherGithubCatalogPage failed: ${err}`);
+      return { success: false, error: err };
+    }
+    const page = await response.json();
+    return { success: true, page_id: page.id as string };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}

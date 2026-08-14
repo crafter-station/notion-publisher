@@ -28,9 +28,10 @@ Constant: `src/services/notion.service.ts` → `export const NOTION_VERSION`.
 |--------|-------------|----------|-------|
 | **Gumroad** (live) | `Gumroad Publish Status` | `Gumroad URL` (+ Edit URL, Product ID) | |
 | **Postly** (live) | `Postly Publish Status` | `Postly URL` | + aggregate `Status`; `Post ID` multi-line |
-| **Luma** (live) | `Luma Publish Status` | `Luma Event URL` | `POST /webhooks/publish-luma`; cover skip v1 |
+| **Luma** (live) | `Luma Publish Status` | `Luma Event URL` | `POST /webhooks/publish-luma`; cover CDN upload |
+| **GitHub** (live) | `GitHub Publish Status` | `GitHub Release URL` (+ ID) | TheVeller Releases only; catalog import |
 | **Skool** (discover) | `Skool Publish Status` | `Skool Post URL` | props exist; **no** publish webhook until MySkool `POST /v1/posts` (#4) |
-| Typefully / Postiz / ONCE / GitHub | `* Publish Status` (props present) | `* URL` where present | stubs — no code write yet |
+| Typefully / Postiz / ONCE | `* Publish Status` (props present) | `* URL` where present | stubs — no code write yet |
 
 Aggregate row `Status` uses evergreen **`Error`** (was `Postly Error`; 41 rows migrated).
 
@@ -84,6 +85,27 @@ Import: `npm run luma:import-tnc` (five Aug-29 The Next Craft → Publisher, ide
 
 Ngrok: `npm run dev` → `ngrok http <port>` → Notion button → `POST /webhooks/publish-luma`.
 
+## Products (GitHub) — `extractGithubPublishContent` / writebacks
+
+| Notion property | Code | Notes |
+|-----------------|------|-------|
+| `GitHub Repo` | `owner`/`repo` | `owner/repo` or URL; publish requires `TheVeller/…` |
+| `GitHub Org` | catalog select | `TheVeller` \| `Nucleo-Lab` \| `crafter-station` \| `GPT-Chain` |
+| `Release Tag` | `tag` | else auto `vYYYY.MM.DD-<slug>` |
+| `Release Notes` | `release_notes` | real notes only; smoke stubs ignored |
+| `Landing Page Copy` | `landing_page_md` | README body + default release body |
+| `Template` / `File` / `GitHub Asset` | asset | seeds `template.json` + release asset |
+| `Gumroad Cover` / `Thumbnail` | `cover_url` / `thumbnail_url` | cover → `docs/cover.*` |
+| `Gumroad URL` | homepage + Buy | repo `homepage` + README / release link |
+| `GitHub Publish Status` | writeback | Not started / Mapped / In progress / Failed / Published |
+| `GitHub Release URL` / `GitHub Release ID` | writeback | |
+
+Publish also seeds repo meta (description, topics `gpt-chain`/`gumroad`/`prompt-chain`) before creating the Release.
+
+Catalog import: `npm run github:import-repos -- --owner=TheVeller` (idempotent; status → `Mapped`).
+
+Ngrok: button → `POST /webhooks/publish-github` (optional `?draft=true`).
+
 ## Skool (discover only)
 
 | Notion property | Notes |
@@ -101,6 +123,7 @@ Discover: `GET /capabilities/skool` · needs valid `SKOOL_API_KEY=sk_live_…`. 
 | `Publish in Gumroad` | `/webhooks/publish-gumroad` |
 | `Publish in Social` / `Publish Instagram` / brand Publish * | `/webhooks/publish-postly` |
 | `Publish in Luma` (when added) | `/webhooks/publish-luma` |
+| `Publish in GitHub` (when added) | `/webhooks/publish-github` |
 | `Publish in Skool` | **not wired** — MySkool POST still Planned (#4) |
 
 Automations are **not** readable via API. After ngrok restart, open each button → Edit automation → confirm host.
@@ -112,7 +135,7 @@ Automations are **not** readable via API. After ngrok restart, open each button 
 | `Channels` | Notion UI only (wire later) |
 | `X Post` | unused; code reads `Twitter Post` |
 | `Postly Error` (rich_text) | unused leftover; aggregate errors use `Status`=`Error` |
-| Stub `* Publish Status` / URLs (Typefully / Postiz / ONCE / GitHub) | props-only until clients ship |
+| Stub `* Publish Status` / URLs (Typefully / Postiz / ONCE) | props-only until clients ship |
 | Skool write props / button | blocked on MySkool `#4` |
 | `(ES)` / `(PT)` captions | EN path only |
 | `Migration Source Page ID` | audit |

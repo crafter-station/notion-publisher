@@ -9,6 +9,7 @@
     "dev": "ts-node src/index.ts",
     "capabilities:check": "ts-node --transpile-only src/capabilities/registry.selfcheck.ts",
     "luma:import-tnc": "ts-node --transpile-only scripts/import-luma-tnc-aug29.ts",
+    "github:import-repos": "ts-node --transpile-only scripts/import-github-repos.ts",
     "publisher:report": "node scripts/generate-publisher-daily-report.mjs",
     "publisher:commit": "bash scripts/daily-publisher-commit.sh"
   },

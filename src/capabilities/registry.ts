@@ -4,7 +4,7 @@ import { DistributorCapability } from './types';
 /**
  * Distributors by layer (publish channels):
  * - Events: luma (live)
- * - Products: gumroad (live), github (stub), myskool (discover)
+ * - Products: gumroad (live), github (live · TheVeller Releases), myskool (discover)
  * - Social: postly (live), typefully (stub), postiz (stub)
  * - Music/Podcast: once (stub)
  */
@@ -27,10 +27,10 @@ export const DISTRIBUTORS: DistributorCapability[] = [
   {
     id: 'github',
     kind: 'marketplace',
-    status: 'stub',
+    status: 'live',
     envKeys: ['GITHUB_TOKEN'],
     notes:
-      'Products layer. Ship the same digital product via GitHub Releases/assets. Mapped only — no publish webhook yet.',
+      'Products layer. Catalog + POST /webhooks/publish-github Releases under TheVeller only (asset from Template/File).',
   },
   {
     id: 'myskool',
@@ -116,9 +116,7 @@ export function checkRegistryHealthy(): void {
   if (getDistributor('gumroad')?.status !== 'live') throw new Error('gumroad must be live');
   if (getDistributor('postly')?.status !== 'live') throw new Error('postly must be live');
   if (getDistributor('myskool')?.status !== 'discover') throw new Error('myskool must be discover');
-  if (!getDistributor('github') || getDistributor('github')?.status !== 'stub') {
-    throw new Error('github stub missing');
-  }
+  if (getDistributor('github')?.status !== 'live') throw new Error('github must be live');
   if (!getDistributor('postiz')) throw new Error('postiz stub missing');
   if (!getDistributor('typefully')) throw new Error('typefully stub missing');
   if (!getDistributor('once')) throw new Error('once stub missing');

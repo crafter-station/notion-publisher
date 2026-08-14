@@ -4,12 +4,19 @@ import { executeUnpublishProductUseCase } from '../use-cases/unpublish-product.u
 import { executePublishExistingProductUseCase } from '../use-cases/publish-existing.use-case';
 import { executePublishPostlyUseCase } from '../use-cases/publish-postly.use-case';
 import { executePublishLumaUseCase } from '../use-cases/publish-luma.use-case';
+import { executePublishGithubUseCase } from '../use-cases/publish-github.use-case';
 import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
 import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { getCapabilitiesSnapshot } from '../capabilities/registry';
 import { PostlyService } from '../services/postly.service';
 import { isSkoolConfigured, SkoolService } from '../services/skool.service';
 import { isLumaConfigured } from '../services/luma.service';
+import {
+  GITHUB_CATALOG_OWNERS,
+  GITHUB_PRODUCT_OWNER,
+  GithubService,
+  isGithubConfigured,
+} from '../services/github.service';
 import { env } from '../config/env';
 
 function getHeaderValue(req: IncomingMessage, name: string) {
@@ -86,6 +93,47 @@ export const webhooksController = {
       json(res, 502, {
         status: 'error',
         distributor: 'myskool',
+        error: err.message || String(err),
+      });
+    }
+  },
+
+  /** GitHub catalog discover (metadata). Releases via publish-github. */
+  async handleCapabilitiesGithub(req: IncomingMessage, res: ServerResponse) {
+    if (!isGithubConfigured()) {
+      return json(res, 200, {
+        status: 'stub',
+        distributor: 'github',
+        message: 'Set GITHUB_TOKEN to enable catalog / Releases.',
+        product_owner: GITHUB_PRODUCT_OWNER,
+        catalog_owners: GITHUB_CATALOG_OWNERS,
+      });
+    }
+
+    try {
+      const reqUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+      const owner = reqUrl.searchParams.get('owner') || GITHUB_PRODUCT_OWNER;
+      const gh = new GithubService();
+      const repos = await gh.listReposForOwner(owner);
+      json(res, 200, {
+        status: 'discover',
+        distributor: 'github',
+        product_owner: GITHUB_PRODUCT_OWNER,
+        catalog_owners: GITHUB_CATALOG_OWNERS,
+        owner,
+        repos_count: repos.length,
+        repos: repos.slice(0, 30).map(r => ({
+          full_name: r.full_name,
+          html_url: r.html_url,
+          private: r.private,
+          description: r.description?.slice(0, 120),
+        })),
+        note: `Product Releases only under ${GITHUB_PRODUCT_OWNER}. Import: npm run github:import-repos -- --owner=${owner}`,
+      });
+    } catch (err: any) {
+      json(res, 502, {
+        status: 'error',
+        distributor: 'github',
         error: err.message || String(err),
       });
     }
@@ -344,6 +392,84 @@ export const webhooksController = {
         );
       } catch (err: any) {
         console.error('[ERROR] Synchronous error in handlePublishLuma:', err.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  },
+
+  async handlePublishGithub(req: IncomingMessage, res: ServerResponse) {
+    let body = '';
+    req.on('data', chunk => (body += chunk.toString()));
+    req.on('end', async () => {
+      try {
+        if (!isGithubConfigured()) {
+          res.writeHead(503);
+          return res.end(JSON.stringify({ error: 'GITHUB_TOKEN not configured' }));
+        }
+
+        const payload = JSON.parse(body || '{}');
+        const notion_page_id = payload.data?.id;
+        if (!notion_page_id) {
+          res.writeHead(400);
+          return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
+        }
+
+        const {
+          extractGithubPublishContent,
+          getNotionPage,
+          updateGithubMetadata,
+        } = require('../services/notion.service');
+        const pageData = await getNotionPage(notion_page_id).catch((err: any) => {
+          console.warn(`[WARN] Notion fetch failed for ${notion_page_id}`, err);
+          return payload.data;
+        });
+        const props = pageData?.properties || payload.data?.properties || {};
+        const content = extractGithubPublishContent(props);
+
+        if (!content.is_complete) {
+          updateGithubMetadata(notion_page_id, {
+            github_status: 'Failed',
+            final_status: 'Error',
+          }).catch(() => undefined);
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({ error: 'Incomplete Notion content', missing: content.missing })
+          );
+        }
+
+        if (content.owner !== GITHUB_PRODUCT_OWNER) {
+          res.writeHead(403);
+          return res.end(
+            JSON.stringify({
+              error: `Product Releases only under ${GITHUB_PRODUCT_OWNER}`,
+              got: content.owner,
+            })
+          );
+        }
+
+        const reqUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+        const draft = reqUrl.searchParams.get('draft') === 'true';
+
+        console.log(
+          `[INFO] Starting GitHub background job (notionPageId: ${notion_page_id}, repo: ${content.full_name}, draft: ${draft})`
+        );
+        executePublishGithubUseCase(notion_page_id, { draft }).catch(err => {
+          console.error('[ERROR] GitHub background job failed', err);
+        });
+
+        res.writeHead(202, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: 'Accepted GitHub release task',
+            notion_page_id,
+            repo: content.full_name,
+            tag: content.tag,
+            draft,
+          })
+        );
+      } catch (err: any) {
+        console.error('[ERROR] Synchronous error in handlePublishGithub:', err.message);
         res.writeHead(500);
         res.end(JSON.stringify({ error: err.message }));
       }

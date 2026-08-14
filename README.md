@@ -59,7 +59,7 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 ```text
 Notion CMS  →  notion-publisher (this repo · no UI)
                     ├─ Events         → Luma (live)
-                    ├─ Products       → Gumroad (live) · GitHub (stub) · Skool/MySkool (discover)
+                    ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
                     ├─ Social         → Postly (live) · Typefully (stub) · Postiz (stub)
                     └─ Music/Podcast  → ONCE.app (stub)
 ```
@@ -79,7 +79,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | <img src="docs/assets/logos/notion.png" width="20" alt=""> | **Notion** | [notion.so](https://www.notion.so/) | CMS | **live** |
 | <img src="docs/assets/logos/luma.png" width="20" alt=""> | **Luma** | [luma.com](https://luma.com/) | Events | **live** |
 | <img src="docs/assets/logos/gumroad.png" width="20" alt=""> | **Gumroad** | [gumroad.com](https://gumroad.com/) | Products | **live** |
-| <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | stub |
+| <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | **live** (TheVeller Releases) |
 | <img src="docs/assets/logos/skool.png" width="20" alt=""> <img src="docs/assets/logos/myskool.png" width="20" alt=""> | **Skool (MySkool)** | [skool.com](https://www.skool.com/) · [myskool.xyz](https://myskool.xyz/) | Products + community | **discover** |
 | <img src="docs/assets/logos/postly.png" width="20" alt=""> | **Postly** | [postly.ai](https://postly.ai/) | Social | **live** |
 | <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | stub |
@@ -267,27 +267,49 @@ Digital storefront for GPT-Chain JSON (and similar) files.
 
 ---
 
-### <img src="docs/assets/logos/github.png" width="22" alt=""> GitHub (stub, products)
+### <img src="docs/assets/logos/github.png" width="22" alt=""> GitHub (live, products)
 
-Ship the same product as a **GitHub Release** (assets + notes). Env: `GITHUB_TOKEN`.
+Ship the same product as a **GitHub Release** (assets + notes) under **`TheVeller/` only**. Env: `GITHUB_TOKEN`.
 
-**Channels:** GitHub Releases (downloadable assets).
+**Channels:** GitHub Releases (downloadable assets). Catalog metadata import for TheVeller + orgs.
 
-#### Notion property contract (**planned**)
+**What we implement:** list/import repo metadata · seed `README.md` + `template.json` (+ cover) from Gumroad fields · `POST /webhooks/publish-github` create Release + asset · Notion writeback. **Refuse** Releases under Nucleo-Lab / crafter-station / GPT-Chain.
+
+**Repo seed (from same Gumroad row):** `Landing Page Copy` → README body; `Template` → `template.json`; `Gumroad Cover` → `docs/cover.*`; `Gumroad URL` → homepage + Buy link. Release body prefers real `Release Notes`, else Landing Page + Gumroad.
+
+#### Notion property contract (case-sensitive, live)
 
 | Property | Type | Role |
 |---|---|---|
-| `GitHub Repo` | Rich text / URL | `owner/repo` or repo URL |
-| `Release Tag` | Rich text | e.g. `v1.2.0` |
-| `Release Notes` | Rich text | Release body (markdown) |
-| `Template` | Rich text | Same product JSON/file source as Gumroad |
-| `GitHub Asset` | Files & media | Optional override file for the release asset |
-| `GitHub Publish Status` | Status | Output |
-| `GitHub Release URL` | URL | Output |
-| `GitHub Release ID` | Rich text | Output |
+| `GitHub Repo` | Rich text | `owner/repo` (must be `TheVeller/…` for publish) |
+| `GitHub Org` | Select | Catalog: `TheVeller` \| `Nucleo-Lab` \| `crafter-station` \| `GPT-Chain` |
+| `Release Tag` | Rich text | e.g. `v1.2.0` — else auto `vYYYY.MM.DD-<slug>` |
+| `Release Notes` | Rich text | Optional override; empty/stub → Landing Page Copy |
+| `Landing Page Copy` | Rich text | README + default release body (shared with Gumroad) |
+| `Template` / `File` / `GitHub Asset` | rich_text / files | Repo `template.json` + release asset |
+| `Gumroad Cover` | Files | Optional `docs/cover.*` + release asset |
+| `Gumroad URL` | URL | Repo homepage + Buy link |
+| `GitHub Publish Status` | Status | Not started / Mapped / In progress / Failed / Published |
+| `GitHub Release URL` | URL | Writeback |
+| `GitHub Release ID` | Rich text | Writeback |
 
----
+#### Catalog import
 
+```bash
+npm run github:import-repos -- --owner=TheVeller
+npm run github:import-repos -- --owner=Nucleo-Lab --limit=20
+```
+
+Idempotent on `GitHub Repo` == `owner/repo`. Status → `Mapped`.
+
+#### Ngrok + Notion button checklist
+
+1. `npm run build && npm run dev`
+2. `ngrok http <port>`
+3. Notion button → `POST https://<ngrok>/webhooks/publish-github` (optional `?draft=true`)
+4. Confirm `GitHub Publish Status=Published` + `GitHub Release URL`
+
+Discover: `GET /capabilities/github?owner=TheVeller`
 ### <img src="docs/assets/logos/skool.png" width="22" alt=""> <img src="docs/assets/logos/myskool.png" width="22" alt=""> Skool / MySkool (discover)
 
 **Channels:** Skool **groups/communities** attached to the MySkool API key (product drop + community post).
@@ -460,9 +482,11 @@ Tag `Source Tags` → `ONCE`.
 | `POST` | `/webhooks/unpublish-gumroad` | Unpublish product |
 | `POST` | `/webhooks/publish-postly` | Social publish (`?target=` optional) |
 | `POST` | `/webhooks/publish-luma` | Create Luma event from Notion |
+| `POST` | `/webhooks/publish-github` | Create TheVeller Release (+ asset; `?draft=true`) |
 | `GET` | `/capabilities` | Registry + layers + Postly catalog |
 | `GET` | `/capabilities/postly` | Live socials + audience groups |
 | `GET` | `/capabilities/skool` | MySkool discover (or stub message if no key) |
+| `GET` | `/capabilities/github` | GitHub catalog sample (`?owner=`) |
 
 ---
 

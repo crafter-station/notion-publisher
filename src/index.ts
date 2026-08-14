@@ -23,6 +23,9 @@ function startServer(port: number) {
       if (path === '/capabilities/skool') {
         return webhooksController.handleCapabilitiesSkool(req, res);
       }
+      if (path === '/capabilities/github') {
+        return webhooksController.handleCapabilitiesGithub(req, res);
+      }
     }
 
     if (req.method === 'POST') {
@@ -37,6 +40,9 @@ function startServer(port: number) {
       }
       if (path === '/webhooks/publish-luma') {
         return webhooksController.handlePublishLuma(req, res);
+      }
+      if (path === '/webhooks/publish-github') {
+        return webhooksController.handlePublishGithub(req, res);
       }
     }
 
