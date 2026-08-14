@@ -35,6 +35,8 @@ Constant: `src/services/notion.service.ts` → `export const NOTION_VERSION`.
 
 Aggregate row `Status` uses evergreen **`Error`** (was `Postly Error`; 41 rows migrated).
 
+**Source Tags** include `Composio`. **Channels** include `Eventbrite` and `Reddit` (Composio delivery — not Postly publish).
+
 ## Product (Gumroad) — `parseNotionPage` / writebacks
 
 | Notion property | Code | Notes |
@@ -132,7 +134,7 @@ Automations are **not** readable via API. After ngrok restart, open each button 
 
 | Property | Action |
 |----------|--------|
-| `Channels` | Notion UI only (wire later) |
+| `Channels` | Multi-select routing | **Eventbrite** / **Reddit** under Source `Composio`; Postly social set; storefront labels |
 | `X Post` | unused; code reads `Twitter Post` |
 | `Postly Error` (rich_text) | unused leftover; aggregate errors use `Status`=`Error` |
 | Stub `* Publish Status` / URLs (Typefully / Postiz / ONCE) | props-only until clients ship |

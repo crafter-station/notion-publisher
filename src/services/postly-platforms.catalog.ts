@@ -22,7 +22,7 @@ export const POSTLY_PLATFORM_CATALOG: PostlyPlatformCapability[] = [
   { identifier: 'hashnode', settingsSchema: 'HashnodePostSettings', availability: 'api', family: 'blog' },
   { identifier: 'devTo', settingsSchema: 'DevToPostSettings', availability: 'api', family: 'blog' },
   { identifier: 'blogger', settingsSchema: 'BloggerPostSettings', availability: 'api', family: 'blog' },
-  // ponytail: reddit still in OpenAPI; removed from many accounts / UI — keep discoverable as docs_only
+  // ponytail: reddit still in OpenAPI but not a real Postly publish path — ship via Composio + Channels=Reddit
   { identifier: 'reddit', settingsSchema: 'RedditPostSettings', availability: 'docs_only', family: 'social' },
   // OpenAPI uses identifier none / provider names for email targets
   { identifier: 'email', settingsSchema: 'none', availability: 'api', family: 'email' },

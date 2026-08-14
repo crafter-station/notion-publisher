@@ -3,9 +3,9 @@ import { DistributorCapability } from './types';
 
 /**
  * Distributors by layer (publish channels):
- * - Events: luma (live)
+ * - Events: luma (live); Eventbrite via composio (stub channel)
  * - Products: gumroad (live), github (live · TheVeller Releases), myskool (discover)
- * - Social: postly (live), typefully (stub), postiz (stub)
+ * - Social: postly (live), composio (stub · Reddit), typefully (stub), postiz (stub)
  * - Music/Podcast: once (stub)
  */
 export const DISTRIBUTORS: DistributorCapability[] = [
@@ -46,7 +46,15 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'live',
     envKeys: ['POSTLY_API_KEY', 'POSTLY_WORKSPACE_ID', 'POSTLY_TARGET_PLATFORMS'],
     notes:
-      'Social layer. Broad multi-channel cloud. Optional POSTLY_AUDIENCE_GROUP unused by default publish.',
+      'Social layer. Broad multi-channel cloud. Reddit is docs_only here — publish via Composio. Optional POSTLY_AUDIENCE_GROUP unused by default.',
+  },
+  {
+    id: 'composio',
+    kind: 'other',
+    status: 'stub',
+    envKeys: ['COMPOSIO_API_KEY'],
+    notes:
+      'Source Tag Composio. Transport for Channels Reddit (Social) and Eventbrite (Events). Shared Notion view with Typefully. Mapped only — no write webhook yet.',
   },
   {
     id: 'typefully',
@@ -54,7 +62,7 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'stub',
     envKeys: ['TYPEFULLY_API_KEY'],
     notes:
-      'Social layer. Cheaper text-first path: X, LinkedIn, Threads, Mastodon — strong per-account granularity. Mapped only.',
+      'Social layer. Text-first path: X, LinkedIn, Threads, Mastodon — strong per-account granularity. Same view as Composio. Mapped only.',
   },
   {
     id: 'postiz',
@@ -84,11 +92,11 @@ export function getDistributor(id: string): DistributorCapability | undefined {
 export function getCapabilitiesSnapshot() {
   return {
     intent:
-      'Notion CMS orchestrator — events (Luma), products (Gumroad, GitHub, Skool), social (Postly, Typefully, Postiz), music/podcast (ONCE.app)',
+      'Notion CMS orchestrator — events (Luma; Eventbrite via Composio), products (Gumroad, GitHub, Skool), social (Postly, Composio/Reddit, Typefully, Postiz), music/podcast (ONCE.app)',
     layers: {
-      events: ['luma'],
+      events: ['luma', 'composio'],
       products: ['gumroad', 'github', 'myskool'],
-      social: ['postly', 'typefully', 'postiz'],
+      social: ['postly', 'composio', 'typefully', 'postiz'],
       music: ['once'],
     },
     distributors: listDistributors(),
@@ -98,7 +106,7 @@ export function getCapabilitiesSnapshot() {
 
 /** Throws if registry invariants break. */
 export function checkRegistryHealthy(): void {
-  if (DISTRIBUTORS.length < 8) throw new Error('expected at least 8 distributors');
+  if (DISTRIBUTORS.length < 9) throw new Error('expected at least 9 distributors');
   const ids = new Set<string>();
   for (const d of DISTRIBUTORS) {
     if (!d.id) throw new Error('distributor missing id');
@@ -117,6 +125,7 @@ export function checkRegistryHealthy(): void {
   if (getDistributor('postly')?.status !== 'live') throw new Error('postly must be live');
   if (getDistributor('myskool')?.status !== 'discover') throw new Error('myskool must be discover');
   if (getDistributor('github')?.status !== 'live') throw new Error('github must be live');
+  if (getDistributor('composio')?.status !== 'stub') throw new Error('composio must be stub');
   if (!getDistributor('postiz')) throw new Error('postiz stub missing');
   if (!getDistributor('typefully')) throw new Error('typefully stub missing');
   if (!getDistributor('once')) throw new Error('once stub missing');

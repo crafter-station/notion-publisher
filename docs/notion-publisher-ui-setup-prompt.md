@@ -60,17 +60,23 @@ Create database views with filters (table layout unless noted):
 **Category / Layer**
 1. `Social — All` → `Layer` equals `Social`
 2. `Products — All` → `Layer` equals `Products`
-3. `Events — Luma` → `Layer` equals `Events` OR `Source Tags` contains `Luma`
-4. `Music — ONCE` → `Layer` equals `Music` OR `Source Tags` contains `ONCE`
+3. `Events — All` → `Layer` equals `Events` OR `Source Tags` contains `Luma` OR (`Source Tags` contains `Composio` AND `Channels` contains `Eventbrite`)
+4. `Events — Luma` → `Source Tags` contains `Luma`
+5. `Music — ONCE` → `Layer` equals `Music` OR `Source Tags` contains `ONCE`
 
 **Source**
-5. `All` → no filter (master)
-6. `Social — Postly` → `Source Tags` contains `Postly`
-7. `Products — Gumroad` → `Source Tags` contains `Gumroad`
+6. `All` → no filter (master)
+7. `Social — Postly` → `Source Tags` contains `Postly`
+8. `Social — Composio / Typefully` → `Source Tags` contains `Composio` OR `Source Tags` contains `Typefully`
+9. `Products — Gumroad` → `Source Tags` contains `Gumroad`
+10. `Products — GitHub` → `Source Tags` contains `GitHub`
+
+`Source Tags` includes **Composio**. `Channels` includes **Eventbrite** (and **Reddit**). Composio Eventbrite rows: tag Composio + Channel Eventbrite + Layer Events. Reddit: Composio + Channel Reddit + Layer Social.
 
 For each view, show only relevant columns:
-- Social views: Name, Layer, Source Tags, Status, Caption, Video, Image, GIF, Instagram Caption, Publish Instagram, Instagram Status, Instagram URL
-- Products views: Name, Layer, Source Tags, Gumroad Title, Gumroad Publish Status, Gumroad URL, Gumroad Edit URL, Landing Page Copy, Template, Gumroad Cover, Publish in Gumroad
+- Social views: Name, Layer, Source Tags, Channels, Status, Caption, Video, Image, GIF, Instagram Caption, Publish Instagram, Postly Publish Status, Postly URL
+- Products views: Name, Layer, Source Tags, Gumroad Title, Gumroad Publish Status, Gumroad URL, Landing Page Copy, Template, Gumroad Cover, Publish in Gumroad
+- Events views: Name, Layer, Source Tags, Channels, Luma Title, Luma Start, Luma Publish Status, Luma Event URL
 
 ### Task 3 — Buttons + automations
 
