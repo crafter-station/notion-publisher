@@ -33,6 +33,7 @@ These are **shipped**. Closed on GitHub with label `status:done`.
 | [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) *(closed)* | Social | **Postly live** — multi-platform webhook, per-platform captions, media, queue, `GET /capabilities/postly` |
 | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) *(closed)* | Products | **Skool discover only** — MySkool read client + `GET /capabilities/skool` (**not** write; write = #4 blocked) |
 | [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) *(closed)* | CMS/Social | **Caption** preferred; `POV Text` legacy fallback (PR [#15](https://github.com/Nucleo-Lab/notion-publisher/pull/15)) |
+| [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) *(closed)* | CMS | **One Publisher DB** — AI POVs renamed+extended; 163 Gumroad rows migrated; env IDs unified; inventory in [`notion-schema-inventory.md`](./notion-schema-inventory.md) |
 
 Open follow-ups on the live stack (not “not done”, just next polish):
 
@@ -45,7 +46,7 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 
 | Layer | Surface | Status | Issue |
 |---|---|---|---|
-| CMS | Notion | live | (source of truth) |
+| CMS | Notion `Publisher` (one DB) | **live** | [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) |
 | Products | Gumroad | **live** | [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) |
 | Social | Postly | **live** | [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) |
 | Products | Skool / MySkool | **discover** | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) |
@@ -62,7 +63,8 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 | Discovery HTTP | `GET /capabilities` (+ postly / skool) |
 | Stub maps + logos | Luma, GitHub, Typefully, Postiz, ONCE |
 | Repo rename | `notion-publisher` under Nucleo Lab |
-| CMS contract docs | One DB `Publisher`, views by `Source Tags`, Social shared `Caption`/media + overrides |
+| CMS contract docs | One DB `Publisher`, views by **Layer** + `Source Tags`, Social shared `Caption`/media + overrides |
+| Publisher unify cutover | Schema + row migration + env triple-ID; archive old Templates DB |
 
 ---
 
@@ -72,18 +74,18 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 | Label | Issue state | Meaning |
 |---|---|---|
-| `status:done` | **CLOSED** | Ya hecho / shipped (#12 Gumroad, #13 Postly, #14 Skool discover, #2 Caption) |
+| `status:done` | **CLOSED** | Ya hecho / shipped (#12 Gumroad, #13 Postly, #14 Skool discover, #2 Caption, #1 Publisher unify) |
 | `status:next` | OPEN | Siguiente — se puede empezar (**no** significa “completado”) |
 | `status:blocked` | OPEN | Esperando a terceros (#4 MySkool write) |
 | `status:later` | OPEN | Backlog después de Phase A |
 
 `status:ready` was retired — too easy to read as Spanish “listo” = done.
 
-### Phase A — CMS hygiene (next open work)
+### Phase A — CMS hygiene
 
 | Issue | Status | In plain words |
 |---|---|---|
-| [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Migrate live Notion DBs → one Publisher | next | Unify production DBs to the documented schema |
+| [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Migrate live Notion DBs → one Publisher | **done** | Unified; recreate Gumroad buttons + views in Notion UI |
 | [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Enable Notion MCP | next | Agents can inspect Publisher schema safely |
 
 ### Phase B — Products (after Phase A; Skool write last among these)

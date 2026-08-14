@@ -88,40 +88,48 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
 
-## <img src="docs/assets/logos/notion.png" width="22" alt=""> Notion DB setup — one database, views by source
+## <img src="docs/assets/logos/notion.png" width="22" alt=""> Notion DB setup — one database, views by category + source
 
-**Target CMS contract:** one Notion database (`Publisher`) + views filtered by `Source Tags`. Production may still use separate Gumroad/Postly DBs today; unification is a follow-up (docs only this pass — no parser/webhook changes).
+**Live CMS:** one Notion database named `Publisher` (renamed from AI POVs). `NOTION_DATABASE_ID`, `GUMROAD_AUTOPILOT_DATABASE_ID`, and `POSTLY_QUEUE_DATABASE_ID` all point at that same ID. Inventory + cutover notes: [`docs/notion-schema-inventory.md`](./docs/notion-schema-inventory.md). Old Prompt Chain Templates DB is **archive** (not deleted).
 
 ### One database
 
 | | |
 |---|---|
-| Recommended name | `Publisher` |
-| Control field | `Source Tags` (multi-select) |
+| Name | `Publisher` |
+| Control | `Source Tags` (multi-select) + optional `Layer` (Social / Products / Events / Music) |
 | Tags | `Luma`, `Gumroad`, `GitHub`, `Skool`, `Postly`, `Typefully`, `Postiz`, `ONCE` |
 
-### Recommended views
+### Recommended views (create in Notion UI)
 
-| View | Filter (`Source Tags` contains) | Purpose |
+**By category / layer** (`Layer` or tag OR-filters):
+
+| View | Filter | Purpose |
+|---|---|---|
+| Social — All | `Layer` = Social **or** tags Postly/Typefully/Postiz | Shared social workbench |
+| Products — All | `Layer` = Products **or** tags Gumroad/GitHub/Skool | Product board |
+| Events — Luma | `Layer` = Events **or** `Luma` | Events |
+| Music — ONCE | `Layer` = Music **or** `ONCE` | DSP |
+
+**By source** (`Source Tags` contains):
+
+| View | Filter | Purpose |
 |---|---|---|
 | All | — | Master board |
-| Social — All | `Postly` **or** `Typefully` **or** `Postiz` | Shared social workbench |
 | Social — Postly | `Postly` | Live social publish |
 | Social — Typefully | `Typefully` | Text drafts / threads |
 | Social — Postiz | `Postiz` | Self-hosted scheduler |
-| Products — All | `Gumroad` **or** `GitHub` **or** `Skool` | Same product, multi-target |
 | Products — Gumroad | `Gumroad` | Live storefront |
 | Products — GitHub | `GitHub` | Releases (planned) |
 | Products — Skool | `Skool` | Community / product (discover → write) |
-| Events — Luma | `Luma` | Events |
-| Music — ONCE | `ONCE` | DSP |
 
 ### Shared properties (all views)
 
 | Property | Type | Role |
 |---|---|---|
-| `Name` | Title | Row identity |
+| `Name` | Title | Row identity (renamed from `Rank`) |
 | `Source Tags` | Multi-select | Which distributors receive the row |
+| `Layer` | Select | Social / Products / Events / Music (view axis) |
 | `Caption` | Rich text | Shared caption / description (social + fallback) |
 | `Video` | Files & media | Shared video |
 | `Image` / `Screenshot` | Files & media | Shared still |
@@ -131,7 +139,17 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | `Topics` | Multi-select | Content taxonomy (not a distributor) |
 | `Status` | Status | Aggregate publish state |
 
-**Alias (live Postly today):** parser still reads `POV Text`. Treat `Caption` as the canonical shared name; `POV Text` remains accepted until a code migration.
+**Alias:** parser prefers `Caption`, then `POV Text`, then per-platform captions. Existing Postly rows were dual-filled (`Caption` ← `POV Text`) on unify.
+
+### Buttons / automations (Notion UI)
+
+| Button | Webhook |
+|---|---|
+| Publish Instagram / Publish *brand* (existing) | `/webhooks/publish-postly` |
+| Publish in Gumroad *(recreate on Publisher if missing — API cannot create buttons)* | existing Gumroad publish webhook |
+| Publish in Social *(optional)* | `/webhooks/publish-postly` |
+
+Product writebacks on the same DB: `Gumroad Publish Status`, `Gumroad Product ID`, `Gumroad URL`, `Gumroad Edit URL`.
 
 ### Social — shared media + optional channel overrides
 
