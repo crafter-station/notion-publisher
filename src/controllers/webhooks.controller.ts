@@ -5,12 +5,14 @@ import { executePublishExistingProductUseCase } from '../use-cases/publish-exist
 import { executePublishPostlyUseCase } from '../use-cases/publish-postly.use-case';
 import { executePublishLumaUseCase } from '../use-cases/publish-luma.use-case';
 import { executePublishGithubUseCase } from '../use-cases/publish-github.use-case';
+import { executePublishComposioUseCase } from '../use-cases/publish-composio.use-case';
 import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
 import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { getCapabilitiesSnapshot } from '../capabilities/registry';
 import { PostlyService } from '../services/postly.service';
 import { isSkoolConfigured, SkoolService } from '../services/skool.service';
 import { isLumaConfigured } from '../services/luma.service';
+import { ComposioService, isComposioConfigured } from '../services/composio.service';
 import {
   GITHUB_CATALOG_OWNERS,
   GITHUB_PRODUCT_OWNER,
@@ -134,6 +136,52 @@ export const webhooksController = {
       json(res, 502, {
         status: 'error',
         distributor: 'github',
+        error: err.message || String(err),
+      });
+    }
+  },
+
+  /** Composio connected accounts (Reddit live; Eventbrite pending). */
+  async handleCapabilitiesComposio(_req: IncomingMessage, res: ServerResponse) {
+    if (!isComposioConfigured()) {
+      return json(res, 200, {
+        status: 'stub',
+        distributor: 'composio',
+        message: 'Set COMPOSIO_API_KEY to enable Reddit publish / account discover.',
+        eventbrite: 'pending_connect',
+      });
+    }
+
+    try {
+      const composio = new ComposioService();
+      const [redditAccounts, eventbriteAccounts] = await Promise.all([
+        composio.listConnectedAccounts({ toolkit: 'reddit' }),
+        composio.listConnectedAccounts({ toolkit: 'eventbrite' }),
+      ]);
+      const redditOk = redditAccounts.some(
+        a => !a.status || /ACTIVE|active|ENABLED|enabled/i.test(String(a.status))
+      );
+
+      json(res, 200, {
+        status: redditOk ? 'live' : 'discover',
+        distributor: 'composio',
+        reddit: {
+          connected: redditOk,
+          accounts: redditAccounts,
+          hint: 'Set COMPOSIO_USER_ID + COMPOSIO_CONNECTED_ACCOUNT_ID from accounts[]',
+        },
+        eventbrite: {
+          connected: eventbriteAccounts.length > 0,
+          accounts: eventbriteAccounts,
+          status: eventbriteAccounts.length ? 'discover' : 'pending_connect',
+          note: 'Write deferred until Eventbrite connected in Composio dashboard.',
+        },
+        webhook: 'POST /webhooks/publish-composio',
+      });
+    } catch (err: any) {
+      json(res, 502, {
+        status: 'error',
+        distributor: 'composio',
         error: err.message || String(err),
       });
     }
@@ -470,6 +518,98 @@ export const webhooksController = {
         );
       } catch (err: any) {
         console.error('[ERROR] Synchronous error in handlePublishGithub:', err.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  },
+
+  async handlePublishComposio(req: IncomingMessage, res: ServerResponse) {
+    let body = '';
+    req.on('data', chunk => (body += chunk.toString()));
+    req.on('end', async () => {
+      try {
+        if (!isComposioConfigured()) {
+          res.writeHead(503);
+          return res.end(
+            JSON.stringify({
+              error: 'COMPOSIO_API_KEY not configured',
+              docs: 'https://docs.composio.dev/',
+            })
+          );
+        }
+
+        const payload = JSON.parse(body || '{}');
+        const notion_page_id = payload.data?.id || payload.notion_page_id;
+        if (!notion_page_id) {
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({
+              error: 'Missing data.id (Notion webhook) or notion_page_id',
+            })
+          );
+        }
+
+        const {
+          extractComposioRedditContent,
+          getNotionPage,
+          updateComposioRedditMetadata,
+        } = require('../services/notion.service');
+        const pageData = await getNotionPage(notion_page_id).catch((err: any) => {
+          console.warn(`[WARN] Notion fetch failed for ${notion_page_id}`, err);
+          return payload.data;
+        });
+        const props = pageData?.properties || payload.data?.properties || {};
+
+        const reqUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+        const kindParam = reqUrl.searchParams.get('kind');
+        const kind =
+          kindParam === 'self' || kindParam === 'link'
+            ? (kindParam as 'self' | 'link')
+            : undefined;
+
+        const content = extractComposioRedditContent(props, { kind });
+
+        if (!content.channels.includes('Reddit') && content.channels.includes('Eventbrite')) {
+          res.writeHead(503);
+          return res.end(
+            JSON.stringify({
+              error: 'Eventbrite via Composio not connected yet',
+              action: 'Connect Eventbrite in Composio dashboard, then retry',
+            })
+          );
+        }
+
+        if (!content.is_complete) {
+          updateComposioRedditMetadata(notion_page_id, {
+            composio_status: 'Failed',
+            final_status: 'Error',
+          }).catch(() => undefined);
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({ error: 'Incomplete Notion content', missing: content.missing })
+          );
+        }
+
+        console.log(
+          `[INFO] Starting Composio background job (notionPageId: ${notion_page_id}, kind: ${content.kind})`
+        );
+        executePublishComposioUseCase(notion_page_id, { kind }).catch(err => {
+          console.error('[ERROR] Composio background job failed', err);
+        });
+
+        res.writeHead(202, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: 'Accepted Composio Reddit publish task',
+            notion_page_id,
+            kind: content.kind,
+            subreddit: content.subreddit,
+            title: content.title,
+          })
+        );
+      } catch (err: any) {
+        console.error('[ERROR] Synchronous error in handlePublishComposio:', err.message);
         res.writeHead(500);
         res.end(JSON.stringify({ error: err.message }));
       }

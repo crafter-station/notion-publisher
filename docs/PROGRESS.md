@@ -54,7 +54,7 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 | Products | Skool / MySkool | **discover** (key in `.env`; smoke 401 until valid `sk_live_…`) | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) · write [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) blocked |
 | Events | Luma | **live** (`POST /webhooks/publish-luma`) | [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) |
 | Products | GitHub | **live** (catalog + Releases under **TheVeller** only) | [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) |
-| Social / Events | Composio | **stub** (Reddit + Eventbrite channels mapped; no write) | — |
+| Social / Events | Composio | **live** · Reddit (`POST /webhooks/publish-composio`); Eventbrite pending connect | — |
 
 Everything else in the kit is **mapped (stub)** — docs + registry, no publish client yet.
 
@@ -65,10 +65,10 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 | Done | Notes |
 |---|---|
 | Capability registry | `src/capabilities/registry.ts` · `npm run capabilities:check` |
-| Discovery HTTP | `GET /capabilities` (+ postly / skool / github) |
-| Stub maps + logos | Typefully, Postiz, ONCE, **Composio** (+ channel favicons) |
+| Discovery HTTP | `GET /capabilities` (+ postly / skool / github / composio) |
+| Stub maps + logos | Typefully, Postiz, ONCE (+ channel favicons) |
 | Channel mega-grid | README SSOT: logo · channel · site · layer · delivery · status |
-| Composio taxonomy | `Source Tags`∋`Composio`; `Channels`∋`Eventbrite` (+ Reddit); views Events — All / Social — Composio·Typefully |
+| Composio Reddit live | `composio.service` + `/webhooks/publish-composio` (self + link) + Notion writeback; Eventbrite deferred |
 | GitHub catalog + Releases | `github.service` + import script + `/webhooks/publish-github` (TheVeller only) |
 | Luma create webhook | `luma.service` + cover CDN upload + `/webhooks/publish-luma` + Notion writeback |
 | Luma TNC import | `npm run luma:import-tnc` — five Aug-29 The Next Craft mirrored to Publisher |

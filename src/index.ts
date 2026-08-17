@@ -26,6 +26,9 @@ function startServer(port: number) {
       if (path === '/capabilities/github') {
         return webhooksController.handleCapabilitiesGithub(req, res);
       }
+      if (path === '/capabilities/composio') {
+        return webhooksController.handleCapabilitiesComposio(req, res);
+      }
     }
 
     if (req.method === 'POST') {
@@ -43,6 +46,9 @@ function startServer(port: number) {
       }
       if (path === '/webhooks/publish-github') {
         return webhooksController.handlePublishGithub(req, res);
+      }
+      if (path === '/webhooks/publish-composio') {
+        return webhooksController.handlePublishComposio(req, res);
       }
     }
 

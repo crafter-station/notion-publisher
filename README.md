@@ -58,17 +58,17 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 
 ```text
 Notion CMS  →  notion-publisher (this repo · no UI)
-                    ├─ Events         → Luma (live) · Eventbrite via Composio (stub)
+                    ├─ Events         → Luma (live) · Eventbrite via Composio (pending connect)
                     ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
-                    ├─ Social         → Postly (live) · Composio (stub · Reddit) · Typefully (stub) · Postiz (stub)
+                    ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (stub) · Postiz (stub)
                     └─ Music/Podcast  → ONCE.app (stub)
 ```
 
 Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social: Postly = broad cloud; **Composio** = Reddit (+ Eventbrite on Events); Typefully = text drafts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**.
 
-**Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller).  
+**Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
 **Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) blocked).  
-**Mapped (stub):** Composio, Typefully, Postiz, ONCE.  
+**Mapped (stub):** Typefully, Postiz, ONCE · Eventbrite (pending Composio connect).  
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
@@ -83,7 +83,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | **live** (TheVeller Releases) |
 | <img src="docs/assets/logos/skool.png" width="20" alt=""> <img src="docs/assets/logos/myskool.png" width="20" alt=""> | **Skool (MySkool)** | [skool.com](https://www.skool.com/) · [myskool.xyz](https://myskool.xyz/) | Products + community | **discover** |
 | <img src="docs/assets/logos/postly.png" width="20" alt=""> | **Postly** | [postly.ai](https://postly.ai/) | Social | **live** |
-| <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio** | [composio.dev](https://composio.dev/) | Social + Events (transport) | stub |
+| <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio** | [composio.dev](https://composio.dev/) | Social + Events (transport) | live · Reddit |
 | <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | stub |
 | <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | stub |
 | <img src="docs/assets/logos/once.png" width="20" alt=""> | **ONCE.app** | [beta.once.app](https://beta.once.app/) | Music / Podcast | stub |
@@ -114,14 +114,14 @@ One SSOT map of Notion `Channels` (+ distributor storefronts). **Delivery** = wh
 | <img src="docs/assets/logos/devto.png" width="18" alt=""> | Dev.to | [dev.to](https://dev.to/) | Social | Postly | live |
 | <img src="docs/assets/logos/blogger.png" width="18" alt=""> | Blogger | [blogger.com](https://blogger.com/) | Social | Postly | live |
 | <img src="docs/assets/logos/email.png" width="18" alt=""> | Email | — | Social | Postly | live |
-| <img src="docs/assets/logos/reddit.png" width="18" alt=""> | Reddit | [reddit.com](https://reddit.com/) | Social | **Composio** | stub |
+| <img src="docs/assets/logos/reddit.png" width="18" alt=""> | Reddit | [reddit.com](https://reddit.com/) | Social | **Composio** | live |
 | <img src="docs/assets/logos/mastodon.png" width="18" alt=""> | Mastodon | [mastodon.social](https://mastodon.social/) | Social | Typefully / Postiz | stub |
 | <img src="docs/assets/logos/medium.png" width="18" alt=""> | Medium | [medium.com](https://medium.com/) | Social | Postiz | stub |
 | <img src="docs/assets/logos/discord.png" width="18" alt=""> | Discord | [discord.com](https://discord.com/) | Social | Postiz | stub |
 | <img src="docs/assets/logos/slack.png" width="18" alt=""> | Slack | [slack.com](https://slack.com/) | Social | Postiz | stub |
 | <img src="docs/assets/logos/twitch.png" width="18" alt=""> | Twitch | [twitch.tv](https://twitch.tv/) | Social | Postiz | stub |
 | <img src="docs/assets/logos/luma.png" width="18" alt=""> | Luma Event Page | [luma.com](https://luma.com/) | Events | native (Luma) | live |
-| <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite | [eventbrite.com](https://eventbrite.com/) | Events | **Composio** | stub |
+| <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite | [eventbrite.com](https://eventbrite.com/) | Events | **Composio** | pending connect |
 | <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | Gumroad Storefront | [gumroad.com](https://gumroad.com/) | Products | native (Gumroad) | live |
 | <img src="docs/assets/logos/github.png" width="18" alt=""> | GitHub Releases | [github.com](https://github.com/) | Products | native (GitHub · TheVeller) | live |
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | Skool | [skool.com](https://skool.com/) | Products | MySkool | discover |
@@ -579,7 +579,10 @@ POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
 # SKOOL_GROUP_ID=
 
 # Optional · stubs (not wired)
-# COMPOSIO_API_KEY=      # Reddit + Eventbrite via Composio
+# COMPOSIO_API_KEY=                 # Reddit live via Composio
+# COMPOSIO_USER_ID=
+# COMPOSIO_CONNECTED_ACCOUNT_ID=
+# COMPOSIO_REDDIT_SUBREDDIT=test
 # TYPEFULLY_API_KEY=
 # POSTIZ_API_KEY=
 # ONCE_API_KEY=

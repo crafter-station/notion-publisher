@@ -1023,3 +1023,134 @@ export async function createPublisherGithubCatalogPage(input: {
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
+
+export type ComposioPublishStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
+
+export type ComposioRedditKind = 'self' | 'link';
+
+export interface ComposioRedditContent {
+  title: string;
+  body: string;
+  subreddit: string;
+  link_url: string;
+  kind: ComposioRedditKind;
+  channels: string[];
+  composio_user_id: string;
+  composio_connected_account_id: string;
+  is_complete: boolean;
+  missing: string[];
+}
+
+const _urlProp = (p: any): string => (typeof p?.url === 'string' ? p.url.trim() : '');
+
+const _multiSelectNames = (p: any): string[] =>
+  (p?.multi_select || []).map((x: any) => (x?.name || '').trim()).filter(Boolean);
+
+function normalizeSubreddit(raw: string): string {
+  return raw.trim().replace(/^r\//i, '');
+}
+
+/**
+ * Publisher Composio + Reddit props → create payload.
+ * kind: explicit option, else link if Reddit Link URL / Image / Screenshot, else self.
+ */
+export function extractComposioRedditContent(
+  props: any,
+  options: { kind?: ComposioRedditKind } = {}
+): ComposioRedditContent {
+  const missing: string[] = [];
+  const title = _richText(props['Reddit Title']) || _titleText(props['Name']) || '';
+  const body = _richText(props['Reddit Body']);
+  const subreddit =
+    normalizeSubreddit(_richText(props['Reddit Subreddit'])) ||
+    normalizeSubreddit(env.COMPOSIO_REDDIT_SUBREDDIT);
+  const linkFromProp = _urlProp(props['Reddit Link URL']);
+  const mediaUrl = _fileUrl(props['Image']) || _fileUrl(props['Screenshot']) || '';
+  const link_url = linkFromProp || mediaUrl;
+  const channels = _multiSelectNames(props['Channels']);
+  const composio_user_id = _richText(props['Composio User ID']);
+  const composio_connected_account_id = _richText(props['Composio Connected Account ID']);
+
+  let kind: ComposioRedditKind = options.kind || (link_url ? 'link' : 'self');
+  if (options.kind === 'link' && !link_url) {
+    missing.push('Reddit Link URL (or Image / Screenshot) for kind=link');
+  }
+  if (options.kind === 'self' && !body) {
+    missing.push('Reddit Body for kind=self');
+  }
+  if (!options.kind) {
+    if (kind === 'link' && !link_url) kind = 'self';
+    if (kind === 'self' && !body && link_url) kind = 'link';
+  }
+
+  if (!title) missing.push('Reddit Title (or Name)');
+  if (!subreddit) missing.push('Reddit Subreddit (or COMPOSIO_REDDIT_SUBREDDIT)');
+  if (kind === 'self' && !body) missing.push('Reddit Body');
+  if (kind === 'link' && !link_url) missing.push('Reddit Link URL (or Image / Screenshot)');
+
+  return {
+    title,
+    body,
+    subreddit,
+    link_url,
+    kind,
+    channels,
+    composio_user_id,
+    composio_connected_account_id,
+    is_complete: missing.length === 0,
+    missing,
+  };
+}
+
+export async function updateComposioRedditMetadata(
+  notion_page_id: string,
+  data: {
+    composio_status?: ComposioPublishStatus;
+    reddit_url?: string;
+    composio_url?: string;
+    final_status?: FinalStatus;
+  }
+) {
+  if (!notionToken || !notion_page_id) {
+    return { success: false, error: 'Missing notion token or page id' };
+  }
+
+  const properties: any = {};
+  if (data.composio_status) {
+    properties['Composio Publish Status'] = { status: { name: data.composio_status } };
+  }
+  if (data.reddit_url) {
+    properties['Reddit URL'] = { url: data.reddit_url };
+  }
+  if (data.composio_url) {
+    properties['Composio URL'] = { url: data.composio_url };
+  }
+  if (data.final_status) {
+    properties['Status'] = { status: { name: data.final_status } };
+  }
+
+  if (Object.keys(properties).length === 0) {
+    return { success: true, updated_page_id: notion_page_id, noop: true };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${notion_page_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({ properties }),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] updateComposioRedditMetadata patch failed: ${err}`);
+      return { success: false, error: err };
+    }
+    return { success: true, updated_page_id: notion_page_id };
+  } catch (error: any) {
+    console.warn(`[NOTION] updateComposioRedditMetadata exception: ${error.message}`);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}

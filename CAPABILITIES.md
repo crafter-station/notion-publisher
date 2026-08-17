@@ -5,9 +5,9 @@
 | Layer | Surfaces |
 |---|---|
 | **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
-| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**stub**) |
-| **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · TheVeller), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool / MySkool (**discover**) |
-| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**stub** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**stub**) |
+| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**pending connect**) |
+| **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
+| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**stub**) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
 
 **CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#notion-db-setup--one-database-views-by-source)**.
@@ -30,7 +30,7 @@ Self-check: `npm run capabilities:check`
 | <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | **live** | [github.com](https://github.com/) |
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | `myskool` | Products | **discover** | [myskool.xyz](https://myskool.xyz/) |
 | <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live** | [postly.ai](https://postly.ai/) |
-| <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | stub | [composio.dev](https://composio.dev/) |
+| <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | **live** · Reddit | [composio.dev](https://composio.dev/) |
 | <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | stub | [typefully.com](https://typefully.com/) |
 | <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | stub | [postiz.com](https://postiz.com/) |
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | `once` | Music | stub | [beta.once.app](https://beta.once.app/) |
@@ -43,6 +43,7 @@ Self-check: `npm run capabilities:check`
 | `GET` | `/capabilities/postly` |
 | `GET` | `/capabilities/skool` |
 | `GET` | `/capabilities/github` |
+| `GET` | `/capabilities/composio` |
 
 ### Postly (live)
 
@@ -54,16 +55,16 @@ Self-check: `npm run capabilities:check`
 | email | `email` (+ providers) |
 | docs_only | `reddit` (**do not publish via Postly** — use Composio + `Channels`∋`Reddit`) |
 
-### Composio (stub)
+### Composio (live · Reddit)
 
-Source Tag **`Composio`**. Transport for **Reddit** (Social) and **Eventbrite** (Events channel — not a Source Tag). Shared Notion view with Typefully: `Social — Composio / Typefully`. Events: `Events — All` includes Composio+Eventbrite. Env: `COMPOSIO_API_KEY` (not wired). No write webhook yet.
+Source Tag **`Composio`**. **Reddit** publish: `POST /webhooks/publish-composio` (`?kind=self|link`). Discover accounts: `GET /capabilities/composio`. **Eventbrite** still pending connect in Composio (no invent write). Env: `COMPOSIO_API_KEY`, optional `COMPOSIO_USER_ID` / `COMPOSIO_CONNECTED_ACCOUNT_ID` / `COMPOSIO_REDDIT_SUBREDDIT`.
 
 | Property | Role |
 |---|---|
 | `Composio Publish Status` / `Composio URL` | Source writebacks |
-| `Reddit Title` / `Body` / `Reddit URL` | Reddit channel |
-| `Eventbrite Title` / `Start` / `End` / `Location` / `Description` / `Cover` | Eventbrite inputs |
-| `Eventbrite URL` / `Eventbrite Event ID` | Eventbrite writebacks |
+| `Reddit Title` / `Body` / `Subreddit` / `Link URL` / `Reddit URL` | Reddit channel |
+| `Composio User ID` / `Composio Connected Account ID` | optional multi-account overrides |
+| `Eventbrite Title` / `Start` / `End` / … | mapped; write deferred |
 
 ### Typefully (stub)
 
@@ -133,6 +134,6 @@ Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts
 
 SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-- **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · channel mega-grid + Composio stub taxonomy
-- **Next:** Composio discover/auth (Reddit / Eventbrite); Phase A leftovers (#3)
+- **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit live
+- **Next:** Eventbrite via Composio (after connect); Phase A leftovers (#3)
 - **Later:** Typefully write (#6); Skool write (#4, blocked); Postiz / ONCE

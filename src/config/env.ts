@@ -24,8 +24,14 @@ export const env = {
   LUMA_API_KEY: process.env.LUMA_API_KEY || '',
   /** Optional GitHub PAT — catalog + TheVeller Releases. Not required to boot. */
   GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
-  /** Optional Composio — stub Source for Reddit / Eventbrite. Not required to boot. */
+  /** Optional Composio — Reddit live; Eventbrite pending connect. Not required to boot. */
   COMPOSIO_API_KEY: process.env.COMPOSIO_API_KEY || '',
+  /** Composio user that owns connected Reddit (dashboard / capabilities). */
+  COMPOSIO_USER_ID: process.env.COMPOSIO_USER_ID || '',
+  /** Default Reddit connected_account_id; Notion page can override. */
+  COMPOSIO_CONNECTED_ACCOUNT_ID: process.env.COMPOSIO_CONNECTED_ACCOUNT_ID || '',
+  /** Fallback subreddit if Notion `Reddit Subreddit` empty (smoke). */
+  COMPOSIO_REDDIT_SUBREDDIT: process.env.COMPOSIO_REDDIT_SUBREDDIT || '',
   POSTLY_QUEUE_ENABLED: process.env.POSTLY_QUEUE_ENABLED === 'true',
   POSTLY_QUEUE_DATABASE_ID: process.env.POSTLY_QUEUE_DATABASE_ID || process.env.NOTION_DATABASE_ID,
   POSTLY_QUEUE_INTERVAL_MS: Number(process.env.POSTLY_QUEUE_INTERVAL_MS) || 6 * 60 * 60 * 1000,

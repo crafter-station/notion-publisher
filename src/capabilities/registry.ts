@@ -3,9 +3,9 @@ import { DistributorCapability } from './types';
 
 /**
  * Distributors by layer (publish channels):
- * - Events: luma (live); Eventbrite via composio (stub channel)
+ * - Events: luma (live); Eventbrite via composio (pending connect)
  * - Products: gumroad (live), github (live · TheVeller Releases), myskool (discover)
- * - Social: postly (live), composio (stub · Reddit), typefully (stub), postiz (stub)
+ * - Social: postly (live), composio (live · Reddit), typefully (stub), postiz (stub)
  * - Music/Podcast: once (stub)
  */
 export const DISTRIBUTORS: DistributorCapability[] = [
@@ -51,10 +51,10 @@ export const DISTRIBUTORS: DistributorCapability[] = [
   {
     id: 'composio',
     kind: 'other',
-    status: 'stub',
+    status: 'live',
     envKeys: ['COMPOSIO_API_KEY'],
     notes:
-      'Source Tag Composio. Transport for Channels Reddit (Social) and Eventbrite (Events). Shared Notion view with Typefully. Mapped only — no write webhook yet.',
+      'Source Tag Composio. Reddit live via POST /webhooks/publish-composio (REDDIT_CREATE_REDDIT_POST). Eventbrite channel pending connect. Multi-account: COMPOSIO_USER_ID + COMPOSIO_CONNECTED_ACCOUNT_ID (Notion overrides).',
   },
   {
     id: 'typefully',
@@ -125,7 +125,7 @@ export function checkRegistryHealthy(): void {
   if (getDistributor('postly')?.status !== 'live') throw new Error('postly must be live');
   if (getDistributor('myskool')?.status !== 'discover') throw new Error('myskool must be discover');
   if (getDistributor('github')?.status !== 'live') throw new Error('github must be live');
-  if (getDistributor('composio')?.status !== 'stub') throw new Error('composio must be stub');
+  if (getDistributor('composio')?.status !== 'live') throw new Error('composio must be live');
   if (!getDistributor('postiz')) throw new Error('postiz stub missing');
   if (!getDistributor('typefully')) throw new Error('typefully stub missing');
   if (!getDistributor('once')) throw new Error('once stub missing');

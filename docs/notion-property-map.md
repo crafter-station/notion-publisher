@@ -32,7 +32,7 @@ Constant: `src/services/notion.service.ts` → `export const NOTION_VERSION`.
 | **GitHub** (live) | `GitHub Publish Status` | `GitHub Release URL` (+ ID) | TheVeller Releases only; catalog import |
 | **Skool** (discover) | `Skool Publish Status` | `Skool Post URL` | props exist; **no** publish webhook until MySkool `POST /v1/posts` (#4) |
 | Typefully / Postiz / ONCE | `* Publish Status` (props present) | `* URL` where present | stubs — no code write yet |
-| **Composio** (stub) | `Composio Publish Status` | `Composio URL` | Source Tag; channels Reddit + Eventbrite |
+| **Composio** (live · Reddit) | `Composio Publish Status` | `Composio URL` | Source Tag; Reddit webhook live; Eventbrite pending |
 
 Aggregate row `Status` uses evergreen **`Error`** (was `Postly Error`; 41 rows migrated).
 
@@ -109,22 +109,23 @@ Catalog import: `npm run github:import-repos -- --owner=TheVeller` (idempotent; 
 
 Ngrok: button → `POST /webhooks/publish-github` (optional `?draft=true`).
 
-## Composio (stub) — Source Tag + channel fields
+## Composio (live · Reddit) — Source Tag + channel fields
 
-Row recipe: `Source Tags`∋`Composio` + `Channels`∋`Reddit`|`Eventbrite` + matching `Layer`.
+Row recipe: `Source Tags`∋`Composio` + `Channels`∋`Reddit` (+ matching `Layer` Social). Eventbrite write deferred.
 
 | Notion property | Role |
 |-----------------|------|
 | `Composio Publish Status` | writeback (Not started / In progress / Failed / Published) |
-| `Composio URL` | aggregate writeback URL |
+| `Composio URL` | aggregate writeback URL (usually Reddit permalink) |
 | `Reddit Title` / `Reddit Body` | Reddit inputs (pre-existing) |
-| `Reddit URL` | Reddit writeback |
-| `Eventbrite Title` | required-ish when Channel=Eventbrite |
-| `Eventbrite Start` / `End` | dates |
-| `Eventbrite Location` / `Description` / `Cover` | optional |
-| `Eventbrite URL` / `Eventbrite Event ID` | writebacks |
+| `Reddit Subreddit` | required (no `r/` prefix; strip if present). Fallback: `COMPOSIO_REDDIT_SUBREDDIT` |
+| `Reddit Link URL` | optional url — drives `kind=link` (else Image/Screenshot file URL) |
+| `Reddit URL` | Reddit writeback permalink |
+| `Composio User ID` | optional override; else `COMPOSIO_USER_ID` |
+| `Composio Connected Account ID` | optional override; else `COMPOSIO_CONNECTED_ACCOUNT_ID` |
+| `Eventbrite Title`… | mapped for future; write blocked until Eventbrite connected in Composio |
 
-No publish webhook yet — props mapped only.
+Webhook: button → `POST /webhooks/publish-composio` (optional `?kind=self|link`). Discover: `GET /capabilities/composio`.
 
 ## Skool (discover only)
 
@@ -144,6 +145,7 @@ Discover: `GET /capabilities/skool` · needs valid `SKOOL_API_KEY=sk_live_…`. 
 | `Publish in Social` / `Publish Instagram` / brand Publish * | `/webhooks/publish-postly` |
 | `Publish in Luma` (when added) | `/webhooks/publish-luma` |
 | `Publish in GitHub` (when added) | `/webhooks/publish-github` |
+| `Publish in Composio` (when added) | `/webhooks/publish-composio` |
 | `Publish in Skool` | **not wired** — MySkool POST still Planned (#4) |
 
 Automations are **not** readable via API. After ngrok restart, open each button → Edit automation → confirm host.
