@@ -138,6 +138,18 @@ Other Notion `Channels` options (Tumblr, VK, MeWe, Lemmy, Whop, Farcaster, Nostr
 
 **Live CMS:** one Notion database named `Publisher` (renamed from AI POVs). `NOTION_DATABASE_ID`, `GUMROAD_AUTOPILOT_DATABASE_ID`, and `POSTLY_QUEUE_DATABASE_ID` all point at that same ID. Inventory + cutover notes: [`docs/notion-schema-inventory.md`](./docs/notion-schema-inventory.md). Old Prompt Chain Templates DB is **archive** (not deleted).
 
+### Agent schema inspection (MCP + CLI)
+
+Agents should **inspect** Publisher schema, not invent props. Two read paths (no secrets in git):
+
+| Path | When | How |
+|---|---|---|
+| **Notion MCP** | Cursor / Claude with MCP enabled | Server `notion` → `https://mcp.notion.com/mcp` (OAuth). Confirm connected in MCP settings; workspace must include Publisher. |
+| **CLI (this repo)** | Any shell / agent without MCP | `npm run notion:schema` (optional `--json`, `--filter=Gumroad`). Uses `.env` `NOTION_TOKEN` + `NOTION_DATABASE_ID`. |
+| **CLI (`ntn`)** | Machine with Notion CLI | `NOTION_API_VERSION=2022-06-28 ntn api v1/databases/$NOTION_DATABASE_ID` — or newer API via `ntn api v1/data_sources/<data_source_id>`. |
+
+Do **not** commit tokens. Integration token stays in `.env` only. MCP uses Notion OAuth (separate from `NOTION_TOKEN`).
+
 ### One database
 
 | | |
@@ -595,6 +607,7 @@ Full knobs (queues, autopilot, comments): [`.env.example`](./.env.example). Matr
 ```bash
 npm run build && npm run dev
 npm run capabilities:check
+npm run notion:schema          # Publisher property dump (read-only)
 npm run publisher:report
 ```
 
@@ -604,9 +617,9 @@ npm run publisher:report
 
 Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-- **Completed (milestone Shipped):** [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) Gumroad · [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) Postly · [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) Skool discover  
-- **Next (milestone Phase A):** [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1)–[#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) — `status:next` = can start, not done  
-- **Later:** Phases B–D · [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write (`status:blocked`)
+- **Completed:** [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) Gumroad · [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) Postly · [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) Skool discover · [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Publisher unify · [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Caption · [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) GitHub · [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Luma create · [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Notion MCP/CLI · [#16](https://github.com/Nucleo-Lab/notion-publisher/issues/16) docs reconcile  
+- **Next:** [#17](https://github.com/Nucleo-Lab/notion-publisher/issues/17)–[#19](https://github.com/Nucleo-Lab/notion-publisher/issues/19) planning (handoff / newsletter / metrics)  
+- **Blocked / later:** [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write · Phases C–D stubs  
 
 ---
 

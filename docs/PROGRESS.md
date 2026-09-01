@@ -35,6 +35,8 @@ These are **shipped**. Closed on GitHub with label `status:done`.
 | [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) *(closed)* | CMS/Social | **Caption** preferred; `POV Text` legacy fallback (PR [#15](https://github.com/Nucleo-Lab/notion-publisher/pull/15)) |
 | [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) *(closed)* | CMS | **One Publisher DB** — AI POVs renamed+extended; 163 Gumroad rows migrated; env IDs unified; inventory in [`notion-schema-inventory.md`](./notion-schema-inventory.md) |
 | [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) *(closed)* | Products | **GitHub live** — catalog import + Releases under **TheVeller** only; asset from Template/File; `POST /webhooks/publish-github` |
+| [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) *(closed)* | CMS | **Notion MCP + CLI schema** — MCP `notion` → `mcp.notion.com`; `npm run notion:schema` (+ `ntn` with API `2022-06-28`) |
+| [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) *(closed)* | Events | **Luma live** — create + CDN cover + Notion writeback (`POST /webhooks/publish-luma`); update/tickets out of scope |
 
 Open follow-ups on the live stack (not “not done”, just next polish):
 
@@ -52,7 +54,7 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 | Products | Gumroad | **live** | [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) |
 | Social | Postly | **live** | [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) |
 | Products | Skool / MySkool | **discover** (key in `.env`; smoke 401 until valid `sk_live_…`) | [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) · write [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) blocked |
-| Events | Luma | **live** (`POST /webhooks/publish-luma`) | [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) |
+| Events | Luma | **live** (`POST /webhooks/publish-luma`) | [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) *(closed · create+cover)* |
 | Products | GitHub | **live** (catalog + Releases under **TheVeller** only) | [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) |
 | Social / Events | Composio | **live** · Reddit (`POST /webhooks/publish-composio`); Eventbrite pending connect | — |
 
@@ -66,6 +68,7 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 |---|---|
 | Capability registry | `src/capabilities/registry.ts` · `npm run capabilities:check` |
 | Discovery HTTP | `GET /capabilities` (+ postly / skool / github / composio) |
+| Notion schema inspect | MCP `notion` (OAuth) + `npm run notion:schema` + `ntn` (`NOTION_API_VERSION=2022-06-28`) — see README |
 | Stub maps + logos | Typefully, Postiz, ONCE (+ channel favicons) |
 | Channel mega-grid | README SSOT: logo · channel · site · layer · delivery · status |
 | Composio Reddit live | `composio.service` + `/webhooks/publish-composio` (self + link) + Notion writeback; Eventbrite deferred |
@@ -97,7 +100,7 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 | Issue | Status | In plain words |
 |---|---|---|
 | [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Migrate live Notion DBs → one Publisher | **done** | Unified; recreate Gumroad buttons + views in Notion UI |
-| [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Enable Notion MCP | next | Agents can inspect Publisher schema safely |
+| [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Enable Notion MCP (+ CLI schema) | **done** | MCP + `npm run notion:schema`; no secrets in git |
 
 ### Phase B — Products (after Phase A; Skool write last among these)
 
@@ -119,8 +122,14 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 | Issue | Status | In plain words |
 |---|---|---|
-| [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Luma events client | **done (create + cover)** | Create + CDN cover + writeback; update/tickets later |
+| [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Luma events client | **done** (create + cover) | Create + CDN cover + writeback; update/tickets later (new issue if needed) |
 | [#8](https://github.com/Nucleo-Lab/notion-publisher/issues/8) ONCE.app DSP client | later | Audio distribution to major DSPs |
+
+### M0 — Project state cleanup
+
+| Issue | Status | In plain words |
+|---|---|---|
+| [#16](https://github.com/Nucleo-Lab/notion-publisher/issues/16) Reconcile docs/project issue state | **done** | Luma #9 closed; live stack + Skool discover/write wording aligned |
 
 ---
 

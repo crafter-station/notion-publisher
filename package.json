@@ -13,6 +13,7 @@
     "composio:smoke": "ts-node --transpile-only scripts/smoke-composio-reddit.ts",
     "luma:import-tnc": "ts-node --transpile-only scripts/import-luma-tnc-aug29.ts",
     "to-cms": "ts-node --transpile-only scripts/to-cms.ts",
+    "notion:schema": "ts-node --transpile-only scripts/notion-schema.ts",
     "github:import-repos": "ts-node --transpile-only scripts/import-github-repos.ts",
     "publisher:report": "node scripts/generate-publisher-daily-report.mjs",
     "publisher:commit": "bash scripts/daily-publisher-commit.sh"
