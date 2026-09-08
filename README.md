@@ -17,7 +17,7 @@
             ║  ██║     ╚██████╔╝██████╔╝███████╗██║███████║██║  ██║███████╗██║  ██║  ║
             ║  ╚═╝      ╚═════╝ ╚═════╝ ╚══════╝╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ║
             ║                                                                        ║
-            ║                     notion-publisher · Nucleo Lab                      ║
+            ║                  notion-publisher · Crafter Station                    ║
             ╚════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -43,7 +43,7 @@
   <img src="docs/assets/logos/once.png" width="28" height="28" alt="ONCE"/>
 </p>
 
-Hosted at [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher) *(private)*.  
+Hosted at [`crafter-station/notion-publisher`](https://github.com/crafter-station/notion-publisher) *(public)*.  
 Matrices · channels · discovery → **[CAPABILITIES.md](./CAPABILITIES.md)** · progress → **[docs/PROGRESS.md](./docs/PROGRESS.md)**
 
 </div>
@@ -67,7 +67,7 @@ Notion CMS  →  notion-publisher (this repo · no UI)
 Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social: Postly = broad cloud; **Composio** = Reddit (+ Eventbrite on Events); Typefully = text drafts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**.
 
 **Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
-**Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) blocked).  
+**Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).  
 **Mapped (stub):** Typefully, Postiz, ONCE · Eventbrite (pending Composio connect).  
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
@@ -380,7 +380,7 @@ Docs: https://myskool.xyz/docs · API: `https://api.myskool.xyz/v1` · Auth: `Be
 Env: `SKOOL_API_KEY` (must be MySkool `sk_live_…`) · optional `SKOOL_GROUP_ID` for sample posts.
 
 **Implemented (read):** groups / posts / comments → `GET /capabilities/skool`.  
-**Planned upstream:** `POST /v1/posts` (Phase 2) — write stays GitHub [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4); no invent success webhook.
+**Planned upstream:** `POST /v1/posts` (Phase 2) — write stays GitHub [#4](https://github.com/crafter-station/notion-publisher/issues/4); no invent success webhook.
 
 #### Notion property contract (**planned** for write)
 
@@ -617,9 +617,9 @@ npm run publisher:report
 
 Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
-- **Completed:** [#12](https://github.com/Nucleo-Lab/notion-publisher/issues/12) Gumroad · [#13](https://github.com/Nucleo-Lab/notion-publisher/issues/13) Postly · [#14](https://github.com/Nucleo-Lab/notion-publisher/issues/14) Skool discover · [#1](https://github.com/Nucleo-Lab/notion-publisher/issues/1) Publisher unify · [#2](https://github.com/Nucleo-Lab/notion-publisher/issues/2) Caption · [#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5) GitHub · [#9](https://github.com/Nucleo-Lab/notion-publisher/issues/9) Luma create · [#3](https://github.com/Nucleo-Lab/notion-publisher/issues/3) Notion MCP/CLI · [#16](https://github.com/Nucleo-Lab/notion-publisher/issues/16) docs reconcile  
-- **Next:** [#17](https://github.com/Nucleo-Lab/notion-publisher/issues/17)–[#19](https://github.com/Nucleo-Lab/notion-publisher/issues/19) planning (handoff / newsletter / metrics)  
-- **Blocked / later:** [#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4) Skool write · Phases C–D stubs  
+- **Completed:** [#12](https://github.com/crafter-station/notion-publisher/issues/12) Gumroad · [#13](https://github.com/crafter-station/notion-publisher/issues/13) Postly · [#14](https://github.com/crafter-station/notion-publisher/issues/14) Skool discover · [#1](https://github.com/crafter-station/notion-publisher/issues/1) Publisher unify · [#2](https://github.com/crafter-station/notion-publisher/issues/2) Caption · [#5](https://github.com/crafter-station/notion-publisher/issues/5) GitHub · [#9](https://github.com/crafter-station/notion-publisher/issues/9) Luma create · [#3](https://github.com/crafter-station/notion-publisher/issues/3) Notion MCP/CLI · [#16](https://github.com/crafter-station/notion-publisher/issues/16) docs reconcile  
+- **Next:** [#17](https://github.com/crafter-station/notion-publisher/issues/17)–[#19](https://github.com/crafter-station/notion-publisher/issues/19) planning (handoff / newsletter / metrics)  
+- **Blocked / later:** [#4](https://github.com/crafter-station/notion-publisher/issues/4) Skool write · Phases C–D stubs  
 
 ---
 
@@ -629,4 +629,8 @@ Internal Nucleo Lab / Nebulabs tooling. Prefer tiny diffs; update [`CAPABILITIES
 
 ## License
 
-Private repository. All rights reserved unless a `LICENSE` file is added later.
+All rights reserved unless a `LICENSE` file is added later.
+
+---
+
+Made with love by **Crafter Station** x **Núcleo Lab**
