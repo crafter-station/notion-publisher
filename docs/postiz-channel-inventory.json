@@ -1,0 +1,582 @@
+{
+  "checkedAt": "2026-09-14T06:15:06.642Z",
+  "source": "Installed image source registry; runtime API confirmation pending",
+  "versionFile": "v1.47.0",
+  "count": 34,
+  "providers": [
+    {
+      "class": "XProvider",
+      "identifier": "x",
+      "name": "X",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "STRIP_LINKS_FROM_X_POSTS",
+          "configured": false
+        },
+        {
+          "key": "DISABLE_X_ANALYTICS",
+          "configured": false
+        },
+        {
+          "key": "X_API_KEY",
+          "configured": false
+        },
+        {
+          "key": "X_API_SECRET",
+          "configured": false
+        },
+        {
+          "key": "X_URL",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "LinkedinProvider",
+      "identifier": "linkedin",
+      "name": "LinkedIn",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "LINKEDIN_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "LINKEDIN_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "LinkedinPageProvider",
+      "identifier": "linkedin-page",
+      "name": "LinkedIn Page",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "LINKEDIN_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "LINKEDIN_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "RedditProvider",
+      "identifier": "reddit",
+      "name": "Reddit",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "REDDIT_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "REDDIT_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "InstagramProvider",
+      "identifier": "instagram",
+      "name": "Instagram\\n(Facebook Business)",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "FACEBOOK_APP_ID",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        },
+        {
+          "key": "FACEBOOK_APP_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "InstagramStandaloneProvider",
+      "identifier": "instagram-standalone",
+      "name": "Instagram\\n(Standalone)",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "INSTAGRAM_APP_ID",
+          "configured": false
+        },
+        {
+          "key": "INSTAGRAM_APP_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "FacebookProvider",
+      "identifier": "facebook",
+      "name": "Facebook Page",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "FACEBOOK_APP_ID",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        },
+        {
+          "key": "FACEBOOK_APP_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "ThreadsProvider",
+      "identifier": "threads",
+      "name": "Threads",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "THREADS_APP_ID",
+          "configured": false
+        },
+        {
+          "key": "THREADS_APP_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "YoutubeProvider",
+      "identifier": "youtube",
+      "name": "YouTube",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "YOUTUBE_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "YOUTUBE_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "GmbProvider",
+      "identifier": "gmb",
+      "name": "Google My Business",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "GOOGLE_GMB_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "YOUTUBE_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "GOOGLE_GMB_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "YOUTUBE_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "TiktokProvider",
+      "identifier": "tiktok",
+      "name": "Tiktok",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "TIKTOK_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "TIKTOK_CLIENT_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "PinterestProvider",
+      "identifier": "pinterest",
+      "name": "Pinterest",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "PINTEREST_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "PINTEREST_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "DribbbleProvider",
+      "identifier": "dribbble",
+      "name": "Dribbble",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "PINTEREST_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "PINTEREST_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        },
+        {
+          "key": "DRIBBBLE_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "DRIBBBLE_CLIENT_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "DiscordProvider",
+      "identifier": "discord",
+      "name": "Discord",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "DISCORD_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "DISCORD_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        },
+        {
+          "key": "DISCORD_BOT_TOKEN_ID",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "SlackProvider",
+      "identifier": "slack",
+      "name": "Slack",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "SLACK_ID",
+          "configured": false
+        },
+        {
+          "key": "SLACK_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "KickProvider",
+      "identifier": "kick",
+      "name": "Kick",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "KICK_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "KICK_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "TwitchProvider",
+      "identifier": "twitch",
+      "name": "Twitch",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "TWITCH_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "TWITCH_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "MastodonProvider",
+      "identifier": "mastodon",
+      "name": "Mastodon",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "MASTODON_URL",
+          "configured": true
+        },
+        {
+          "key": "MASTODON_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        },
+        {
+          "key": "MASTODON_CLIENT_SECRET",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "BlueskyProvider",
+      "identifier": "bluesky",
+      "name": "Bluesky",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "DISABLE_SSRF_PROTECTION",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "LemmyProvider",
+      "identifier": "lemmy",
+      "name": "Lemmy",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "FarcasterProvider",
+      "identifier": "wrapcast",
+      "name": "Farcaster",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "NEYNAR_SECRET_KEY",
+          "configured": false
+        },
+        {
+          "key": "NEYNAR_CLIENT_ID",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "TelegramProvider",
+      "identifier": "telegram",
+      "name": "Telegram",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "TELEGRAM_TOKEN",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        },
+        {
+          "key": "STORAGE_PROVIDER",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "NostrProvider",
+      "identifier": "nostr",
+      "name": "Nostr",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "VkProvider",
+      "identifier": "vk",
+      "name": "VK",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "VK_ID",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "MediumProvider",
+      "identifier": "medium",
+      "name": "Medium",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "DevToProvider",
+      "identifier": "devto",
+      "name": "Dev.to",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "HashnodeProvider",
+      "identifier": "hashnode",
+      "name": "Hashnode",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "NEXT_PUBLIC_BACKEND_URL",
+          "configured": true
+        },
+        {
+          "key": "NEXT_PUBLIC_UPLOAD_STATIC_DIRECTORY",
+          "configured": false
+        }
+      ]
+    },
+    {
+      "class": "WordpressProvider",
+      "identifier": "wordpress",
+      "name": "WordPress",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "ListmonkProvider",
+      "identifier": "listmonk",
+      "name": "ListMonk",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "MoltbookProvider",
+      "identifier": "moltbook",
+      "name": "Moltbook",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "WhopProvider",
+      "identifier": "whop",
+      "name": "Whop",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "WHOP_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "SkoolProvider",
+      "identifier": "skool",
+      "name": "Skool",
+      "connectionState": "not_verified",
+      "environmentReferences": []
+    },
+    {
+      "class": "MeweProvider",
+      "identifier": "mewe",
+      "name": "MeWe",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "MEWE_HOST",
+          "configured": false
+        },
+        {
+          "key": "MEWE_APP_ID",
+          "configured": false
+        },
+        {
+          "key": "MEWE_API_KEY",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    },
+    {
+      "class": "TumblrProvider",
+      "identifier": "tumblr",
+      "name": "Tumblr",
+      "connectionState": "not_verified",
+      "environmentReferences": [
+        {
+          "key": "TUMBLR_CLIENT_ID",
+          "configured": false
+        },
+        {
+          "key": "TUMBLR_CLIENT_SECRET",
+          "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
+        }
+      ]
+    }
+  ],
+  "imageId": "sha256:1bc5a731a3258b5ad11a5aa0ae0df65a6f152cda1cb22dbce9932166365b65d3",
+  "caveat": "Environment references include optional flags and fallback keys; presence is not proof of required credentials, permissions or account connection."
+}
