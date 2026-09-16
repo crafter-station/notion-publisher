@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-14T06:15:06.642Z",
+  "checkedAt": "2026-09-16T18:58:16.341Z",
   "source": "Installed image source registry; runtime API confirmation pending",
   "versionFile": "v1.47.0",
   "count": 34,
@@ -127,6 +127,10 @@
           "configured": false
         },
         {
+          "key": "FRONTEND_URL",
+          "configured": true
+        },
+        {
           "key": "INSTAGRAM_APP_SECRET",
           "configured": false
         }
@@ -161,6 +165,10 @@
         {
           "key": "THREADS_APP_ID",
           "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
         },
         {
           "key": "THREADS_APP_SECRET",
@@ -229,6 +237,10 @@
         {
           "key": "TIKTOK_CLIENT_SECRET",
           "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
         }
       ]
     },
@@ -313,6 +325,10 @@
         {
           "key": "SLACK_ID",
           "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
         },
         {
           "key": "SLACK_SECRET",
@@ -455,6 +471,10 @@
         {
           "key": "VK_ID",
           "configured": false
+        },
+        {
+          "key": "FRONTEND_URL",
+          "configured": true
         }
       ]
     },

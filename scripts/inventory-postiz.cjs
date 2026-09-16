@@ -12,7 +12,7 @@ const providers=[...list.matchAll(/new (\w+)\(/g)].map(([,cls])=>{
  const source=fs.readFileSync(base+'social/'+file,'utf8');
  const identifier=source.match(/identifier\s*=\s*['"]([^'"]+)/)?.[1];
  if(!identifier) throw new Error('Provider identifier missing');
- return {class:cls,identifier,name:source.match(/name\s*=\s*['"]([^'"]+)/)?.[1],connectionState:'not_verified',environmentReferences:[...new Set([...source.matchAll(/process\.env\.(\w+)/g)].map(x=>x[1]))].map(key=>({key,configured:!!process.env[key]}))};
+ return {class:cls,identifier,name:source.match(/name\s*=\s*['"]([^'"]+)/)?.[1],connectionState:'not_verified',environmentReferences:[...new Set([...source.matchAll(/process(?:\?\.|\.)env(?:\?\.|\.)(\w+)/g)].map(x=>x[1]))].map(key=>({key,configured:!!process.env[key]}))};
 });
 console.log(JSON.stringify({checkedAt:new Date().toISOString(),source:'Installed image source registry; runtime API confirmation pending',versionFile:fs.readFileSync('/app/version.txt','utf8').trim(),count:providers.length,providers}));
 `;
