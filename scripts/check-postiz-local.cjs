@@ -2,8 +2,14 @@
 const { execFileSync } = require('node:child_process');
 const { summarizeCoverage } = require('./lib/postiz-coverage.cjs');
 const inventory = require('../docs/postiz-channel-inventory.json');
+const fs = require('node:fs');
+const dotenv = require('dotenv');
 
 async function main() {
+  const index = process.argv.indexOf('--env');
+  const file = index < 0 ? null : process.argv[index + 1];
+  if (index >= 0 && (!file || file.startsWith('--'))) throw new Error('Missing environment file');
+  const config = { ...(file ? dotenv.parse(fs.readFileSync(file)) : {}), ...process.env };
   const report = { checkedAt: new Date().toISOString(), project: 'open-publisher-postiz', containers: [], api: { state: 'unreachable' } };
   try {
     const output = execFileSync('docker', ['ps', '-a', '--filter', 'label=com.docker.compose.project=open-publisher-postiz', '--format', '{{json .}}'], { encoding: 'utf8', timeout: 15000 });
@@ -20,11 +26,11 @@ async function main() {
   report.coverage = summarizeCoverage(inventory.providers, null);
   try {
     const response = await fetch('http://localhost:4007/api/public/v1/integrations', {
-      headers: process.env.POSTIZ_API_KEY ? { Authorization: process.env.POSTIZ_API_KEY } : {},
+      headers: config.POSTIZ_API_KEY ? { Authorization: config.POSTIZ_API_KEY } : {},
       redirect: 'error', signal: AbortSignal.timeout(15000),
     });
     report.api = { httpStatus: response.status, state: 'unexpected_response' };
-    if (response.status === 401) report.api.state = process.env.POSTIZ_API_KEY ? 'credential_rejected' : 'authentication_required';
+    if (response.status === 401) report.api.state = config.POSTIZ_API_KEY ? 'credential_rejected' : 'authentication_required';
     else if (response.ok) {
       const accounts = await response.json();
       if (Array.isArray(accounts) && accounts.every(a => a && typeof a.id === 'string' && typeof a.identifier === 'string' && typeof a.disabled === 'boolean')) {

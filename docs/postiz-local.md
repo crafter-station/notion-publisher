@@ -72,3 +72,17 @@ El JSON separa `active`, `disabled`, `missing` y `unverified`. Dos cuentas del m
 `allRegisteredIntegrationsActive` solo acredita el inventario de cuentas devuelto por la API. La renovación/reconexión y la visibilidad desde Open Publisher siguen requiriendo las pruebas del objetivo. Verificador de esta clasificación: `node scripts/check-postiz-coverage.cjs`.
 
 Verificación 2026-09-16: imagen coincidente, 34 integraciones registradas y 34 sin verificar; API 401 sin clave. Se corrigió también la detección de referencias `process?.env` para incluir las dependencias de URL de Instagram Standalone, Threads, TikTok, Slack y VK. No se modificaron credenciales ni se publicaron contenidos.
+
+## Actualización 2026-09-17: API local conectada
+
+La instancia ya contiene una cuenta administradora y una organización con clave de API. Se reutilizó la clave existente, sin crear ni rotar credenciales, y se verificó `/api/public/v1/integrations`: HTTP 200, inventario vacío. La cobertura actual es **0 de 34 integraciones activas**, con las 34 ausentes en el inventario autenticado (ya no simplemente sin verificar).
+
+La conexión está configurada únicamente en `publisher-web/.dev.vars`, ignorado por git y con permisos 0600. La aplicación alojada en Sites todavía necesita un endpoint HTTPS accesible o un enlace privado soportado; no se le ha copiado una URL localhost.
+
+Diagnóstico reproducible sin pegar secretos en la terminal:
+
+```sh
+node scripts/check-postiz-local.cjs --env publisher-web/.dev.vars --require-all-active
+```
+
+El código de salida 1 sigue siendo correcto mientras no estén activas las 34 integraciones. Iniciar sesión en Postiz permitirá completar la autorización de las cuentas; las aplicaciones OAuth necesarias también siguen pendientes.
