@@ -95,6 +95,11 @@ export function buildIngestPages(resolved: ResolvedIngest): IngestPagePayload[] 
       if (body) properties['Reddit Body'] = rt(body);
       const sub = field(f, 'Reddit Subreddit');
       if (sub) properties['Reddit Subreddit'] = rt(sub);
+      const kind = field(f, 'Reddit Post Type');
+      if (kind && !['self', 'link'].includes(kind)) throw new Error('Reddit Post Type must be self or link');
+      if (kind) properties['Reddit Post Type'] = select(kind);
+      const flair = field(f, 'Reddit Flair ID');
+      if (flair) properties['Reddit Flair ID'] = rt(flair);
       const link = field(f, 'Reddit Link URL');
       if (link.startsWith('http')) properties['Reddit Link URL'] = urlProp(link);
     }

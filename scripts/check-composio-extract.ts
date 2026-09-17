@@ -49,3 +49,27 @@ if (forced.kind !== 'self' || !forced.is_complete) {
 }
 
 console.log('[check-composio-extract] ok');
+
+const flairId = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
+const explicitProps = {
+  'Reddit Title': rt('Explicit text'),
+  'Reddit Body': rt('Body'),
+  'Reddit Subreddit': rt('r/test'),
+  'Reddit Link URL': url('https://example.com'),
+  'Reddit Post Type': { select: { name: 'self' } },
+  'Reddit Flair ID': rt(flairId),
+};
+const explicit = extractComposioRedditContent(explicitProps);
+if (explicit.kind !== 'self' || explicit.flair_id !== flairId || !explicit.is_complete) throw new Error('Explicit type and flair lost');
+for (const overrides of [
+  { 'Reddit Title': rt('x'.repeat(301)) },
+  { 'Reddit Title': rt('   ') },
+  { 'Reddit Body': rt('x'.repeat(40001)) },
+  { 'Reddit Subreddit': rt('https://reddit.com/r/test') },
+  { 'Reddit Flair ID': rt('news') },
+  { 'Reddit Post Type': { select: { name: 'video' } } },
+  { 'Reddit Post Type': { select: { name: 'link' } }, 'Reddit Link URL': url('javascript:alert(1)') },
+]) {
+  if (extractComposioRedditContent({ ...explicitProps, ...overrides }).is_complete) throw new Error('Invalid Reddit fields accepted');
+}
+console.log('[check-composio-extract] explicit type, flair and validation ok');

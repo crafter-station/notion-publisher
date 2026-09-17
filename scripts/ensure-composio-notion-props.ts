@@ -16,9 +16,14 @@ if (!token || !databaseId) {
 type PropDef =
   | { rich_text: {} }
   | { url: {} }
+  | { select: { options: { name: string }[] } }
   | { status: { options: { name: string; color?: string }[] } };
 
 const WANTED: Record<string, PropDef> = {
+  'Reddit Title': { rich_text: {} },
+  'Reddit Body': { rich_text: {} },
+  'Reddit Post Type': { select: { options: [{ name: 'self' }, { name: 'link' }] } },
+  'Reddit Flair ID': { rich_text: {} },
   'Reddit Subreddit': { rich_text: {} },
   'Reddit Link URL': { url: {} },
   'Composio User ID': { rich_text: {} },
@@ -50,6 +55,7 @@ async function main() {
   const toAdd: Record<string, PropDef> = {};
   for (const [name, def] of Object.entries(WANTED)) {
     if (!existing[name]) toAdd[name] = def;
+    else if (existing[name].type !== Object.keys(def)[0]) throw new Error(`Property type mismatch: ${name}`);
     else console.log(`ok exists: ${name} (${existing[name].type})`);
   }
   if (Object.keys(toAdd).length === 0) {

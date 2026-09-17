@@ -132,9 +132,10 @@ export class ComposioService {
     args: RedditCreatePostArgs,
     auth: { userId: string; connectedAccountId?: string }
   ) {
+    if (!args.title.trim() || Array.from(args.title).length > 300) throw new Error('Reddit title must contain 1–300 characters');
     const payload: Record<string, unknown> = {
       subreddit: args.subreddit.replace(/^r\//i, ''),
-      title: args.title.slice(0, 300),
+      title: args.title,
     };
     if (args.kind) payload.kind = args.kind;
     if (args.text) payload.text = args.text;
