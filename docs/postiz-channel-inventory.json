@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-16T18:58:16.341Z",
+  "checkedAt": "2026-09-17T23:56:31.402Z",
   "source": "Installed image source registry; runtime API confirmation pending",
   "versionFile": "v1.47.0",
   "count": 34,
@@ -271,20 +271,12 @@
       "connectionState": "not_verified",
       "environmentReferences": [
         {
-          "key": "PINTEREST_CLIENT_ID",
-          "configured": false
-        },
-        {
-          "key": "PINTEREST_CLIENT_SECRET",
+          "key": "DRIBBBLE_CLIENT_ID",
           "configured": false
         },
         {
           "key": "FRONTEND_URL",
           "configured": true
-        },
-        {
-          "key": "DRIBBBLE_CLIENT_ID",
-          "configured": false
         },
         {
           "key": "DRIBBBLE_CLIENT_SECRET",
@@ -597,6 +589,6 @@
       ]
     }
   ],
-  "imageId": "sha256:1bc5a731a3258b5ad11a5aa0ae0df65a6f152cda1cb22dbce9932166365b65d3",
+  "imageId": "sha256:040a097c8a61e5fdf668b9cb0fe37c528dc81a09a621555133443b23cf0fec7d",
   "caveat": "Environment references include optional flags and fallback keys; presence is not proof of required credentials, permissions or account connection."
 }

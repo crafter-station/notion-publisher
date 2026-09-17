@@ -86,3 +86,19 @@ node scripts/check-postiz-local.cjs --env publisher-web/.dev.vars --require-all-
 ```
 
 El código de salida 1 sigue siendo correcto mientras no estén activas las 34 integraciones. Iniciar sesión en Postiz permitirá completar la autorización de las cuentas; las aplicaciones OAuth necesarias también siguen pendientes.
+
+## Corrección local de Dribbble — 2026-09-17
+
+Aplicada la imagen `open-publisher/postiz:dribbble-reconnect-1`, construida con `infra/postiz/Dockerfile` sobre el digest exacto de la imagen instalada. Corrige únicamente `refreshToken` de Dribbble en el código fuente y en los ejecutables de backend y orquestador: ya no llama a Pinterest ni lee sus credenciales. Devuelve un error de reconexión, que el servicio existente de Postiz convierte en una cuenta que necesita volver a autorizarse. No inventa un grant de renovación que Dribbble no documenta.
+
+La construcción comprueba los hashes de los tres archivos originales; si cambia la base, exige revisión. Las pruebas ejecutan ambos proveedores compilados y el servicio de renovación con transportes simulados: cero solicitudes de renovación, señal de reconexión y flujo inicial de OAuth conservado. También se ejecutaron en el contenedor desplegado. Esto verifica la corrección de código, **no una autorización real de Dribbble**, que sigue pendiente.
+
+Reconstrucción desde este repositorio:
+
+```sh
+docker build --network=none -t open-publisher/postiz:dribbble-reconnect-1 infra/postiz
+```
+
+El directorio privado de instalación contiene `docker-compose.override.yaml` con el nombre de esa imagen y `pull_policy: never`. `docker compose -p open-publisher-postiz up -d --no-deps postiz`, ejecutado allí, la aplica sin recrear bases ni volúmenes. Para volver temporalmente a la imagen original, ejecutar allí `docker compose -f docker-compose.yaml -p open-publisher-postiz up -d --no-deps postiz`; la siguiente ejecución sin `-f` volverá a aplicar el override. No usar `pull` para reemplazar silenciosamente la base fijada.
+
+El inventario se regeneró desde la imagen corregida: conserva las 34 integraciones; Dribbble ya no contiene referencias a las variables de Pinterest. Tras cualquier cambio de imagen, repetir el inventario y la comprobación autenticada de cobertura. La conexión y reconexión reales de todas las cuentas siguen siendo requisitos pendientes.
