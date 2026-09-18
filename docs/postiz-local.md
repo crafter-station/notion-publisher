@@ -102,3 +102,34 @@ docker build --network=none -t open-publisher/postiz:dribbble-reconnect-1 infra/
 El directorio privado de instalación contiene `docker-compose.override.yaml` con el nombre de esa imagen y `pull_policy: never`. `docker compose -p open-publisher-postiz up -d --no-deps postiz`, ejecutado allí, la aplica sin recrear bases ni volúmenes. Para volver temporalmente a la imagen original, ejecutar allí `docker compose -f docker-compose.yaml -p open-publisher-postiz up -d --no-deps postiz`; la siguiente ejecución sin `-f` volverá a aplicar el override. No usar `pull` para reemplazar silenciosamente la base fijada.
 
 El inventario se regeneró desde la imagen corregida: conserva las 34 integraciones; Dribbble ya no contiene referencias a las variables de Pinterest. Tras cualquier cambio de imagen, repetir el inventario y la comprobación autenticada de cobertura. La conexión y reconexión reales de todas las cuentas siguen siendo requisitos pendientes.
+
+## Bloqueo confirmado: autorización de LinkedIn e Instagram — 2026-09-18
+
+El usuario pudo entrar en `/launches`, pero las conexiones de LinkedIn e Instagram fallaron. Se verificó directamente el entorno del contenedor: faltan las seis variables de aplicaciones indicadas abajo. Tampoco están en los archivos de configuración conocidos del proyecto. `/api/integrations` devuelve 34 conectores registrados; esto prueba disponibilidad del catálogo, no capacidad de autorizar cuentas.
+
+| Variantes | Variables requeridas |
+| --- | --- |
+| LinkedIn y LinkedIn Page | LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET |
+| Instagram Facebook Business | FACEBOOK_APP_ID, FACEBOOK_APP_SECRET |
+| Instagram Standalone | INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET |
+
+Diagnóstico de estas cuatro variantes, sin mostrar valores secretos:
+
+```bash
+node scripts/check-postiz-oauth.cjs
+```
+
+Devuelve `missing_app_credentials` o `credentials_present_unverified`, el callback efectivo y las verificaciones que faltan. No presenta claves existentes como conexiones verificadas. Código 1 indica configuración faltante; código 0 solo indica presencia de claves, no éxito OAuth. Este diagnóstico cubre cuatro variantes, no sustituye la aceptación de las 34.
+
+Callbacks actuales obtenidos del código instalado:
+
+- `http://localhost:4007/integrations/social/linkedin`
+- `http://localhost:4007/integrations/social/linkedin-page`
+- `http://localhost:4007/integrations/social/instagram`
+- Instagram Standalone transforma HTTP en `https://redirectmeto.com/http://localhost:4007/integrations/social/instagram-standalone`.
+
+Para la instalación definitiva, usar un origen HTTPS estable y registrar los callbacks resultantes en las aplicaciones de LinkedIn/Meta. No registrar el relay externo de desarrollo como solución definitiva. La migración del origen requiere actualizar las variables de URL y todos los callbacks; no basta con cambiar el DNS.
+
+LinkedIn requiere los productos y scopes listados en su [guía oficial de Postiz](https://docs.postiz.com/self-host/providers/linkedin), incluidos los permisos de organización que solicita también el conector de perfil. La [guía de Instagram](https://docs.postiz.com/self-host/providers/instagram) distingue la aplicación Facebook Business de las credenciales Instagram Standalone. Tras configurar claves y permisos, recrear únicamente el servicio Postiz conservando los volúmenes y comprobar la autorización de cada variante desde el navegador. No cambiar ni reinicializar las cuentas existentes para resolver este bloqueo.
+
+El acceso mediante Google en la pantalla de login también genera actualmente un `client_id` ausente; no está configurado. El acceso local con email/contraseña es independiente. No se cambió la política de cookies ni se deshabilitaron controles de seguridad durante el diagnóstico.
