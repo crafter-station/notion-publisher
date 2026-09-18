@@ -2,7 +2,7 @@
  * ponytail: assert extractComposioRedditContent kind inference (no framework).
  * Run: npx ts-node --transpile-only scripts/check-composio-extract.ts
  */
-import { extractComposioRedditContent } from '../src/services/notion.service';
+import { extractComposioRedditContent } from '../src/services/reddit-content';
 
 function rt(s: string) {
   return { rich_text: [{ plain_text: s }] };
