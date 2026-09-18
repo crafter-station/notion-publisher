@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-17T23:56:31.402Z",
+  "checkedAt": "2026-09-18T12:55:37.446Z",
   "source": "Installed image source registry; runtime API confirmation pending",
   "versionFile": "v1.47.0",
   "count": 34,
@@ -589,6 +589,6 @@
       ]
     }
   ],
-  "imageId": "sha256:040a097c8a61e5fdf668b9cb0fe37c528dc81a09a621555133443b23cf0fec7d",
+  "imageId": "sha256:54477791b62fe41bee586f6e29e286089c12e19753940ca5db6066a273be0366",
   "caveat": "Environment references include optional flags and fallback keys; presence is not proof of required credentials, permissions or account connection."
 }

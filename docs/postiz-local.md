@@ -133,3 +133,19 @@ Para la instalación definitiva, usar un origen HTTPS estable y registrar los ca
 LinkedIn requiere los productos y scopes listados en su [guía oficial de Postiz](https://docs.postiz.com/self-host/providers/linkedin), incluidos los permisos de organización que solicita también el conector de perfil. La [guía de Instagram](https://docs.postiz.com/self-host/providers/instagram) distingue la aplicación Facebook Business de las credenciales Instagram Standalone. Tras configurar claves y permisos, recrear únicamente el servicio Postiz conservando los volúmenes y comprobar la autorización de cada variante desde el navegador. No cambiar ni reinicializar las cuentas existentes para resolver este bloqueo.
 
 El acceso mediante Google en la pantalla de login también genera actualmente un `client_id` ausente; no está configurado. El acceso local con email/contraseña es independiente. No se cambió la política de cookies ni se deshabilitaron controles de seguridad durante el diagnóstico.
+
+## Error OAuth accionable en Postiz local — 2026-09-18
+
+Imagen activa: `open-publisher/postiz:oauth-preflight-1`, ID `sha256:54477791b62fe41bee586f6e29e286089c12e19753940ca5db6066a273be0366`. Conserva la corrección Dribbble e incorpora `infra/postiz/patch-oauth-preflight.cjs`.
+
+El controlador de inicio OAuth rechaza LinkedIn/LinkedIn Page e Instagram/Instagram Standalone si faltan sus credenciales de aplicación. Lo hace antes de generar la URL, acceder al proveedor o guardar estado OAuth en Redis. Devuelve únicamente los nombres de variables faltantes y un mensaje; nunca sus valores. El cliente muestra ese mensaje en lugar de abrir una URL con client_id ausente. Los errores genéricos mantienen su mensaje anterior. No se alteran las autorizaciones de cuentas ni la autenticación del servicio.
+
+El parche exige hashes exactos del código y los dos chunks de frontend de la imagen fijada; otra versión requiere revisión. Se prueban el método compilado instalado, la ausencia de llamadas a proveedor/Redis cuando faltan claves, el flujo con claves presentes, un proveedor ajeno al cambio, la sintaxis completa de los chunks y los mensajes. Las pruebas usan dependencias simuladas y no envían OAuth ni publicaciones.
+
+```bash
+docker build --network=none -t open-publisher/postiz:oauth-preflight-1 infra/postiz
+```
+
+El override privado de Docker Compose apunta a esa imagen. Tras recrear solo Postiz, la API autenticada volvió a HTTP 200 con cero cuentas y el inventario conservó 34 integraciones. Ambos chunks corregidos se comprobaron por HTTP. El arranque tardó aproximadamente dos minutos; el estado Docker healthy apareció antes de que la API estuviera lista. La interacción del toast en la sesión autenticada del usuario aún no se ha verificado; una pestaña abierta antes del cambio puede necesitar recarga completa porque los nombres de chunks de esta imagen fijada no cambian.
+
+Rollback: restaurar la imagen `open-publisher/postiz:dribbble-reconnect-1` en el override privado y recrear solo `postiz`, sin eliminar volúmenes. Regenerar el inventario después de cambiar la imagen. Esta corrección informa y bloquea la configuración incompleta; no proporciona las aplicaciones OAuth pendientes.
