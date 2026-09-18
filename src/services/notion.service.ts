@@ -1061,7 +1061,8 @@ export function extractComposioRedditContent(
 ): ComposioRedditContent {
   const missing: string[] = [];
   const title = _richText(props['Reddit Title']) || _titleText(props['Name']) || '';
-  const body = _richText(props['Reddit Body']);
+  // Empty Notion overrides inherit Caption, matching the web Notion adapter.
+  const body = _richText(props['Reddit Body']) || _richText(props['Caption']);
   const subreddit =
     normalizeSubreddit(_richText(props['Reddit Subreddit'])) ||
     normalizeSubreddit(env.COMPOSIO_REDDIT_SUBREDDIT);
@@ -1081,7 +1082,7 @@ export function extractComposioRedditContent(
     missing.push('Reddit Link URL (or Image / Screenshot) for kind=link');
   }
   if (explicitKind === 'self' && !body) {
-    missing.push('Reddit Body for kind=self');
+    missing.push('Reddit Body (or Caption) for kind=self');
   }
   if (!explicitKind) {
     if (kind === 'link' && !link_url) kind = 'self';
@@ -1100,7 +1101,7 @@ export function extractComposioRedditContent(
   }
   if (flair_id && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(flair_id)) missing.push('Reddit Flair ID must be a flair template UUID for this subreddit');
   if (!subreddit) missing.push('Reddit Subreddit (or COMPOSIO_REDDIT_SUBREDDIT)');
-  if (kind === 'self' && !body) missing.push('Reddit Body');
+  if (kind === 'self' && !body) missing.push('Reddit Body (or Caption)');
   if (kind === 'link' && !link_url) missing.push('Reddit Link URL (or Image / Screenshot)');
 
   return {
