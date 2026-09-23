@@ -40,6 +40,8 @@ Desktop: contenido y vista previa como área principal, conversación contextual
 
 ## Runtime propuesto
 
+Inspección de los clientes instalados y sus diferencias: [viabilidad del runtime](agent-runtime-feasibility.md). La disponibilidad de flags y esquemas no equivale a integración validada.
+
 Dos entradas al mismo trabajo: agente externo que llama API/CLI/MCP, o conversación web que delega a un ejecutor conectado. MCP permite llamar operaciones; por sí solo no ejecuta Claude Code/Codex en la computadora del usuario.
 
 Para agentes locales, evaluar un conector iniciado por el usuario que solicite trabajos mediante conexiones salientes HTTPS. Así no requiere ngrok ni un puerto local expuesto. El servidor conserva el estado durable; el conector ejecuta únicamente tareas y adaptadores permitidos. Un equipo apagado aparece como desconectado, no como un trabajo ejecutándose.
