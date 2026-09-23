@@ -66,6 +66,8 @@ El contenido, los archivos, las cuentas de destino y la programación forman par
 
 ## Capacidades y vistas previas
 
+Primer contrato por formato investigado: [TikTok](tiktok-editor-contract.md), con diferencias de vídeo/fotos y envío a bandeja frente a publicación directa. Música tiene una [revisión separada de ONCE](once-discovery.md).
+
 Cada ruta debe declarar operaciones (descubrir, cargar, crear borrador, publicar, programar, consultar resultado, editar/eliminar si están disponibles), formatos, campos obligatorios, límites, permisos y evidencia fechada. Separar soporte documentado, implementado y probado con una cuenta real. Los tres no se reducen a un único indicador verde.
 
 UI, agentes y servidor deben consumir el mismo contrato. Validar primero el contenido, luego la cuenta y los permisos, y nuevamente antes de ejecutar. La ausencia de un campo opcional o una función en un proveedor no debe ocultarse detrás de una vista previa que sí la muestra.
