@@ -18,3 +18,11 @@ La [autenticación oficial](https://docs.once.app/rest-api/authentication) permi
 Para diseñar el editor musical: obtener primero el esquema autorizado, cargar audio/portada, representar lanzamiento y pistas, y validar los metadatos. La [guía de lanzamientos](https://docs.once.app/rest-api/releases) diferencia guardar un borrador, cotizar y enviar a distribución. Una entrega tiene coste y resultado por tienda; no es una publicación de texto. No se subieron archivos, crearon borradores, distribuyeron canciones ni compraron créditos.
 
 Podcasts requieren una ruta separada pendiente de investigación y prueba. Ni una tienda musical listada ni estos endpoints acreditan soporte de episodios. El onboarding debe distinguir música de podcast antes de mostrar sus campos.
+
+## Acceso de cuenta comprobado en navegador
+
+El 2026-09-22 se pudo abrir la cuenta existente en `beta.once.app` con su sesión activa. Account & Settings mostró cero créditos disponibles y cero lanzamientos distribuidos. El panel Developer mostró cero tokens personales y cero webhooks registrados.
+
+Se inspeccionó el formulario de token y se canceló sin enviarlo. Ofrece vencimientos de 30 días, 90 días, un año o sin vencimiento. El alcance obligatorio es `once:mcp` (API completa); `once:fraud` es opcional y ajeno a Publisher. No hay una opción de solo lectura en ese formulario.
+
+La sesión de navegador queda verificada; la autenticación servidor→ONCE sigue pendiente. No extraer cookies como sustituto de una credencial de integración. El siguiente paso de implementación es una credencial dedicada con vencimiento, almacenamiento secreto y comprobación autenticada de identidad/esquema antes de preparar un borrador. El saldo de cero bloquea una entrega que requiera créditos, pero no se ha probado que bloquee las lecturas o la preparación de borradores. No se compraron créditos ni se creó contenido en esta revisión.
