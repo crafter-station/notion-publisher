@@ -1,5 +1,7 @@
 # Progress + backlog
 
+**2026-09-22 — Product planning update:** [Agent-first experience and runtime plan](agent-first-plan.md) records the current requested direction, inspected implementation gaps, acceptance stages and open user decisions. The historical shipped/live labels below do not prove current hosted channel readiness. See also [hosted acceptance](hosted-acceptance-2026-09-22.md).
+
 How to read this file: **completed work first** (Gumroad + Postly), then what’s live, then what’s left.
 
 | Layer | Link |
