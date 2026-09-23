@@ -1,0 +1,448 @@
+{
+  "checkedAt": "2026-09-23T00:23:17.378Z",
+  "source": "https://once.app/v1",
+  "evidence": "public_discovery_only",
+  "stores": [
+    {
+      "id": 1,
+      "name": "Apple Music",
+      "aliases": [
+        "apple",
+        "itunes",
+        "apple music"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 9,
+      "name": "Spotify",
+      "aliases": [
+        "spotify"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 13,
+      "name": "YouTube Music",
+      "aliases": [
+        "youtube music",
+        "yt music",
+        "youtube"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 319,
+      "name": "TikTok",
+      "aliases": [
+        "tiktok",
+        "tik tok",
+        "tt"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 17,
+      "name": "Amazon",
+      "aliases": [
+        "amazon",
+        "amazon music"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 14,
+      "name": "Tidal",
+      "aliases": [
+        "tidal"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 19,
+      "name": "Nuuday",
+      "aliases": [
+        "nuuday"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 41,
+      "name": "Pandora",
+      "aliases": [
+        "pandora"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 45,
+      "name": "KKBOX",
+      "aliases": [
+        "kkbox"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 52,
+      "name": "iMusica",
+      "aliases": [
+        "imusica",
+        "i musica"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 68,
+      "name": "SoundCloud",
+      "aliases": [
+        "soundcloud",
+        "sound cloud"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 85,
+      "name": "iHeartRadio",
+      "aliases": [
+        "iheartradio",
+        "iheart radio",
+        "iheart"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 91,
+      "name": "Anghami",
+      "aliases": [
+        "anghami"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 110,
+      "name": "Jiosaavn",
+      "aliases": [
+        "jiosaavn",
+        "jio saavn"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 130,
+      "name": "AWA",
+      "aliases": [
+        "awa"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 208,
+      "name": "Tencent",
+      "aliases": [
+        "tencent"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 264,
+      "name": "NetEase",
+      "aliases": [
+        "netease",
+        "net ease"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 309,
+      "name": "Facebook Audio Library",
+      "aliases": [
+        "facebook",
+        "facebook audio library",
+        "meta"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 315,
+      "name": "Mixcloud",
+      "aliases": [
+        "mixcloud"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 321,
+      "name": "Boomplay",
+      "aliases": [
+        "boomplay"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 323,
+      "name": "Snap",
+      "aliases": [
+        "snap",
+        "snapchat"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 324,
+      "name": "Peloton",
+      "aliases": [
+        "peloton"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 334,
+      "name": "Audiomack",
+      "aliases": [
+        "audiomack",
+        "audio mack"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 371,
+      "name": "JOOX",
+      "aliases": [
+        "joox"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 416,
+      "name": "Flo",
+      "aliases": [
+        "flo"
+      ],
+      "partnerOnly": false
+    },
+    {
+      "id": 307,
+      "name": "YouTube Content ID",
+      "aliases": [
+        "youtube content id",
+        "youtube cid",
+        "content id",
+        "yt cid"
+      ],
+      "partnerOnly": true
+    },
+    {
+      "id": 310,
+      "name": "Facebook Rights Manager",
+      "aliases": [
+        "facebook rights manager",
+        "fb rights manager",
+        "frm",
+        "meta rights"
+      ],
+      "partnerOnly": false
+    }
+  ],
+  "mappedDestinations": [
+    {
+      "channelId": "Spotify",
+      "state": "publicly_listed",
+      "storeId": 9
+    },
+    {
+      "channelId": "AppleMusic",
+      "state": "publicly_listed",
+      "storeId": 1
+    },
+    {
+      "channelId": "YouTubeMusic",
+      "state": "publicly_listed",
+      "storeId": 13
+    },
+    {
+      "channelId": "AmazonMusic",
+      "state": "publicly_listed",
+      "storeId": 17
+    },
+    {
+      "channelId": "Tidal",
+      "state": "publicly_listed",
+      "storeId": 14
+    },
+    {
+      "channelId": "Deezer",
+      "state": "not_in_public_catalog",
+      "storeId": null
+    },
+    {
+      "channelId": "Pandora",
+      "state": "publicly_listed",
+      "storeId": 41
+    }
+  ],
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/"
+    },
+    {
+      "method": "POST",
+      "path": "/agent-auth/verified-email/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/agent-auth/verified-email/claim"
+    },
+    {
+      "method": "GET",
+      "path": "/status"
+    },
+    {
+      "method": "GET",
+      "path": "/metadata-rules"
+    },
+    {
+      "method": "GET",
+      "path": "/distribution-stores"
+    },
+    {
+      "method": "GET",
+      "path": "/language-script-codes"
+    },
+    {
+      "method": "GET",
+      "path": "/pricing"
+    },
+    {
+      "method": "GET",
+      "path": "/release-schema"
+    },
+    {
+      "method": "GET",
+      "path": "/me"
+    },
+    {
+      "method": "GET",
+      "path": "/me/credits"
+    },
+    {
+      "method": "POST",
+      "path": "/files"
+    },
+    {
+      "method": "POST",
+      "path": "/files/from-url"
+    },
+    {
+      "method": "POST",
+      "path": "/uploads"
+    },
+    {
+      "method": "POST",
+      "path": "/audio/ai-detection"
+    },
+    {
+      "method": "POST",
+      "path": "/audio/acr-check"
+    },
+    {
+      "method": "POST",
+      "path": "/cover-art"
+    },
+    {
+      "method": "POST",
+      "path": "/drafts"
+    },
+    {
+      "method": "GET",
+      "path": "/releases"
+    },
+    {
+      "method": "POST",
+      "path": "/releases"
+    },
+    {
+      "method": "POST",
+      "path": "/releases/quote"
+    },
+    {
+      "method": "GET",
+      "path": "/releases/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/releases/{id}/status"
+    },
+    {
+      "method": "GET",
+      "path": "/releases/{id}/job"
+    },
+    {
+      "method": "POST",
+      "path": "/releases/{id}/distribute"
+    },
+    {
+      "method": "POST",
+      "path": "/releases/{id}/takedown"
+    },
+    {
+      "method": "PUT",
+      "path": "/releases/{id}/stores"
+    },
+    {
+      "method": "GET",
+      "path": "/releases/{id}/ugc-policies"
+    },
+    {
+      "method": "PUT",
+      "path": "/releases/{id}/ugc-policies"
+    },
+    {
+      "method": "GET",
+      "path": "/me/autoreload"
+    },
+    {
+      "method": "POST",
+      "path": "/me/autoreload"
+    },
+    {
+      "method": "POST",
+      "path": "/credits/checkout"
+    },
+    {
+      "method": "GET",
+      "path": "/webhooks"
+    },
+    {
+      "method": "POST",
+      "path": "/webhooks"
+    },
+    {
+      "method": "PATCH",
+      "path": "/webhooks/{id}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/webhooks/{id}"
+    },
+    {
+      "method": "POST",
+      "path": "/fraud/score"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/token"
+    },
+    {
+      "method": "POST",
+      "path": "/accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/auth/authorize"
+    }
+  ],
+  "accountVerified": false,
+  "publishingVerified": false,
+  "podcastSupportVerified": false
+}

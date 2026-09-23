@@ -96,7 +96,7 @@ Notion: shared `Caption` + `Postiz Targets` + optional `Postiz {Channel}` overri
 
 ### ONCE.app (stub — music / podcast DSP)
 
-Documented destinations: **Spotify**, **Apple Music**, **YouTube Music**, **Amazon Music**, **Tidal**, **Deezer**, **Pandora**, plus other DSPs via the ONCE network.
+Originally mapped destinations: **Spotify**, **Apple Music**, **YouTube Music**, **Amazon Music**, **Tidal**, **Deezer**, **Pandora**. These mappings are not verified account connections. On 2026-09-22, ONCE's public distribution catalog listed six of these destinations but did not list Deezer. Its documented API concerns music releases; podcast distribution remains unverified. See [ONCE discovery](docs/once-discovery.md) before implementing the editor or selecting stores.
 
 Notion: `ONCE Title`, `ONCE Audio`, `ONCE Artwork`, `ONCE Metadata`, `ONCE Targets` (multi-select of the majors above).
 
