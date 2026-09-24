@@ -59,4 +59,36 @@ Un agente puede proponer caption y campos, detectar omisiones y preparar variant
 5. Pruebas de archivo inválido, medio ausente, privacidad no elegida, opciones restringidas, timeout y reconciliación.
 6. Verificación con cuenta conectada: procesamiento, recibo y visibilidad. Una publicación de prueba necesita autorización específica.
 
-Postly continúa como ruta pendiente de contraste: su cliente local acepta `platform_posts.settings` genérico y el catálogo menciona `TikTokPostSettings`, pero esta inspección no obtuvo su esquema completo ni probó que exponga todas las opciones de Postiz. No reutilizar la tabla como si fuera un contrato universal de ambos proveedores.
+## Contraste con Postly (2026-09-24)
+
+Fuente: [OpenAPI oficial](https://docs.postly.ai/openapi.yaml), obtenido por HTTPS sin credenciales. Es evidencia del contrato publicado, no una prueba de entrega. El esquema `TikTokPostSettings` requiere únicamente `identifier: tiktok`; el identificador también debe coincidir con el del objeto padre `PlatformPost`.
+
+| Capacidad | Postly documentado | Diferencia con Postiz instalado |
+| --- | --- | --- |
+| Visibilidad | `privacy_level`, cuatro valores iguales a Postiz; default público | Exigir elección explícita en Publisher en ambas rutas |
+| Interacciones | `disable_duet`, `disable_stitch`, `disable_comment` | Nombres inversos a los booleanos de Postiz; no copiar directamente |
+| IA | `is_aigc` | Postiz usa `video_made_with_ai` |
+| Declaración comercial | `brand_content_toggle`, `brand_organic_toggle` | Coinciden los nombres; comportamiento real pendiente |
+| Destino feed/story | `share_to_feed`, `share_as_story` | Documentados por Postly; no asumir soporte real de stories sin comprobarlo |
+| Título | `title`, sin límite declarado en este esquema | No heredar automáticamente el límite de fotos de Postiz |
+| Bandeja vs directo | No aparece `content_posting_method` | No ofrecer la opción `UPLOAD` por esta ruta sin evidencia adicional |
+| Música automática de fotos | No aparece `autoAddMusic` | No prometer paridad para fotos |
+| Restricciones del creador | No hay operación dedicada en los paths publicados | Falta resolver cómo obtener privacidad, duración e interacciones actuales antes de habilitar entrega |
+
+La ausencia de campos en el contrato público no prueba que Postly nunca soporte esas funciones; sí impide prometerlas desde nuestra API. La etiqueta de canal debe conservar proveedor, cuenta, formato y nivel de verificación. Una cuenta conectada no acredita todos sus formatos.
+
+### Medios y privacidad del borrador
+
+Postly documenta carga de vídeos mediante `POST /files/upload-session`, `PUT` de bytes a la URL recibida y `POST /files/upload-session/complete`. El primer paso acepta nombre y tamaño exacto, con MIME opcional e `Idempotency-Key`. La URL firmada es secreta y el PUT no lleva la API key. Completar verifica el objeto y **lo hace públicamente legible**; esto sucede antes de crear el post social.
+
+Por tanto, guardar un borrador de Publisher no debe completar automáticamente una carga en Postly. Mantener originales privados y separar una acción de preparación/transferencia, con información visible para el usuario y un permiso explícito para el agente. El almacenamiento privado aún está pendiente. No transferir archivos confidenciales como prueba de conexión.
+
+`/files/upload-status` permite recuperar por clave de idempotencia; un 202 indica trabajo en curso y un timeout no demuestra fallo. Conservar la misma clave para la misma carga. No iniciar otra carga solo porque se perdió la respuesta.
+
+### Resultado de entrega
+
+Crear un post confirma encolado, no publicación. `/posts/activity` documenta estado efectivo, éxito parcial y listas de entregas publicadas/fallidas; el objeto `Post` básico no documenta esos recibos. La integración debe reconciliar por destino y conservar incertidumbre cuando falten datos, sin reenviar contenido automáticamente.
+
+### Consecuencia para el primer editor
+
+Priorizar vídeo TikTok con archivo, caption, cuenta y campos explícitos. Mantener fotos, stories y bandeja como capacidades separadas por proveedor, pendientes de validación. Antes de habilitar publicación por Postly hay que resolver la información actual del creador y verificar una entrega autorizada. Ni esta inspección ni las cuentas anteriormente conectadas prueban que el flujo completo funcione.
