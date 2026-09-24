@@ -100,3 +100,11 @@ Consulta GET real a `/v1/workspaces/{workspaceId}/socials` con la configuración
 Esto acredita lectura y conexión declarada por Postly; no acredita permiso de publicación, formatos ni entrega. Priorizar el adaptador de vídeo por Postly para la primera verificación de extremo a extremo, mientras se resuelve OAuth de Postiz. La consulta del creador y el almacenamiento privado siguen siendo requisitos pendientes, no omitidos por tener cuentas conectadas.
 
 En la misma revisión, Notion respondió con 167 propiedades y nueve fuentes configuradas; Typefully y Reddit pasaron sus lecturas autenticadas vía Composio; Gumroad, Luma y GitHub respondieron HTTP 200. Skool devolvió HTTP 402. ONCE sigue sin verificación autenticada del adaptador. Estos resultados se obtuvieron usando `publisher-web/.dev.vars`; no prueban por sí solos la configuración ni el acceso a la API de la versión alojada.
+
+## Adaptador de medios implementado (2026-09-24)
+
+`src/services/postly-media.service.ts` implementa creación de sesión, transferencia de un Blob, finalización explícita y recuperación por clave. No importa el servidor ni inicia schedulers. La transferencia restringe el destino al host de almacenamiento documentado, bloquea redirects y no transmite la API key de Postly. Tamaño y MIME deben coincidir con la sesión; esto no sustituye la inspección del contenido binario, duración o dimensiones que falta en la capa de archivos.
+
+La finalización exige `allowPublicMedia: true`; el llamador debe obtener y conservar la autorización del usuario antes de invocarla. Este booleano no sustituye los permisos y la revisión del borrador. Las claves deben persistirse antes de cada operación y mantenerse al reconciliar; este adaptador no incorpora aún un registro durable de intentos. Los errores de red, 5xx o respuestas incompletas se tratan como resultado incierto, sin reintento automático. Recuperación con 202 conserva el estado pendiente.
+
+Validación: `node scripts/check-postly-media.cjs` cubre separación de pasos, bloqueo de finalización no autorizada, tamaño/host inválidos, ausencia de credenciales en PUT, respuestas inciertas y ausencia de llamadas de publicación. TypeScript del archivo pasa. Son pruebas con HTTP simulado: no se cargó ningún archivo real, no hay endpoint web conectado a este adaptador y el editor sigue sin carga de medios.
