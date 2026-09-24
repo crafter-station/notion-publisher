@@ -108,3 +108,11 @@ En la misma revisión, Notion respondió con 167 propiedades y nueve fuentes con
 La finalización exige `allowPublicMedia: true`; el llamador debe obtener y conservar la autorización del usuario antes de invocarla. Este booleano no sustituye los permisos y la revisión del borrador. Las claves deben persistirse antes de cada operación y mantenerse al reconciliar; este adaptador no incorpora aún un registro durable de intentos. Los errores de red, 5xx o respuestas incompletas se tratan como resultado incierto, sin reintento automático. Recuperación con 202 conserva el estado pendiente.
 
 Validación: `node scripts/check-postly-media.cjs` cubre separación de pasos, bloqueo de finalización no autorizada, tamaño/host inválidos, ausencia de credenciales en PUT, respuestas inciertas y ausencia de llamadas de publicación. TypeScript del archivo pasa. Son pruebas con HTTP simulado: no se cargó ningún archivo real, no hay endpoint web conectado a este adaptador y el editor sigue sin carga de medios.
+
+## Primera transferencia real (2026-09-24)
+
+`OPEN_PUBLISHER_MEDIA_STAGING_TEST=1 node scripts/check-postly-media-live.cjs` pasó contra Postly real: sesión aceptada y PUT de una imagen PNG sintética de 68 bytes completado. El estado conservado es `transferred_not_finalized`; no se llamó a `/files/upload-session/complete` ni a `/posts`. No se probó la ACL pública del objeto ni se deduce privacidad verificada solamente por omitir finalización.
+
+El recibo, con clave de idempotencia y sesión firmada, queda fuera del repositorio en `~/.local/share/open-publisher/postly-media-smoke/attempt.json`, permisos 0600. El script reclama ese archivo de forma exclusiva antes de llamar al proveedor y conserva la fase antes de cada transferencia. Un segundo intento de ejecución se rechazó por recibo existente, sin nueva carga. Las respuestas y el recibo completo no se imprimen. El objeto sintético queda pendiente de finalización/limpieza; no es contenido del usuario.
+
+Esta prueba verifica el contrato real de sesión y transferencia pequeña, no vídeos grandes, MIME real, duración, finalización pública, recuperación tras fallo ni publicación TikTok. El recibo es soporte de esta prueba, no el registro multiusuario de producción que todavía debe implementarse en D1.
