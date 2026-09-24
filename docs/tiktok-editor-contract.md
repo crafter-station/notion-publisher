@@ -92,3 +92,11 @@ Crear un post confirma encolado, no publicación. `/posts/activity` documenta es
 ### Consecuencia para el primer editor
 
 Priorizar vídeo TikTok con archivo, caption, cuenta y campos explícitos. Mantener fotos, stories y bandeja como capacidades separadas por proveedor, pendientes de validación. Antes de habilitar publicación por Postly hay que resolver la información actual del creador y verificar una entrega autorizada. Ni esta inspección ni las cuentas anteriormente conectadas prueban que el flujo completo funcione.
+
+## Inventario autenticado y orden de implementación (2026-09-24)
+
+Consulta GET real a `/v1/workspaces/{workspaceId}/socials` con la configuración local del proyecto: 32 destinos individuales y 2 grupos de audiencia. TikTok devuelve tres cuentas con `connected: true` y `hidden: false`. No se conservan sus nombres, identificadores ni credenciales en este documento. Postiz local responde HTTP 200 a su inventario y devuelve cero integraciones.
+
+Esto acredita lectura y conexión declarada por Postly; no acredita permiso de publicación, formatos ni entrega. Priorizar el adaptador de vídeo por Postly para la primera verificación de extremo a extremo, mientras se resuelve OAuth de Postiz. La consulta del creador y el almacenamiento privado siguen siendo requisitos pendientes, no omitidos por tener cuentas conectadas.
+
+En la misma revisión, Notion respondió con 167 propiedades y nueve fuentes configuradas; Typefully y Reddit pasaron sus lecturas autenticadas vía Composio; Gumroad, Luma y GitHub respondieron HTTP 200. Skool devolvió HTTP 402. ONCE sigue sin verificación autenticada del adaptador. Estos resultados se obtuvieron usando `publisher-web/.dev.vars`; no prueban por sí solos la configuración ni el acceso a la API de la versión alojada.
