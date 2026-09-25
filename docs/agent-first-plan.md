@@ -19,7 +19,7 @@ Notion primero sigue siendo requisito. El runtime no debe desplazar la reparaci�
 | Agentes | 16 herramientas HTTP MCP, puente stdio y CLI reutilizan API | Onboarding comprobado de cada cliente; conexión de ejecutores locales; trabajos, eventos, cancelación y recuperación |
 | Contenido | Título, cuerpo, variantes de texto y campos específicos de Reddit | Brief original, archivos persistentes, variantes estructuradas por formato, propuestas y conversación asociada |
 | Canales | 48 destinos con rutas en `publisher-web/lib/channels.ts` | Capacidades ejecutables por cuenta/proveedor/formato y pruebas de publicación por ruta |
-| Medios | El backend antiguo maneja medios en algunos flujos | La aplicación web no tiene una ruta completa de carga/validación/entrega; `.openai/hosting.json` declara `r2: null` |
+| Medios | R2 privado y sesiones persistentes; adjuntos por revisión, carga en editor y CLI reanudable (2026-09-25) | Aceptación de carga en producción, validación real del contenido, vista previa y entrega a proveedores; completar almacenamiento no prueba compatibilidad con un canal |
 | Vista previa | Componente específico de Reddit; otras vistas siguen siendo genéricas | Representaciones por formato con campos, archivos, identidad y diferencias documentadas |
 | Postiz | Docker y lectura autenticada funcionan, catálogo de 34 variantes | Cero cuentas activas en la última comprobación; credenciales OAuth LinkedIn/Meta ausentes; acceso desde Sites pendiente |
 | Música/podcast | Spotify y otros seis destinos mapeados a ONCE | Proveedor y operaciones sin verificar; no se puede inferir capacidad de publicar audio desde un campo de texto |
