@@ -53,6 +53,14 @@ Requisito incorporado al objetivo el 2026-09-25 a partir de la captura aportada 
 
 Aceptación: comprobar en escritorio y móvil el recorrido idea → variantes → adjuntos → revisión → plan de entrega, incluyendo cambio de canal, recarga del borrador y recuperación de errores. Evaluar jerarquía visual, legibilidad, foco/teclado y fidelidad de cada preview. No trasladar promociones, pruebas gratuitas ni avisos comerciales de la captura. Esta referencia no reduce la cobertura de canales ni sustituye los requisitos API/MCP y Notion del objetivo.
 
+### Selector de modos en el sidebar
+
+Segunda referencia explícita del usuario, 2026-09-25: menú desplegable en la cabecera del sidebar para cambiar entre **Escribir**, **Planificar** y **Analizar**. Mostrar el modo activo y cambiar el contenido de la barra lateral según ese modo, manteniendo el espacio de trabajo y el contexto del contenido.
+
+Separar visualmente las entradas **Configuración** y **Agentes e integraciones** de los modos de trabajo. Identidad de sesión y cerrar sesión al final del menú. Los atajos de teclado deben aparecer cuando estén implementados y comprobados; no copiar atajos de la captura como si ya funcionaran.
+
+Aceptación: cambio de modo sin pérdida de borradores o adjuntos sin guardar; menú operable con teclado, foco visible, Escape y selección accesible; equivalente táctil en móvil. Planificar debe reflejar entregas y estados reales. Analizar solo debe presentar métricas verificadas de las rutas compatibles, con estados vacíos o de indisponibilidad explícitos. La referencia define la organización visual solicitada; estos modos todavía requieren implementación y validación.
+
 ## Runtime propuesto
 
 Inspección de los clientes instalados y sus diferencias: [viabilidad del runtime](agent-runtime-feasibility.md). La disponibilidad de flags y esquemas no equivale a integración validada.
