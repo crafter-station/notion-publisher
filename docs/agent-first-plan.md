@@ -38,6 +38,21 @@ Fuentes de implementación: `publisher-web/db/schema.ts`, `lib/server/drafts.ts`
 
 Desktop: contenido y vista previa como área principal, conversación contextual al lado. Móvil: alternar Idea, Variantes, Conversación y Entregas conservando el contexto y los cambios. Propuesta de navegación pendiente de prototipo y respuesta del usuario.
 
+## Referencia explícita del editor: Typefully
+
+Requisito incorporado al objetivo el 2026-09-25 a partir de la captura aportada por el usuario. Es una referencia de diseño pendiente de implementación y aceptación, no una descripción del editor actual.
+
+- Modo oscuro inicial y lienzo central amplio, con la composición como actividad principal. Identidad de la cuenta y estado del borrador junto al contenido.
+- Barra lateral con espacio/cuenta, borradores, cola y publicados; cada borrador muestra un extracto y los destinos asociados. Los estados reflejan resultados reales.
+- Selector compacto de canales sobre el lienzo para trabajar cada variante sin perder el contexto. Conservar todos los destinos del catálogo y sus categorías; mostrar cuenta, formato y proveedor de la ruta seleccionada.
+- Herramientas contextuales junto al contenido: adjuntar medios, gestionar hilos/carruseles y editar los campos permitidos por la API de esa ruta. Mostrar requisitos y bloqueos antes de ejecutar.
+- Programar y publicar como acciones principales visibles, con revisión de variantes y destinos; guardar no implica ninguna de esas acciones.
+- Conversación con el agente vinculada a la idea y variante activa, en un panel que pueda plegarse para escribir con espacio. Las propuestas se revisan sobre el contenido y no reemplazan cambios manuales silenciosamente.
+- Vista previa propia del canal y formato, con medios e identidad reales del borrador. El estilo de Typefully orienta el espacio de trabajo; la representación del contenido sigue la plataforma de destino y documenta diferencias que no se puedan reproducir.
+- En móvil, navegación y conversación plegables, selector de variantes accesible y controles táctiles. Mantener texto, archivos y contexto al cambiar de panel, sin desbordamiento horizontal.
+
+Aceptación: comprobar en escritorio y móvil el recorrido idea → variantes → adjuntos → revisión → plan de entrega, incluyendo cambio de canal, recarga del borrador y recuperación de errores. Evaluar jerarquía visual, legibilidad, foco/teclado y fidelidad de cada preview. No trasladar promociones, pruebas gratuitas ni avisos comerciales de la captura. Esta referencia no reduce la cobertura de canales ni sustituye los requisitos API/MCP y Notion del objetivo.
+
 ## Runtime propuesto
 
 Inspección de los clientes instalados y sus diferencias: [viabilidad del runtime](agent-runtime-feasibility.md). La disponibilidad de flags y esquemas no equivale a integración validada.
