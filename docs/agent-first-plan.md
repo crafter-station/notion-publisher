@@ -61,6 +61,23 @@ Separar visualmente las entradas **Configuración** y **Agentes e integraciones*
 
 Aceptación: cambio de modo sin pérdida de borradores o adjuntos sin guardar; menú operable con teclado, foco visible, Escape y selección accesible; equivalente táctil en móvil. Planificar debe reflejar entregas y estados reales. Analizar solo debe presentar métricas verificadas de las rutas compatibles, con estados vacíos o de indisponibilidad explícitos. La referencia define la organización visual solicitada; estos modos todavía requieren implementación y validación.
 
+### Contexto de publicación y social sets
+
+Incorporado el 2026-09-25 tras revisar las referencias aportadas por el usuario:
+[toolkit de Composio](https://docs.composio.dev/toolkits/typefully),
+[producto Typefully](https://typefully.com) y
+[Social Sets and Accounts](https://support.typefully.com/en/articles/8717684-social-sets-and-accounts).
+
+Typefully agrupa las cuentas de una persona o marca en un social set con borradores, calendario, análisis y ajustes propios. El conjunto puede pertenecer a un usuario o equipo. Su selección determina el contexto de trabajo; no es una categoría de canal.
+
+**Propuesta para Open Publisher:** selector de conjunto bajo el selector de modo. Un conjunto nativo representa una marca/persona/cliente y referencia cuentas concretas de varios proveedores. Conservar el ID y proveedor de cada grupo importado, sin inferir identidad ni permisos por coincidencia de nombres. Separar el conjunto organizativo de la ruta elegida para cada entrega; si una cuenta está disponible por varios proveedores, evitar publicar dos veces y mostrar cuál se usará.
+
+Cada idea, variante y plan de entrega debe indicar su conjunto. Cambiarlo conserva el trabajo anterior, vuelve a verificar cuentas/permisos y exige revisar cualquier cambio de destino antes de ejecutar. API, CLI y MCP deben permitir descubrir y seleccionar este contexto con IDs estables. Los permisos nativos siguen aplicándose aunque Composio tenga acceso a un social set remoto.
+
+**Estado comprobado en código:** `publisher-web/lib/server/typefully-connections.ts` ejecuta `TYPEFULLY_LIST_SOCIAL_SETS` y `TYPEFULLY_GET_SOCIAL_SET`, representa sus cuentas y grupos; `components/typefully-export.tsx` ya selecciona `social_set_id` para una copia privada. No existe todavía un conjunto nativo persistente ni un filtro global del editor por conjunto. El listado actual limita la consulta a 50 grupos y lo indica cuando hay siguiente página; falta paginación completa.
+
+La documentación de Composio muestra 16 herramientas, incluidas colas, borradores, etiquetas y carga de medios. Esto permite planificar adaptadores adicionales, pero no prueba que estén implementados aquí. La [API nativa](https://typefully.com/docs/api) documenta análisis de X por social set; el catálogo público de Composio revisado no muestra esas herramientas. Verificar una ruta de acceso antes de implementar Analizar o prometer métricas de otras redes.
+
 ## Runtime propuesto
 
 Inspección de los clientes instalados y sus diferencias: [viabilidad del runtime](agent-runtime-feasibility.md). La disponibilidad de flags y esquemas no equivale a integración validada.
