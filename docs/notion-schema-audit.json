@@ -1,0 +1,847 @@
+{
+  "checkedAt": "2026-09-08T20:43:47.036Z",
+  "readOnly": true,
+  "completeTraversal": true,
+  "pages": 3,
+  "rows": 241,
+  "sources": {
+    "Postly": 64,
+    "Luma": 7,
+    "Composio": 2,
+    "GitHub": 5,
+    "Gumroad": 163
+  },
+  "statuses": {
+    "Not started": 170,
+    "Published": 9,
+    "Error": 42,
+    "Published (EN)": 20
+  },
+  "properties": [
+    {
+      "name": "(PT) YouTube Title",
+      "type": "rich_text",
+      "populatedRows": 33
+    },
+    {
+      "name": "Instagram Caption",
+      "type": "rich_text",
+      "populatedRows": 64
+    },
+    {
+      "name": "Luma Publish Status",
+      "type": "status",
+      "populatedRows": 7
+    },
+    {
+      "name": "Postiz TikTok",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Gumroad Cover",
+      "type": "files",
+      "populatedRows": 163
+    },
+    {
+      "name": "Publish Automation Groups",
+      "type": "select",
+      "populatedRows": 0
+    },
+    {
+      "name": "RemotionTemplate",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "(PT) Universal First Comment",
+      "type": "rich_text",
+      "populatedRows": 24
+    },
+    {
+      "name": "Universal First Comment",
+      "type": "rich_text",
+      "populatedRows": 64
+    },
+    {
+      "name": "Image",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Date",
+      "type": "date",
+      "populatedRows": 6
+    },
+    {
+      "name": "Luma End",
+      "type": "date",
+      "populatedRows": 7
+    },
+    {
+      "name": "Reddit URL",
+      "type": "url",
+      "populatedRows": 1
+    },
+    {
+      "name": "Reddit Body",
+      "type": "rich_text",
+      "populatedRows": 48
+    },
+    {
+      "name": "Caption",
+      "type": "rich_text",
+      "populatedRows": 64
+    },
+    {
+      "name": "Skool Media",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Pinterest Description",
+      "type": "rich_text",
+      "populatedRows": 62
+    },
+    {
+      "name": "LinkedIn Post",
+      "type": "rich_text",
+      "populatedRows": 64
+    },
+    {
+      "name": "(PT) Facebook Post",
+      "type": "rich_text",
+      "populatedRows": 15
+    },
+    {
+      "name": "Postly Publish Status",
+      "type": "status",
+      "populatedRows": 241
+    },
+    {
+      "name": "Publish Saul",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "GitHub Repo",
+      "type": "rich_text",
+      "populatedRows": 6
+    },
+    {
+      "name": "Pinterest Title",
+      "type": "rich_text",
+      "populatedRows": 62
+    },
+    {
+      "name": "(ES) POV Text",
+      "type": "rich_text",
+      "populatedRows": 48
+    },
+    {
+      "name": "Release Tag",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Post ID",
+      "type": "rich_text",
+      "populatedRows": 62
+    },
+    {
+      "name": "Postiz Discord",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Postiz VK",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "GitHub Org",
+      "type": "select",
+      "populatedRows": 1
+    },
+    {
+      "name": "ONCE URL",
+      "type": "url",
+      "populatedRows": 0
+    },
+    {
+      "name": "X Post",
+      "type": "rich_text",
+      "populatedRows": 3
+    },
+    {
+      "name": "Skool Title",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Created",
+      "type": "created_time",
+      "populatedRows": 0
+    },
+    {
+      "name": "Composio Publish Status",
+      "type": "status",
+      "populatedRows": 241
+    },
+    {
+      "name": "Publish in Gumroad",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "Status",
+      "type": "status",
+      "populatedRows": 241
+    },
+    {
+      "name": "Twitter Post",
+      "type": "rich_text",
+      "populatedRows": 64
+    },
+    {
+      "name": "ONCE Targets",
+      "type": "multi_select",
+      "populatedRows": 0
+    },
+    {
+      "name": "YouTube Caption",
+      "type": "rich_text",
+      "populatedRows": 62
+    },
+    {
+      "name": "Postiz Slack",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Postiz Skool",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Typefully Thread",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Generate",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "Luma Start",
+      "type": "date",
+      "populatedRows": 7
+    },
+    {
+      "name": "url",
+      "type": "url",
+      "populatedRows": 64
+    },
+    {
+      "name": "Postiz Telegram",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "(PT) POV Text",
+      "type": "rich_text",
+      "populatedRows": 48
+    },
+    {
+      "name": "Reddit Title",
+      "type": "rich_text",
+      "populatedRows": 50
+    },
+    {
+      "name": "Layer",
+      "type": "select",
+      "populatedRows": 239
+    },
+    {
+      "name": "GIF",
+      "type": "files",
+      "populatedRows": 62
+    },
+    {
+      "name": "Typefully Mastodon",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Postiz Listmonk",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Twitch",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "ONCE Publish Status",
+      "type": "status",
+      "populatedRows": 0
+    },
+    {
+      "name": "Topics",
+      "type": "multi_select",
+      "populatedRows": 0
+    },
+    {
+      "name": "Gumroad URL",
+      "type": "url",
+      "populatedRows": 159
+    },
+    {
+      "name": "Eventbrite Description",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Migration Source Page ID",
+      "type": "rich_text",
+      "populatedRows": 163
+    },
+    {
+      "name": "SongName",
+      "type": "files",
+      "populatedRows": 57
+    },
+    {
+      "name": "WhatsApp Post",
+      "type": "rich_text",
+      "populatedRows": 3
+    },
+    {
+      "name": "Channels",
+      "type": "multi_select",
+      "populatedRows": 4
+    },
+    {
+      "name": "Publish in Social",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz LinkedIn",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Publish TheVeller",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz URLs",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Composio URL",
+      "type": "url",
+      "populatedRows": 1
+    },
+    {
+      "name": "Brand",
+      "type": "select",
+      "populatedRows": 63
+    },
+    {
+      "name": "Skool Body",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Skool Post URL",
+      "type": "url",
+      "populatedRows": 0
+    },
+    {
+      "name": "(PT) Pinterest Title",
+      "type": "rich_text",
+      "populatedRows": 31
+    },
+    {
+      "name": "Postly Error",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "GitHub Publish Status",
+      "type": "status",
+      "populatedRows": 6
+    },
+    {
+      "name": "Select",
+      "type": "select",
+      "populatedRows": 62
+    },
+    {
+      "name": "Typefully Bluesky",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Source Tags",
+      "type": "multi_select",
+      "populatedRows": 241
+    },
+    {
+      "name": "Postiz Targets",
+      "type": "multi_select",
+      "populatedRows": 0
+    },
+    {
+      "name": "POV Text",
+      "type": "rich_text",
+      "populatedRows": 62
+    },
+    {
+      "name": "ONCE Metadata",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Composio User ID",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Publish Nebualabs",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "Gumroad Thumbnail",
+      "type": "files",
+      "populatedRows": 163
+    },
+    {
+      "name": "(ES) Universal First Comment",
+      "type": "rich_text",
+      "populatedRows": 41
+    },
+    {
+      "name": "Luma Location",
+      "type": "rich_text",
+      "populatedRows": 5
+    },
+    {
+      "name": "Template",
+      "type": "rich_text",
+      "populatedRows": 163
+    },
+    {
+      "name": "Gumroad Product ID",
+      "type": "rich_text",
+      "populatedRows": 159
+    },
+    {
+      "name": "Eventbrite Cover",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Facebook",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Gumroad Title",
+      "type": "rich_text",
+      "populatedRows": 163
+    },
+    {
+      "name": "ONCE Artwork",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Eventbrite Event ID",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Landing Page Copy",
+      "type": "rich_text",
+      "populatedRows": 163
+    },
+    {
+      "name": "(ES) Pinterest Description",
+      "type": "rich_text",
+      "populatedRows": 18
+    },
+    {
+      "name": "Luma Title",
+      "type": "rich_text",
+      "populatedRows": 7
+    },
+    {
+      "name": "(PT) YouTube Caption",
+      "type": "rich_text",
+      "populatedRows": 26
+    },
+    {
+      "name": "Postiz Threads",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Select 1",
+      "type": "select",
+      "populatedRows": 0
+    },
+    {
+      "name": "(ES) YouTube Caption",
+      "type": "rich_text",
+      "populatedRows": 20
+    },
+    {
+      "name": "Luma Event URL",
+      "type": "url",
+      "populatedRows": 7
+    },
+    {
+      "name": "Skool Group ID",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Reddit Subreddit",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Postiz Hashnode",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Screenshot",
+      "type": "files",
+      "populatedRows": 62
+    },
+    {
+      "name": "Composio Connected Account ID",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Typefully Publish Status",
+      "type": "status",
+      "populatedRows": 0
+    },
+    {
+      "name": "Gumroad Edit URL",
+      "type": "url",
+      "populatedRows": 159
+    },
+    {
+      "name": "Typefully URL",
+      "type": "url",
+      "populatedRows": 0
+    },
+    {
+      "name": "Eventbrite Title",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "(ES) Facebook Post",
+      "type": "rich_text",
+      "populatedRows": 20
+    },
+    {
+      "name": "(ES) TikTok Caption",
+      "type": "rich_text",
+      "populatedRows": 34
+    },
+    {
+      "name": "ONCE Title",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Eventbrite End",
+      "type": "date",
+      "populatedRows": 0
+    },
+    {
+      "name": "Facebook Post",
+      "type": "rich_text",
+      "populatedRows": 63
+    },
+    {
+      "name": "Postiz Bluesky",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Video",
+      "type": "files",
+      "populatedRows": 62
+    },
+    {
+      "name": "Release Notes",
+      "type": "rich_text",
+      "populatedRows": 5
+    },
+    {
+      "name": "Eventbrite Start",
+      "type": "date",
+      "populatedRows": 0
+    },
+    {
+      "name": "Telegram Post",
+      "type": "rich_text",
+      "populatedRows": 3
+    },
+    {
+      "name": "Postiz YouTube",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Postiz Instagram",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "YouTube Title",
+      "type": "rich_text",
+      "populatedRows": 62
+    },
+    {
+      "name": "GitHub Release ID",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Postiz Pinterest",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Postly URL",
+      "type": "url",
+      "populatedRows": 55
+    },
+    {
+      "name": "Publish Ignacio",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "Luma Description",
+      "type": "rich_text",
+      "populatedRows": 7
+    },
+    {
+      "name": "Typefully Account",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Publish Aaron",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "ONCE Audio",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Reddit Link URL",
+      "type": "url",
+      "populatedRows": 2
+    },
+    {
+      "name": "Postiz Whop",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Audio",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Reddit",
+      "type": "rich_text",
+      "populatedRows": 1
+    },
+    {
+      "name": "Publish Instagram",
+      "type": "button",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Mastodon",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Eventbrite URL",
+      "type": "url",
+      "populatedRows": 0
+    },
+    {
+      "name": "(ES) Instagram Caption",
+      "type": "rich_text",
+      "populatedRows": 19
+    },
+    {
+      "name": "GitHub Release URL",
+      "type": "url",
+      "populatedRows": 1
+    },
+    {
+      "name": "Postiz Dribbble",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Medium",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz MeWe",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "TikTok Caption",
+      "type": "rich_text",
+      "populatedRows": 62
+    },
+    {
+      "name": "Postiz Google",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz WordPress",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Devto",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "(ES) YouTube Title",
+      "type": "rich_text",
+      "populatedRows": 27
+    },
+    {
+      "name": "(PT) TikTok Caption",
+      "type": "rich_text",
+      "populatedRows": 18
+    },
+    {
+      "name": "GitHub Asset",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Tumblr",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "(ES) Pinterest Title",
+      "type": "rich_text",
+      "populatedRows": 18
+    },
+    {
+      "name": "Postiz Farcaster",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz X",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Blogger Post",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Kick",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Publish Status",
+      "type": "status",
+      "populatedRows": 0
+    },
+    {
+      "name": "File",
+      "type": "files",
+      "populatedRows": 0
+    },
+    {
+      "name": "Postiz Lemmy",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "(PT) Instagram Caption",
+      "type": "rich_text",
+      "populatedRows": 42
+    },
+    {
+      "name": "Luma Cover",
+      "type": "files",
+      "populatedRows": 6
+    },
+    {
+      "name": "Postiz Nostr",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "(PT) Pinterest Description",
+      "type": "rich_text",
+      "populatedRows": 20
+    },
+    {
+      "name": "Gumroad Publish Status",
+      "type": "status",
+      "populatedRows": 241
+    },
+    {
+      "name": "Eventbrite Location",
+      "type": "rich_text",
+      "populatedRows": 0
+    },
+    {
+      "name": "Bluesky Post",
+      "type": "rich_text",
+      "populatedRows": 2
+    },
+    {
+      "name": "Skool Publish Status",
+      "type": "status",
+      "populatedRows": 0
+    },
+    {
+      "name": "Name",
+      "type": "title",
+      "populatedRows": 241
+    }
+  ]
+}

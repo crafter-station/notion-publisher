@@ -1,0 +1,16 @@
+require('ts-node/register/transpile-only');
+const assert=require('node:assert/strict');
+const {buildTypefullyDraft}=require('../src/services/typefully-notion.service');
+const rt=s=>({rich_text:[{plain_text:s}]});
+const input={Name:{title:[{plain_text:'Test'}]},'Typefully Account':rt('33552'),Caption:rt('Shared'),'X Post':rt('X override'),'Typefully Thread':rt('Second\n\n\n\nThird'),Channels:{multi_select:[{name:'X'},{name:'Twitter'},{name:'LinkedIn'}]}};
+const draft=buildTypefullyDraft(input);
+assert.equal(draft.social_set_id,33552);assert.equal(draft.share,false);assert(!('publish_at' in draft));
+assert.deepEqual(Object.keys(draft.platforms),['x','linkedin']);
+assert.deepEqual(draft.platforms.x.posts.map(p=>p.text),['X override','Second','Third']);
+assert.equal(draft.platforms.linkedin.posts[0].text,'Shared');
+assert.throws(()=>buildTypefullyDraft({...input,'Typefully Account':rt('TheVeller')}),/ID numérico/);
+assert.throws(()=>buildTypefullyDraft({...input,Channels:{multi_select:[{name:'Instagram'}]}}),/no cubre/);
+assert.throws(()=>buildTypefullyDraft({...input,Image:{files:[{}]}}),/medios/);
+assert.throws(()=>buildTypefullyDraft({...input,'Typefully URL':{url:'https://typefully.com/example'}}),/ya tiene/);
+assert.throws(()=>buildTypefullyDraft({...input,Caption:rt(''),Channels:{multi_select:[{name:'LinkedIn'}]}}),/Falta contenido/);
+console.log('Notion-Typefully mapping checks passed: account selection, overrides, thread splitting, alias deduplication, media/unsupported-channel rejection and draft-only payload.');

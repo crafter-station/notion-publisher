@@ -30,6 +30,8 @@ export const env = {
   COMPOSIO_USER_ID: process.env.COMPOSIO_USER_ID || '',
   /** Default Reddit connected_account_id; Notion page can override. */
   COMPOSIO_CONNECTED_ACCOUNT_ID: process.env.COMPOSIO_CONNECTED_ACCOUNT_ID || '',
+  /** Typefully has its own connection; never reuse Reddit's account. */
+  COMPOSIO_TYPEFULLY_CONNECTED_ACCOUNT_ID: process.env.COMPOSIO_TYPEFULLY_CONNECTED_ACCOUNT_ID || '',
   /** Fallback subreddit if Notion `Reddit Subreddit` empty (smoke). */
   COMPOSIO_REDDIT_SUBREDDIT: process.env.COMPOSIO_REDDIT_SUBREDDIT || '',
   POSTLY_QUEUE_ENABLED: process.env.POSTLY_QUEUE_ENABLED === 'true',
@@ -45,6 +47,9 @@ export const env = {
   GUMROAD_AUTOPILOT_DAILY_LIMIT: Number(process.env.GUMROAD_AUTOPILOT_DAILY_LIMIT) || 10,
   GUMROAD_AUTOPILOT_TIMEZONE: process.env.GUMROAD_AUTOPILOT_TIMEZONE || 'America/Lima',
   GUMROAD_AUTOPILOT_PUBLISH_LIVE: process.env.GUMROAD_AUTOPILOT_PUBLISH_LIVE === 'true',
+  /** Dedicated secret for Notion button webhook; empty disables it. */
+  PUBLISHER_WEBHOOK_TOKEN: process.env.PUBLISHER_WEBHOOK_TOKEN || '',
+  TYPEFULLY_JOURNAL_DIRECTORY: process.env.TYPEFULLY_JOURNAL_DIRECTORY || '',
   PORT: Number(process.env.PORT) || 3000,
 };
 

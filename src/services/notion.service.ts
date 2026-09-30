@@ -408,10 +408,10 @@ export async function queryNextGumroadAutopilotCandidates(databaseId: string, pa
  * - `Postly Publish Status` (status): pipeline phase (Not started / In progress / Published / Failed)
  * - `Postly URL` (url): first published URL (IG preferred, else any platform)
  * - `Post ID` (rich_text): multi-line `<platform>: <id>`
- * - `Status` (status): aggregate — Published (EN) on full success, Error otherwise
+ * - `Status` (status): aggregate — Published (EN), In progress while unresolved, Error on confirmed rejection
  *
- * Each field is sent independently; a single property error doesn't abort the whole patch
- * (we log warnings but never throw).
+ * Fields are patched together; callers receive success=false if the patch fails.
+ * Postly Error records confirmed rejection versus pending/uncertain outcomes.
  */
 export async function updatePostlyMetadata(
   notion_page_id: string,
@@ -420,6 +420,7 @@ export async function updatePostlyMetadata(
     postly_url?: string;
     post_id?: string;
     final_status?: FinalStatus;
+    postly_error?: string;
     /** @deprecated use postly_status */
     instagram_status?: PostlyPublishStatus;
     /** @deprecated use postly_url */
@@ -445,6 +446,9 @@ export async function updatePostlyMetadata(
     properties['Post ID'] = {
       rich_text: [{ text: { content: data.post_id.slice(0, 2000) } }],
     };
+  }
+  if (data.postly_error !== undefined) {
+    properties['Postly Error'] = { rich_text: data.postly_error ? [{ text: { content: data.postly_error.slice(0, 2000) } }] : [] };
   }
   if (data.final_status) {
     properties['Status'] = { status: { name: data.final_status } };

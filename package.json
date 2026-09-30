@@ -1,7 +1,7 @@
 {
-  "name": "notion-publisher",
+  "name": "open-publisher",
   "version": "1.0.0",
-  "description": "Notion CMS orchestrator — products, social, events, music/podcast publish channels",
+  "description": "Notion CMS orchestrator \u2014 products, social, events, music/podcast publish channels",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -16,7 +16,8 @@
     "notion:schema": "ts-node --transpile-only scripts/notion-schema.ts",
     "github:import-repos": "ts-node --transpile-only scripts/import-github-repos.ts",
     "publisher:report": "node scripts/generate-publisher-daily-report.mjs",
-    "publisher:commit": "bash scripts/daily-publisher-commit.sh"
+    "publisher:commit": "bash scripts/daily-publisher-commit.sh",
+    "start:notion-drafts": "node dist/typefully-server.js"
   },
   "dependencies": {
     "@notionhq/client": "^2.2.14",

@@ -1,13 +1,12 @@
-import { env } from '../config/env';
-
 const API_BASE = 'https://backend.composio.dev/api/v3.1';
 
 /** Pin Reddit toolkit version from Composio catalog (20260724_00). */
 export const COMPOSIO_REDDIT_TOOLKIT_VERSION = '20260724_00';
 export const REDDIT_CREATE_POST_SLUG = 'REDDIT_CREATE_REDDIT_POST';
+export const COMPOSIO_TYPEFULLY_TOOLKIT_VERSION = '20260908_00';
 
 export function isComposioConfigured(): boolean {
-  return !!env.COMPOSIO_API_KEY;
+  return !!process.env.COMPOSIO_API_KEY;
 }
 
 export type ComposioConnectedAccount = {
@@ -36,7 +35,7 @@ export type ComposioToolExecuteResult = {
 export class ComposioService {
   private headers: Record<string, string>;
 
-  constructor(apiKey: string = env.COMPOSIO_API_KEY) {
+  constructor(apiKey: string = process.env.COMPOSIO_API_KEY || '') {
     if (!apiKey) {
       throw new Error('COMPOSIO_API_KEY is not configured');
     }
@@ -54,6 +53,8 @@ export class ComposioService {
   ): Promise<T> {
     const response = await fetch(`${API_BASE}${path}`, {
       method,
+      redirect: 'error',
+      signal: AbortSignal.timeout(20000),
       headers: this.headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -146,6 +147,44 @@ export class ComposioService {
       userId: auth.userId,
       connectedAccountId: auth.connectedAccountId,
       arguments: payload,
+    });
+  }
+
+  async resolveTypefullyAccount(connectedAccountId: string, userId: string) {
+    if (!connectedAccountId || !userId) throw new Error('Typefully connected account and owner are required');
+    const account = await this.request<any>('GET', '/connected_accounts/' + encodeURIComponent(connectedAccountId));
+    if (account.id !== connectedAccountId || account.status !== 'ACTIVE' ||
+        (account.toolkit?.slug || account.toolkit_slug) !== 'typefully' ||
+        (account.user_id || account.userId || account.entity_id) !== userId) {
+      throw new Error('Configured Typefully connection is inactive or belongs to another owner/toolkit');
+    }
+    return { userId, connectedAccountId };
+  }
+
+  listTypefullySocialSets(auth: { userId: string; connectedAccountId?: string }, offset = 0) {
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new Error('Invalid offset');
+    return this.executeTool('TYPEFULLY_LIST_SOCIAL_SETS', {
+      ...auth,
+      version: COMPOSIO_TYPEFULLY_TOOLKIT_VERSION,
+      arguments: { limit: 50, offset },
+    });
+  }
+
+  createTypefullyDraft(
+    args: { social_set_id: number; platforms: Record<string, unknown>; draft_title?: string; share?: boolean },
+    auth: { userId: string; connectedAccountId?: string }
+  ) {
+    if (!Number.isSafeInteger(args.social_set_id) || args.social_set_id <= 0) throw new Error('Typefully social set is required');
+    // Explicit allowlist prevents callers from smuggling publish_at into a draft action.
+    return this.executeTool('TYPEFULLY_CREATE_DRAFT', {
+      ...auth,
+      version: COMPOSIO_TYPEFULLY_TOOLKIT_VERSION,
+      arguments: {
+        social_set_id: args.social_set_id,
+        platforms: args.platforms,
+        draft_title: args.draft_title,
+        share: args.share ?? false,
+      },
     });
   }
 }

@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+const base='http://localhost:3000';
+const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});
+const headers={cookie:login.headers.get('set-cookie').split(';')[0],origin:base,'Content-Type':'application/json'};
+const pageId='3d6da243-5b46-8169-8dee-ebb512574f3b';
+const importPage=(id=pageId, h=headers)=>fetch(base+'/api/v1/notion/import',{method:'POST',headers:h,body:JSON.stringify({pageId:id})});
+assert.equal((await importPage(pageId,{'Content-Type':'application/json'})).status,401);
+assert.equal((await importPage('invalid')).status,400);
+const results=await Promise.all([importPage(),importPage()]);
+const bodies=await Promise.all(results.map(async r=>{assert([200,201].includes(r.status));return r.json()}));
+assert.equal(bodies[0].id,bodies[1].id);
+const id=bodies[0].id;
+const get=async()=>{const r=await fetch(base+'/api/v1/drafts/'+id,{headers});assert.equal(r.status,200);return r.json()};
+const original=await get();assert(original.notion);assert(original.title.includes('Prueba privada API'));assert(original.body.length>0);
+const saved=await fetch(base+'/api/v1/drafts/'+id,{method:'PATCH',headers,body:JSON.stringify({...original,title:original.title+' · local edit',revision:original.revision})});assert.equal(saved.status,200);
+const repeated=await importPage(pageId.replaceAll('-',''));assert.equal(repeated.status,200);assert.equal((await repeated.json()).id,id);
+const after=await get();assert.equal(after.title,original.title+' · local edit');assert.equal(after.revision,original.revision+1);
+// Restore only the local fixture's content through the same revision-checked API.
+assert.equal((await fetch(base+'/api/v1/drafts/'+id,{method:'PATCH',headers,body:JSON.stringify({...original,revision:after.revision})})).status,200);
+console.log('Notion import passed: authenticated live read, concurrent idempotency, normalized IDs, retained link, and preservation of local edits on reimport. No Notion writes.');

@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import { readFile, readdir } from 'node:fs/promises';
+import { DatabaseSync } from 'node:sqlite';
+import ts from 'typescript';
+const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
+const files = ['lib/server/context.ts', 'lib/server/private-media.ts', 'lib/postiz-integrations.ts', 'lib/channels.ts', 'lib/postiz-versions.ts', 'lib/thread-content.ts', 'lib/channel-settings.ts', 'app/api/v1/channels/route.ts'];
+let source = (await Promise.all(files.map(read))).join('\n').replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?/gm, '').replaceAll('import.meta.env.DEV', 'false');
+source = 'const env=globalThis.channelTestEnv; const getChatGPTUser=async()=>null;\n' + source;
+const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
+const db = new DatabaseSync(':memory:');
+for (const file of (await readdir(new URL('../drizzle/', import.meta.url))).filter(file => file.endsWith('.sql')).sort()) db.exec(await read('drizzle/' + file));
+globalThis.channelTestEnv = { DB: { prepare(sql) { return { bind(...args) { return { first: async () => db.prepare(sql).get(...args) || null }; } }; } } };
+try {
+  const api = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'));
+  const token = 'op_' + 'a'.repeat(64);
+  db.prepare('INSERT INTO members VALUES(?,?,?,?)').run('workspace', 'editor', 'editor@example.test', 'editor');
+  db.prepare('INSERT INTO api_tokens(id,token_hash,workspace_id,user_id,name,access,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?)').run('t', await api.hashToken(token), 'workspace', 'editor', 'fixture', 'read', 'now', '2099-01-01');
+  const request = (path = 'channels', credential = token) => new Request('https://publisher.example/api/v1/' + path, { headers: credential ? { Authorization: 'Bearer ' + credential } : {} });
+  assert.equal((await api.GET(request('channels', null))).status, 401);
+  const response = await api.GET(request());
+  assert.equal(response.status, 200);
+  const catalog = await response.json();
+  assert.equal(catalog.items.length, 48);
+  assert.equal(catalog.privateMedia.scope, 'draft-storage-only');
+  await assert.rejects(api.context(request(), true), error => error.code === 'token_read_only');
+  for (const path of ['tokens', 'team', 'settings', 'channels-extra']) await assert.rejects(api.context(request(path)), error => error.code === 'token_scope_denied');
+  db.prepare("UPDATE api_tokens SET access='write' WHERE id='t'").run();
+  assert.equal((await api.GET(request())).status, 200);
+  db.prepare("UPDATE api_tokens SET revoked_at='now' WHERE id='t'").run();
+  assert.equal((await api.GET(request())).status, 401);
+  db.prepare("UPDATE api_tokens SET revoked_at=NULL,expires_at='2000-01-01' WHERE id='t'").run();
+  assert.equal((await api.GET(request())).status, 401);
+  db.prepare("UPDATE api_tokens SET expires_at='2099-01-01' WHERE id='t'").run();
+  db.prepare("DELETE FROM members WHERE user_id='editor'").run();
+  assert.equal((await api.GET(request())).status, 401);
+  console.log('Channel access passed with actual context and SQLite: read/write tokens discover 48 channels; anonymous, revoked, expired and removed members rejected; management scope stays denied.');
+} finally { delete globalThis.channelTestEnv; db.close(); }

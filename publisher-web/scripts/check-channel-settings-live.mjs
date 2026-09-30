@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+if(process.env.OPEN_PUBLISHER_LIVE_NOTION_WRITE!=='1')throw new Error('Explicit opt-in required: updates the existing private CMS fixture only.');
+process.loadEnvFile('.dev.vars');
+const base=process.env.OPEN_PUBLISHER_TEST_URL||'http://localhost:3001';
+if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw new Error('Local server only.');
+const fixture=JSON.parse(await readFile('.wrangler/notion-write-fixture.json','utf8'));
+assert(fixture.pageId,'Run the existing CMS fixture setup first.');
+const remote=await fetch('https://api.notion.com/v1/pages/'+encodeURIComponent(fixture.pageId),{headers:{Authorization:'Bearer '+process.env.NOTION_TOKEN,'Notion-Version':'2022-06-28'},redirect:'error',signal:AbortSignal.timeout(20000)});
+assert(remote.ok);const page=await remote.json();
+assert.equal(page.properties['Source Tags'].multi_select.length,0);assert.equal(page.properties.Channels.multi_select.length,0);
+assert(Object.values(page.properties).find(p=>p.type==='title').title.map(t=>t.plain_text).join('').startsWith('[Private smoke]'));
+const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});const cookie=login.headers.get('set-cookie')?.split(';')[0];assert(cookie);
+const headers={cookie,origin:base,'Content-Type':'application/json'};
+const api=async(path,method='GET',body)=>{const r=await fetch(base+'/api/v1/'+path,{method,headers,signal:AbortSignal.timeout(60000),...(body?{body:JSON.stringify(body)}:{})});const data=await r.json();assert(r.ok,`${r.status} ${data.error?.code}`);return data;};
+const imported=await api('notion/import','POST',{pageId:fixture.pageId});
+let draft=await api('drafts/'+imported.id),comparison=await api('drafts/'+draft.id+'/notion');
+assert.equal(comparison.conflicts.length,0,'Fixture has competing edits; inspect rather than overwrite.');
+if(comparison.changesDraft){await api('drafts/'+draft.id+'/notion','POST',{revision:draft.revision,remoteEditedAt:comparison.remoteEditedAt});draft=await api('drafts/'+draft.id);}
+const settings={reddit_title:'Private Reddit settings roundtrip',reddit_subreddit:'test',reddit_kind:'self',reddit_link:'https://example.com/'};
+await api('drafts/'+draft.id,'PATCH',{title:draft.title,body:draft.body,versions:draft.versions,channelSettings:settings,revision:draft.revision});
+draft=await api('drafts/'+draft.id);assert.deepEqual(draft.channelSettings,settings);
+comparison=await api('drafts/'+draft.id+'/notion');assert.equal(comparison.conflicts.length,0);assert.equal(comparison.outbound.available,true);
+const written=await api('drafts/'+draft.id+'/notion','PUT',{revision:draft.revision,remoteEditedAt:comparison.remoteEditedAt});
+assert.equal(written.notionWritten,comparison.outbound.fields.length>0);
+const verified=await api('drafts/'+draft.id+'/notion');assert.equal(verified.changesDraft,false);assert.deepEqual(verified.outbound.fields,[]);assert.deepEqual(verified.content.channelSettings,settings);
+console.log('Real Notion settings roundtrip verified through local API: rich text, select and URL; private fixture, no publication.');

@@ -1,0 +1,1 @@
+ALTER TABLE `drafts` ADD `publication_set` text DEFAULT 'null' NOT NULL;

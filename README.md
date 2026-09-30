@@ -1,27 +1,8 @@
 <div align="center">
 
-```
-            ╔════════════════════════════════════════════════════════════════════════╗
-            ║                                                                        ║
-            ║           ███╗   ██╗ ██████╗ ████████╗██╗ ██████╗ ███╗   ██╗           ║
-            ║           ████╗  ██║██╔═══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║           ║
-            ║           ██╔██╗ ██║██║   ██║   ██║   ██║██║   ██║██╔██╗ ██║           ║
-            ║           ██║╚██╗██║██║   ██║   ██║   ██║██║   ██║██║╚██╗██║           ║
-            ║           ██║ ╚████║╚██████╔╝   ██║   ██║╚██████╔╝██║ ╚████║           ║
-            ║           ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝           ║
-            ║                                                                        ║
-            ║  ██████╗ ██╗   ██╗██████╗ ██╗     ██╗███████╗██╗  ██╗███████╗██████╗   ║
-            ║  ██╔══██╗██║   ██║██╔══██╗██║     ██║██╔════╝██║  ██║██╔════╝██╔══██╗  ║
-            ║  ██████╔╝██║   ██║██████╔╝██║     ██║███████╗███████║█████╗  ██████╔╝  ║
-            ║  ██╔═══╝ ██║   ██║██╔══██╗██║     ██║╚════██║██╔══██║██╔══╝  ██╔══██╗  ║
-            ║  ██║     ╚██████╔╝██████╔╝███████╗██║███████║██║  ██║███████╗██║  ██║  ║
-            ║  ╚═╝      ╚═════╝ ╚═════╝ ╚══════╝╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ║
-            ║                                                                        ║
-            ║                   notion-publisher · Crafter Station                   ║
-            ╚════════════════════════════════════════════════════════════════════════╝
-```
+# Open Publisher
 
-**Notion CMS orchestrator** — publish **events**, **products**, **social**, and **music/podcast** from Notion pages + automations.
+**Open Publisher — multi-provider publishing workspace** — publish **events**, **products**, **social**, and **music/podcast** from Notion pages + automations.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript&logoColor=white)](./package.json)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18-339933?logo=nodedotjs&logoColor=white)](./package.json)
@@ -57,19 +38,37 @@ Matrices · channels · discovery → **[CAPABILITIES.md](./CAPABILITIES.md)** �
 Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publisher-capability-flow.excalidraw)
 
 ```text
-Notion CMS  →  notion-publisher (this repo · no UI)
-                    ├─ Events         → Luma (live) · Eventbrite via Composio (pending connect)
-                    ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
-                    ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (stub) · Postiz (stub)
-                    └─ Music/Podcast  → ONCE.app (stub)
+01 · CMS            Notion Publisher (team content record)
+                            ↓
+02 · Providers      Postly · Composio → Typefully · native integrations
+                    Postiz / ONCE pending · Buffer / Hootsuite planned
+                            ↓
+03 · Destinations   Social (35) · Events (2) · Products (3) · Music/podcast (7)
 ```
 
-Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social: Postly = broad cloud; **Composio** = Reddit (+ Eventbrite on Events); Typefully = text drafts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**.
+**The product value is the destination layer:** one workspace orchestrates multiple
+providers to reach 48 mapped channels. A provider is not a channel, and mapped
+coverage does not prove a connected account or permission to publish.
 
-**Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
-**Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).<br>
-**Mapped (stub):** Typefully, Postiz, ONCE · Eventbrite (pending Composio connect).  
-Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
+**Web UI:** [`publisher-web/`](./publisher-web) has a dark channel catalog with all
+48 destinations, category/provider filters, provider account reads and a separate
+Notion connection/record diagnostics view. The same catalog is exposed through
+`GET /api/v1/channels` and the HTTP MCP tool `publisher_list_channels`.
+
+**Discovery update (2026-09-11):** Typefully social-set details, read through Composio, returned connected accounts for X, LinkedIn, Threads, Bluesky, Mastodon and Substack. Substack is now included in the web catalog and text editor. This proves account discovery, not publishing support for every format.
+
+**Current verification:** hosted Notion reads work; hosted provider identity/account
+reads work for Postly, Gumroad, Luma, GitHub and MySkool. Private Typefully draft
+creation via Composio has been verified in the local backend. The hosted editor
+still stores drafts separately; bidirectional Notion sync, full per-channel editors
+and publishing from the web are not complete. Historical Postly failures require
+reconciliation; they do not indicate that Notion authentication is failing.
+
+The matrices below retain the original integration inventory. Their `live` labels
+describe the legacy backend, **not** an assertion that each action has passed a
+fresh smoke test or is available in the hosted web app. Postiz and ONCE remain
+pending; Eventbrite needs its API key. Typefully's older `stub` labels below are
+superseded by the verified private-draft path described above.
 
 ---
 
@@ -444,9 +443,9 @@ Uses the **shared Social model** above. Live parser keys today:
 
 ---
 
-### <img src="docs/assets/logos/typefully.png" width="22" alt=""> Typefully (stub)
+### <img src="docs/assets/logos/typefully.png" width="22" alt=""> Typefully (Notion draft workflow)
 
-Cheaper **text-first** path with strong per-account granularity. Env: `TYPEFULLY_API_KEY`.
+Text drafts use **Composio API** with an explicitly selected Typefully connection and owner. The authenticated Composio CLI remains an optional local transport. `TYPEFULLY_API_KEY` is not required in Publisher: Composio stores the dedicated provider credential. No Notion button or hosted execution is wired yet.
 
 #### Channels
 
@@ -464,17 +463,44 @@ Cheaper **text-first** path with strong per-account granularity. Env: `TYPEFULLY
 |---|---|---|
 | `Caption` | Rich text | Shared draft (same as Social) |
 | `Typefully Thread` | Rich text | Multi-tweet / thread continuation |
-| `Typefully Account` | Rich text / select | Which connected account |
+| `Typefully Account` | Rich text | Numeric Typefully social-set ID (33552 for the verified local account); not a Composio account ID |
 | `Typefully Publish Status` | Status | Output |
 | `Typefully URL` | URL | Output |
 
-Media: usually text-only; optional shared `Image` when the channel supports it. Tag `Source Tags` → `Typefully`.
+Tag `Source Tags` → `Typefully` and select the intended `Channels`. This implementation rejects media until upload support is implemented, preventing silently incomplete drafts.
+
+Preview without mutation:
+```bash
+node scripts/preview-typefully-notion.cjs ENV_FILE NOTION_PAGE_ID
+```
+Create a private, unscheduled draft and return its link to Notion:
+```bash
+node scripts/create-typefully-notion.cjs ENV_FILE NOTION_PAGE_ID --create-draft-via-api
+```
+The API transport requires `COMPOSIO_API_KEY`, `COMPOSIO_USER_ID` and
+`COMPOSIO_TYPEFULLY_CONNECTED_ACCOUNT_ID`. It verifies that the configured
+connection is active and belongs to the expected owner and toolkit before
+reserving a job. Use `--create-draft-via-cli` only for the local CLI session.
+
+`Typefully URL` receives the private editor URL; `Typefully Publish Status` becomes
+`In progress`, never `Published`. Persistent local receipts in `data/typefully-jobs`
+prevent duplicate creation for a page. Keep this directory when restarting or
+moving the worker. If the upstream outcome is uncertain, the command stops;
+inspect Typefully before resolving the reservation. A Notion writeback failure
+can be retried using the stored receipt without recreating the draft. This is a
+single-host workflow; replicas require shared transactional job storage.
+
+Verified 2026-09-09: one real X text draft created through Composio, Notion
+writeback read back, and repeat invocation reused the same draft. Scheduling,
+media, other platform writes and Notion button execution remain unverified.
 
 ---
 
-### <img src="docs/assets/logos/postiz.png" width="22" alt=""> Postiz (stub)
+### <img src="docs/assets/logos/postiz.png" width="22" alt=""> Postiz (connection in progress)
 
-Widest scheduler surface (open-source). Prefer **self-hosted** over expensive cloud. Env: `POSTIZ_API_KEY`.
+Widest scheduler surface (open-source). Prefer **self-hosted** over expensive cloud. Env: `POSTIZ_API_KEY` and `POSTIZ_API_BASE_URL`.
+
+The hosted web app includes a live inventory adapter in Sources/API/MCP. Local Docker setup and operation are documented in [Postiz local](docs/postiz-local.md). Account authorization, hosted-to-server connectivity and publishing remain pending.
 
 Provider list from official [`postiz-app` social integrations](https://github.com/gitroomhq/postiz-app/tree/main/libraries/nestjs-libraries/src/integrations/social).
 

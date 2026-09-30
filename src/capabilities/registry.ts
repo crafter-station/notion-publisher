@@ -10,6 +10,20 @@ import { DistributorCapability } from './types';
  */
 export const DISTRIBUTORS: DistributorCapability[] = [
   {
+    id: 'buffer',
+    kind: 'social',
+    status: 'stub',
+    envKeys: [],
+    notes: 'Planned connector. Official GraphQL API, MCP and CLI documented at https://developers.buffer.com/. Account connections, access and operations must be verified before activation.',
+  },
+  {
+    id: 'hootsuite',
+    kind: 'social',
+    status: 'stub',
+    envKeys: [],
+    notes: 'Planned connector. Official REST API and Perch publishing MCP documented at https://www.hootsuite.com/docs. Requires account/product permissions; no connection verified.',
+  },
+  {
     id: 'luma',
     kind: 'other',
     status: 'live',
@@ -92,11 +106,11 @@ export function getDistributor(id: string): DistributorCapability | undefined {
 export function getCapabilitiesSnapshot() {
   return {
     intent:
-      'Notion CMS orchestrator — events (Luma; Eventbrite via Composio), products (Gumroad, GitHub, Skool), social (Postly, Composio/Reddit, Typefully, Postiz), music/podcast (ONCE.app)',
+      'Open Publisher — API-first workspace orchestrating publishing providers across social, products, events and music, with Notion synchronization',
     layers: {
       events: ['luma', 'composio'],
       products: ['gumroad', 'github', 'myskool'],
-      social: ['postly', 'composio', 'typefully', 'postiz'],
+      social: ['postly', 'composio', 'typefully', 'postiz', 'buffer', 'hootsuite'],
       music: ['once'],
     },
     distributors: listDistributors(),

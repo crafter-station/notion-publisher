@@ -1,5 +1,6 @@
 import { PostlyService, PostlyTargetPlatform } from '../services/postly.service';
-import { updatePostlyMetadata, PostlyContent, FinalStatus, PostlyPublishStatus } from '../services/notion.service';
+import { updatePostlyMetadata, PostlyContent } from '../services/notion.service';
+import { summarizePostlyOutcome } from '../services/postly-outcome.service';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
@@ -242,6 +243,7 @@ async function buildPlatformPosts(content: PostlyContent, targetPlatforms: Postl
 export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
   const postly = new PostlyService();
   const { notion_page_id, workspace_id, target_platforms, content } = params;
+  let submissionStarted = false;
 
   try {
     console.log(`[POSTLY-USE-CASE] Starting pipeline for Notion page: ${notion_page_id}`);
@@ -249,14 +251,16 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     console.log(`[POSTLY-USE-CASE] Media: ${content.media_type} ${content.media_url}`);
 
     // PHASE 1 — Mark in-progress on Notion
-    await updatePostlyMetadata(notion_page_id, { postly_status: 'In progress' });
+    const started = await updatePostlyMetadata(notion_page_id, { postly_status: 'In progress', postly_error: '' });
+    if (!started.success) throw new Error('Could not record the publication attempt in Notion; nothing sent to Postly.');
 
     // PHASE 2 — Build payload and send
     const platform_posts = await buildPlatformPosts(content, target_platforms);
     console.log(`[POSTLY-USE-CASE] Phase 2: posting (${platform_posts.length} per-platform overrides)`);
     logPublishDiagnostics(content, target_platforms, platform_posts);
 
-    await postly.createPost({
+    submissionStarted = true;
+    const acceptedPost = await postly.createPost({
       workspace: workspace_id,
       target_platforms,
       text: content.global_text,
@@ -269,14 +273,16 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     console.log(`[POSTLY-USE-CASE] Post accepted. Waiting 3s to fetch its internal ID...`);
     await delay(3000);
 
-    const recentPosts = await postly.listPosts(workspace_id);
-    const createdPost = findMatchingPost(recentPosts, content.global_text, content.media_url);
+    const createdPost = typeof acceptedPost?._id === 'string' && acceptedPost._id
+      ? acceptedPost
+      : findMatchingPost(await postly.listPosts(workspace_id), content.global_text, content.media_url);
 
     if (!createdPost || !createdPost._id) {
       throw new Error("Could not find the newly created post's ID in Postly via list matching.");
     }
 
     const internal_post_id = createdPost._id;
+    await updatePostlyMetadata(notion_page_id, { post_id: `Postly: ${internal_post_id}` });
     console.log(`[POSTLY-USE-CASE] Post found. Internal ID: ${internal_post_id}`);
     logStoredPostDiagnostics('created/list', createdPost, target_platforms);
 
@@ -314,7 +320,7 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     if (!isResolved) {
       console.log(`[POSTLY-USE-CASE] Phase 5: fallback match`);
       const allPosts = await postly.listPosts(workspace_id);
-      const match = findMatchingPost(allPosts, content.global_text, content.media_url);
+      const match = allPosts.find((post: any) => post._id === internal_post_id);
       if (match) {
         logStoredPostDiagnostics('fallback/list', match, target_platforms);
         finalResults = normalizePostlyResults(match, target_platforms);
@@ -324,47 +330,39 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
 
     // PHASE 6 — Aggregate and update Notion
     const publishedResults = finalResults.filter(r => r.status === 'published');
-    const failedResults = finalResults.filter(r => r.status === 'failed');
-
-    let postlyStatus: PostlyPublishStatus = 'Published';
-    let finalStatus: FinalStatus = 'Published (EN)';
-
-    if (publishedResults.length === 0) {
-      postlyStatus = 'Failed';
-      finalStatus = 'Error';
-    } else if (failedResults.length > 0 || publishedResults.length < target_platforms.length) {
-      // Partial — at least one published, at least one failed/pending. No "Partial" enum, mark Failed.
-      postlyStatus = 'Failed';
-      finalStatus = 'Error';
-    }
+    const outcome = summarizePostlyOutcome(finalResults, target_platforms.length);
 
     // First IG URL goes to `Postly URL`; fallback to any first published URL
     const igResult = publishedResults.find(r => r.platform_name === 'instagram');
     const firstUrl = igResult?.url || publishedResults[0]?.url;
 
     // Multi-line "<platform>: <post_id|error>" string for Post ID column
-    const postIdLog = finalResults
+    const postIdLog = `Postly: ${internal_post_id}\n` + finalResults
       .map(r => {
         const id = r.external_id || (r.error ? `ERR: ${String(r.error).slice(0, 100)}` : r.status);
         return `${r.platform_name}: ${id}`;
       })
       .join('\n');
 
-    await updatePostlyMetadata(notion_page_id, {
-      postly_status: postlyStatus,
+    const recorded = await updatePostlyMetadata(notion_page_id, {
+      ...outcome,
       postly_url: firstUrl,
       post_id: postIdLog,
-      final_status: finalStatus,
     });
 
-    console.log(`[POSTLY-USE-CASE] Pipeline finished. postly_status=${postlyStatus} final=${finalStatus}`);
-    return { status: finalStatus, results: finalResults, attempts: currentAttempt };
+    if (!recorded.success) throw new Error('Postly result could not be recorded in Notion; reconcile the existing post.');
+
+    console.log(`[POSTLY-USE-CASE] Pipeline finished. postly_status=${outcome.postly_status} final=${outcome.final_status}`);
+    return { status: outcome.final_status, results: finalResults, attempts: currentAttempt };
 
   } catch (error: any) {
     console.error(`[POSTLY-USE-CASE] Critical failure:`, error);
     await updatePostlyMetadata(notion_page_id, {
-      postly_status: 'Failed',
-      final_status: 'Error',
+      postly_status: submissionStarted ? 'In progress' : 'Failed',
+      final_status: submissionStarted ? 'In progress' : 'Error',
+      postly_error: submissionStarted
+        ? 'Resultado no confirmado tras enviar a Postly. Consultar el post existente antes de reintentar; puede haber destinos publicados.'
+        : 'No se envió a Postly. Falló la preparación del contenido; revisar los campos y medios.',
     });
     throw error;
   }
@@ -380,8 +378,8 @@ function normalizePostlyResults(post: any, target_platforms: PostlyTargetPlatfor
       results.push({
         platform_id: targetPlatform.id,
         platform_name: targetPlatform.identifier,
-        status: 'failed',
-        error: 'Platform not found in post data',
+        status: 'pending',
+        error: 'Platform not yet present in Postly response',
       });
       continue;
     }

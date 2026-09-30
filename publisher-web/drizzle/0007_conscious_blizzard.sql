@@ -1,0 +1,1 @@
+ALTER TABLE `drafts` ADD `media_ids` text DEFAULT '[]' NOT NULL;

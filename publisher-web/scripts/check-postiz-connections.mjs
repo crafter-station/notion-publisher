@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import ts from 'typescript';
+const moduleUrl = source => 'data:text/javascript;base64,' + Buffer.from(ts.transpileModule(source, {compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText).toString('base64');
+const registryUrl = moduleUrl(await readFile(new URL('../lib/postiz-integrations.ts', import.meta.url), 'utf8'));
+const coverageUrl = moduleUrl((await readFile(new URL('../lib/postiz-coverage.ts', import.meta.url), 'utf8')).replace("'./postiz-integrations'", JSON.stringify(registryUrl)));
+const {postizCoverage} = await import(coverageUrl);
+assert.equal(postizCoverage(null).unverified, 34);
+assert.equal(postizCoverage([]).missing, 34);
+const variants = postizCoverage([{channel:'linkedin',connected:true},{channel:'linkedin',connected:true},{channel:'linkedin-page',connected:false},{channel:'instagram-standalone',connected:true},{channel:'new-provider',connected:true}]);
+assert.equal(variants.active,2);
+assert.equal(variants.reconnect,1);
+assert.equal(variants.variants.find(v=>v.id==='instagram').state,'missing');
+assert.equal(variants.variants.find(v=>v.id==='linkedin').activeAccounts,2);
+assert.deepEqual(variants.unknownIdentifiers,['new-provider']);
+const source=(await readFile(new URL('../lib/server/postiz-connections.ts',import.meta.url),'utf8')).replace("import { env } from 'cloudflare:workers';",'const env = globalThis.postizTestEnvironment;').replace("'../postiz-coverage'", JSON.stringify(coverageUrl));
+const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const config={};globalThis.postizTestEnvironment=config;
+const {postizConnections}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+const originalFetch=globalThis.fetch;let calls=0, body=[],status=200;
+globalThis.fetch=async(url,options)=>{
+  calls++;assert.equal(url,'http://localhost:4007/api/public/v1/integrations');
+  assert.equal(options.headers.Authorization,'fixture');assert.equal(options.redirect,'manual');
+  return new Response(JSON.stringify(body),{status});
+};
+try {
+  assert.equal((await postizConnections()).state,'missing_configuration');assert.equal(calls,0);
+  Object.assign(config,{POSTIZ_API_KEY:'fixture',POSTIZ_API_BASE_URL:'http://localhost:4007/api/public/v1/'});
+  let result=await postizConnections();assert.equal(result.state,'read_verified');assert.equal(result.accounts.length,0);assert.equal(result.coverage.missing,34);
+  body=[{id:'account',name:'Account',identifier:'linkedin-page',disabled:true}];
+  result=await postizConnections();assert.equal(result.accounts[0].connected,false);assert.equal(result.accounts[0].channel,'linkedin-page');
+  body=[{id:'bad'}];assert.equal((await postizConnections()).state,'read_failed');
+  status=302;result=await postizConnections();assert.equal(result.state,'read_failed');assert.equal(result.coverage.unverified,34);assert.equal(result.coverage.missing,0);
+  status=401;assert.match((await postizConnections()).message,/clave/);
+  config.POSTIZ_API_BASE_URL='http://localhost.evil.test/api/public/v1';const before=calls;
+  assert.equal((await postizConnections()).state,'missing_configuration');assert.equal(calls,before);
+  config.POSTIZ_API_BASE_URL='http://localhost:4007/api/public/v1';
+  globalThis.fetch=async()=>{throw new Error('secret upstream detail')};
+  result=await postizConnections();assert.equal(result.state,'read_failed');assert(!JSON.stringify(result).includes('secret upstream'));
+  console.log('Postiz inventory checks passed: configuration, auth, empty accounts, disabled accounts, malformed responses, URL validation and redaction.');
+} finally {globalThis.fetch=originalFetch;delete globalThis.postizTestEnvironment;}
