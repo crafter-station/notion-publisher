@@ -24,7 +24,7 @@
   <img src="docs/assets/logos/once.png" width="28" height="28" alt="ONCE"/>
 </p>
 
-Transferred from `Nucleo-Lab` and hosted at [`crafter-station/notion-publisher`](https://github.com/crafter-station/notion-publisher) *(private)*.<br>
+Hosted at [`crafter-station/notion-publisher`](https://github.com/crafter-station/notion-publisher) *(public)*.  
 Matrices · channels · discovery → **[CAPABILITIES.md](./CAPABILITIES.md)** · progress → **[docs/PROGRESS.md](./docs/PROGRESS.md)**
 
 </div>
@@ -655,4 +655,8 @@ Internal Crafter Station tooling. Prefer tiny diffs; update [`CAPABILITIES.md`](
 
 ## License
 
-Private repository. All rights reserved unless a `LICENSE` file is added later.
+All rights reserved unless a `LICENSE` file is added later.
+
+---
+
+Made with love by **Crafter Station** x **Núcleo Lab**
