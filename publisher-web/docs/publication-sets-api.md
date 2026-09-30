@@ -1,8 +1,8 @@
 # Native publication sets
 
 Workspace-visible organization of account references across providers. These
-sets do not create remote groups, grant account access, select draft destinations
-or authorize publication. Accounts remain explicitly `not_checked` until a
+sets do not create remote groups, grant account access or authorize publication.
+Attaching a set to a draft captures its account references as described below. Accounts remain explicitly `not_checked` until a
 separate provider verification occurs. Set membership is not an access-control
 boundary; workspace permissions apply.
 
@@ -27,14 +27,15 @@ HTTP MCP and the forwarding stdio bridge expose `publisher_list_sets`,
 
 Validation: `check-publication-sets.mjs` uses actual authorization and SQLite
 migrations. `check-mcp-http.mjs` exercises all four tools on the local HTTP MCP
-server with read/write tokens. Native sets are not yet linked to drafts or shown
-in the editor selector; provider verification and delivery routing remain pending.
+server with read/write tokens. Provider verification, draft association and the
+editor selector are implemented as described below; delivery coverage remains
+limited to the implemented adapters.
 
 ## Current reference verification
 
 `GET /api/v1/sets/{id}/verify`, MCP `publisher_verify_set`, and CLI `verifySet` inspect the current provider inventories after workspace authorization. Each provider is read once per request. The response identifies the set revision and returns per-reference states: `reference_verified`, `account_missing`, `account_disconnected`, `account_hidden`, `group_missing`, `group_membership_mismatch`, `unsupported_provider`, `missing_configuration`, `subscription_required`, or `read_failed`.
 
-This read-only snapshot does not persist verification, modify the set, or authorize publication. Provider timestamps are retained; references may change after the response. Delivery must recheck permissions and destinations. Native set selection and draft association remain pending.
+This read-only snapshot does not persist verification, modify the set, or authorize publication. Provider timestamps are retained; references may change after the response. Delivery must recheck permissions and destinations.
 
 ## Draft association
 
