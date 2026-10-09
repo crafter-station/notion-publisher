@@ -1,0 +1,17 @@
+require('ts-node/register');
+const assert = require('node:assert/strict');
+const { summarizePostlyOutcome: summarize } = require('../src/services/postly-outcome.service');
+const result = status => ({ platform_name: 'fixture', status });
+assert.equal(summarize([result('published'),result('published')],2).postly_status,'Published');
+assert.equal(summarize([result('published')],1).postly_error,'');
+assert.equal(summarize([result('pending')],1).postly_status,'In progress');
+assert.equal(summarize([result('published'),result('pending')],2).final_status,'In progress');
+assert.equal(summarize([result('failed'),result('pending')],2).postly_status,'In progress');
+assert.equal(summarize([result('published')],2).postly_status,'In progress');
+assert.equal(summarize([],2).postly_status,'In progress');
+assert.equal(summarize([result('failed')],1).final_status,'Error');
+assert.equal(summarize([result('published'),result('failed')],2).postly_status,'Failed');
+assert.match(summarize([result('published'),result('failed')],2).postly_error,/1\/2 publicados/);
+assert.throws(()=>summarize([],0));
+assert.throws(()=>summarize([result('published')],0));
+console.log('Postly outcome checks passed: confirmed failure, partial success, pending deadlines, missing results and error clearing.');

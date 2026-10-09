@@ -95,6 +95,7 @@ export async function executePublishComposioUseCase(
         subreddit: content.subreddit,
         title: content.title,
         kind: content.kind,
+        flair_id: content.flair_id || undefined,
         text: content.kind === 'self' ? content.body : undefined,
         url: content.kind === 'link' ? content.link_url : undefined,
       },

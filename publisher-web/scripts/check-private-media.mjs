@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
+import ts from 'typescript';
+const source = await readFile(new URL('../lib/server/private-media.ts', import.meta.url), 'utf8');
+const js = ts.transpileModule(source, {compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const { startPrivateMedia, putPrivateMediaPart, completePrivateMedia, abortPrivateMedia, MEDIA_PART_BYTES } = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'));
+const mf = new Miniflare(convertV4MiniflareOptions({ workers:[{ modules:true, script:'export default { fetch() { return new Response("Not exposed", {status:404}); } }', r2Buckets:['MEDIA'] }] }));
+try {
+ const bucket = await mf.getR2Bucket('MEDIA');
+ const input = {workspaceId:'team_a',assetId:'fixture',size:MEDIA_PART_BYTES+3,declaredType:'video/mp4'};
+ const session = await startPrivateMedia(bucket,input);
+ await assert.rejects(startPrivateMedia(bucket,{...input,assetId:'../other'}));
+ await assert.rejects(putPrivateMediaPart(bucket,'team_b',session,1,new ArrayBuffer(MEDIA_PART_BYTES)),/another workspace/);
+ await assert.rejects(putPrivateMediaPart(bucket,'team_a',session,1,new ArrayBuffer(1)),/byte length/);
+ await assert.rejects(putPrivateMediaPart(bucket,'team_a',session,3,new ArrayBuffer(3)),/part number/);
+ const tail = await putPrivateMediaPart(bucket,'team_a',session,2,Uint8Array.from([1,2,3]).buffer);
+ const first = await putPrivateMediaPart(bucket,'team_a',session,1,new ArrayBuffer(MEDIA_PART_BYTES));
+ assert.equal(await bucket.head('private-media/team_a/fixture'),null,'Incomplete media must not appear as a completed object');
+ await assert.rejects(completePrivateMedia(bucket,'team_a',session,[first]),/complete ordered/);
+ await assert.rejects(completePrivateMedia(bucket,'team_a',session,[tail,first]),/complete ordered/);
+ const receipt = await completePrivateMedia(bucket,'team_a',session,[first,tail]);
+ assert.equal(receipt.size,input.size);
+ assert.deepEqual(await completePrivateMedia(bucket,'team_a',session,[first,tail]),receipt,'Completion can reconcile after a lost response');
+ const object = await bucket.get('private-media/team_a/fixture');
+ assert.equal(object.httpMetadata.contentType,'application/octet-stream');
+ assert.equal(object.httpMetadata.cacheControl,'private, no-store');
+ const bytes = new Uint8Array(await object.arrayBuffer());
+ assert.deepEqual(Array.from(bytes.slice(-3)),[1,2,3]);
+ const cancelled = await startPrivateMedia(bucket,{...input,assetId:'cancelled',size:3});
+ await abortPrivateMedia(bucket,'team_a',cancelled);
+ assert.equal(await bucket.head('private-media/team_a/cancelled'),null);
+ await assert.rejects(putPrivateMediaPart(bucket,'team_a',cancelled,1,new ArrayBuffer(3)));
+ console.log('Local R2 multipart passed: out-of-order transfer, exact part sizes, workspace boundary, missing receipts, completion reconciliation, byte integrity and abort. No public route exists.');
+} finally { await mf.dispose(); }

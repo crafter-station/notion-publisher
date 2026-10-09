@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {Client} from '@modelcontextprotocol/sdk/client/index.js';
+import {StreamableHTTPClientTransport} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+const base=process.env.TEST_BASE_URL || 'http://localhost:3001';
+assert(['localhost','127.0.0.1'].includes(new URL(base).hostname),'Local fixtures only');
+const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});
+const cookie=login.headers.get('set-cookie')?.split(';')[0];assert(cookie);
+const headers={cookie,origin:base,'Content-Type':'application/json'};
+const input={title:'Private review queue fixture',body:'Review this text',versions:{LinkedIn:'Specific copy'}};
+const request=(path,method='GET',body)=>fetch(base+'/api/v1/'+path,{method,headers,...(body===undefined?{}:{body:JSON.stringify(body)})});
+assert.equal((await fetch(base+'/api/v1/drafts?status=in_review')).status,401);
+assert.equal((await request('drafts?status=invalid')).status,400);
+const created=await request('drafts','POST',input);assert.equal(created.status,201);const draft=await created.json();
+const review=(action,revision)=>request('drafts/'+draft.id+'/review','POST',{action,revision});
+const list=async status=>{const r=await request('drafts?status='+status);assert.equal(r.status,200);const data=await r.json();assert(data.items.every(item=>item.status===status));return data.items;};
+assert((await list('draft')).some(item=>item.id===draft.id));
+assert.equal((await review('submit',1)).status,200);
+assert((await list('in_review')).some(item=>item.id===draft.id));
+assert(!(await list('draft')).some(item=>item.id===draft.id));
+const client=new Client({name:'review-queue-test',version:'1.0.0'});
+try {
+ await client.connect(new StreamableHTTPClientTransport(new URL(base+'/api/v1/mcp'),{requestInit:{headers}}));
+ const result=await client.callTool({name:'publisher_list_drafts',arguments:{status:'in_review'}});
+ assert(!result.isError);const items=JSON.parse(result.content[0].text).items;assert(items.every(item=>item.status==='in_review'));assert(items.some(item=>item.id===draft.id));
+} finally {await client.close();}
+assert.equal((await review('approve',2)).status,200);
+assert((await list('approved')).some(item=>item.id===draft.id));
+assert.equal((await request('drafts/'+draft.id,'PATCH',{...input,body:'Edited after approval',revision:3})).status,200);
+assert(!(await list('approved')).some(item=>item.id===draft.id));
+assert((await list('draft')).some(item=>item.id===draft.id));
+assert.equal((await review('approve',2)).status,409);
+console.log('Review queue passed over HTTP and MCP: state filters, submission, approval, edit invalidation and stale revision rejection.');
+console.log('Local-only fixture retained:',draft.id);

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+const base='http://localhost:3000';
+const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});
+const headers={cookie:login.headers.get('set-cookie').split(';')[0],origin:base,'Content-Type':'application/json'};
+const catalogResponse=await fetch(base+'/api/v1/channels',{headers});assert.equal(catalogResponse.status,200);const catalog=await catalogResponse.json();assert.equal(catalog.items.length,47);
+const versions=Object.fromEntries(catalog.items.map(c=>[c.id,'Texto específico para '+c.name]));
+assert.equal(Object.keys(versions).length,47);
+const created=await fetch(base+'/api/v1/drafts',{method:'POST',headers,body:JSON.stringify({title:'Local test: 47 destination versions',body:'Shared base',versions})});assert.equal(created.status,201);const draft=await created.json();
+const loaded=await fetch(base+'/api/v1/drafts/'+draft.id,{headers});assert.equal(loaded.status,200);const content=await loaded.json();assert.deepEqual(content.versions,versions);
+versions.YouTubeMusic='Música diferente del video';
+const edited=await fetch(base+'/api/v1/drafts/'+draft.id,{method:'PATCH',headers,body:JSON.stringify({...content,versions})});assert.equal(edited.status,200);
+const checked=await (await fetch(base+'/api/v1/drafts/'+draft.id,{headers})).json();assert.equal(checked.versions.YouTubeMusic,'Música diferente del video');assert.equal(checked.versions.YouTube,'Texto específico para YouTube');assert.equal(Object.keys(checked.versions).length,47);
+console.log('All 47 channel versions saved and reloaded; editing YouTube Music preserves YouTube and every other version. Local-only fixture.');

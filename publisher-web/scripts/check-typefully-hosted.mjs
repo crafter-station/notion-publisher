@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+const base='http://localhost:3000';
+const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});
+const headers={cookie:login.headers.get('set-cookie').split(';')[0]};
+const response=await fetch(base+'/api/v1/connections',{headers});assert.equal(response.status,200);
+const body=await response.json(), typefully=body.items.find(c=>c.provider==='typefully');assert(typefully);assert.equal(typefully.state,'read_verified',typefully.message);
+assert(typefully.groups.some(g=>g.id==='33552'));
+for(const channel of ['x','linkedin','threads','bluesky','mastodon','substack']) assert(typefully.accounts.some(a=>a.channel===channel && a.connected));
+assert(!JSON.stringify(typefully).includes('api_key'));
+console.log(JSON.stringify({provider:'Typefully via Composio',state:typefully.state,groups:typefully.groups.length,channels:typefully.accounts.map(a=>a.channel),readOnly:true}));

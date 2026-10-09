@@ -1,0 +1,1 @@
+ALTER TABLE `drafts` ADD `channel_settings` text DEFAULT '{}' NOT NULL;

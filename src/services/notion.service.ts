@@ -1,3 +1,4 @@
+import { extractComposioRedditContent as extractRedditContent, ComposioRedditKind } from './reddit-content';
 import { env } from '../config/env';
 import { markdownToGumroadHtml } from './markdown.service';
 
@@ -407,10 +408,10 @@ export async function queryNextGumroadAutopilotCandidates(databaseId: string, pa
  * - `Postly Publish Status` (status): pipeline phase (Not started / In progress / Published / Failed)
  * - `Postly URL` (url): first published URL (IG preferred, else any platform)
  * - `Post ID` (rich_text): multi-line `<platform>: <id>`
- * - `Status` (status): aggregate — Published (EN) on full success, Error otherwise
+ * - `Status` (status): aggregate — Published (EN), In progress while unresolved, Error on confirmed rejection
  *
- * Each field is sent independently; a single property error doesn't abort the whole patch
- * (we log warnings but never throw).
+ * Fields are patched together; callers receive success=false if the patch fails.
+ * Postly Error records confirmed rejection versus pending/uncertain outcomes.
  */
 export async function updatePostlyMetadata(
   notion_page_id: string,
@@ -419,6 +420,7 @@ export async function updatePostlyMetadata(
     postly_url?: string;
     post_id?: string;
     final_status?: FinalStatus;
+    postly_error?: string;
     /** @deprecated use postly_status */
     instagram_status?: PostlyPublishStatus;
     /** @deprecated use postly_url */
@@ -444,6 +446,9 @@ export async function updatePostlyMetadata(
     properties['Post ID'] = {
       rich_text: [{ text: { content: data.post_id.slice(0, 2000) } }],
     };
+  }
+  if (data.postly_error !== undefined) {
+    properties['Postly Error'] = { rich_text: data.postly_error ? [{ text: { content: data.postly_error.slice(0, 2000) } }] : [] };
   }
   if (data.final_status) {
     properties['Status'] = { status: { name: data.final_status } };
@@ -1026,80 +1031,9 @@ export async function createPublisherGithubCatalogPage(input: {
 
 export type ComposioPublishStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
 
-export type ComposioRedditKind = 'self' | 'link';
-
-export interface ComposioRedditContent {
-  title: string;
-  body: string;
-  subreddit: string;
-  link_url: string;
-  kind: ComposioRedditKind;
-  channels: string[];
-  composio_user_id: string;
-  composio_connected_account_id: string;
-  is_complete: boolean;
-  missing: string[];
-}
-
-const _urlProp = (p: any): string => (typeof p?.url === 'string' ? p.url.trim() : '');
-
-const _multiSelectNames = (p: any): string[] =>
-  (p?.multi_select || []).map((x: any) => (x?.name || '').trim()).filter(Boolean);
-
-function normalizeSubreddit(raw: string): string {
-  return raw.trim().replace(/^r\//i, '');
-}
-
-/**
- * Publisher Composio + Reddit props → create payload.
- * kind: explicit option, else link if Reddit Link URL / Image / Screenshot, else self.
- */
-export function extractComposioRedditContent(
-  props: any,
-  options: { kind?: ComposioRedditKind } = {}
-): ComposioRedditContent {
-  const missing: string[] = [];
-  const title = _richText(props['Reddit Title']) || _titleText(props['Name']) || '';
-  const body = _richText(props['Reddit Body']);
-  const subreddit =
-    normalizeSubreddit(_richText(props['Reddit Subreddit'])) ||
-    normalizeSubreddit(env.COMPOSIO_REDDIT_SUBREDDIT);
-  const linkFromProp = _urlProp(props['Reddit Link URL']);
-  const mediaUrl = _fileUrl(props['Image']) || _fileUrl(props['Screenshot']) || '';
-  const link_url = linkFromProp || mediaUrl;
-  const channels = _multiSelectNames(props['Channels']);
-  const composio_user_id = _richText(props['Composio User ID']);
-  const composio_connected_account_id = _richText(props['Composio Connected Account ID']);
-
-  let kind: ComposioRedditKind = options.kind || (link_url ? 'link' : 'self');
-  if (options.kind === 'link' && !link_url) {
-    missing.push('Reddit Link URL (or Image / Screenshot) for kind=link');
-  }
-  if (options.kind === 'self' && !body) {
-    missing.push('Reddit Body for kind=self');
-  }
-  if (!options.kind) {
-    if (kind === 'link' && !link_url) kind = 'self';
-    if (kind === 'self' && !body && link_url) kind = 'link';
-  }
-
-  if (!title) missing.push('Reddit Title (or Name)');
-  if (!subreddit) missing.push('Reddit Subreddit (or COMPOSIO_REDDIT_SUBREDDIT)');
-  if (kind === 'self' && !body) missing.push('Reddit Body');
-  if (kind === 'link' && !link_url) missing.push('Reddit Link URL (or Image / Screenshot)');
-
-  return {
-    title,
-    body,
-    subreddit,
-    link_url,
-    kind,
-    channels,
-    composio_user_id,
-    composio_connected_account_id,
-    is_complete: missing.length === 0,
-    missing,
-  };
+export type { ComposioRedditContent, ComposioRedditKind } from './reddit-content';
+export function extractComposioRedditContent(props: any, options: { kind?: ComposioRedditKind } = {}) {
+  return extractRedditContent(props, { ...options, defaultSubreddit: env.COMPOSIO_REDDIT_SUBREDDIT });
 }
 
 export async function updateComposioRedditMetadata(

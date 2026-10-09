@@ -1,0 +1,34 @@
+# Campos Reddit desde Notion
+
+El flujo Composio conserva estos campos antes de publicar:
+
+| Campo | Uso |
+| --- | --- |
+| Reddit Title | Título; Name como fallback. Máximo 300 caracteres, sin truncado silencioso. |
+| Reddit Body | Texto Markdown para self; si está vacío hereda Caption, como el adaptador web de Notion. Máximo 40 000 caracteres sobre el texto efectivo. |
+| Reddit Subreddit | Nombre de comunidad, acepta prefijo r/. |
+| Reddit Post Type | Selección self o link. Vacío conserva la inferencia histórica por enlace/imagen. Una opción explícita del llamador tiene prioridad. |
+| Reddit Link URL | URL HTTP(S) para link. Se conserva el fallback histórico Image/Screenshot. |
+| Reddit Flair ID | UUID de una plantilla de etiqueta de la comunidad; se envía como flair_id. |
+
+El tipo explícito self evita que una imagen adjunta transforme inadvertidamente un texto en enlace. El tipo inválido, título vacío/excesivo, cuerpo excesivo, comunidad con URL y enlace o UUID malformados impiden considerar completo el contenido. La validación de formato del UUID no prueba que exista en la comunidad ni que el usuario tenga permisos para usarlo.
+
+Esquema Composio consultado: REDDIT_CREATE_REDDIT_POST, versión 20260724_00. Referencia: https://www.reddit.com/dev/api/#POST_api_submit
+
+El 2026-09-17 se añadieron Reddit Post Type (select self/link) y Reddit Flair ID (rich_text) a la base configurada; una lectura posterior confirmó ambos tipos y opciones. No se modificaron páginas ni se publicó contenido. El editor web incorpora estos campos y su sincronización explícita desde la versión 23; la vista previa de Reddit está disponible desde la 25 y la identidad verificada desde la 26. No se reinició ni desplegó el servidor de publicación en esta revisión.
+
+Validación local: check-composio-extract.ts, check-reddit-payload.ts y compilación TypeScript. Las pruebas del payload simulan el transporte; no envían publicaciones.
+
+La herencia de Caption se comprobó localmente el 2026-09-18, incluidos campos ausentes, vacíos, espacios, prioridad de Reddit Body y límites. El servidor de publicación aún requiere incorporar este código; la advertencia web se conserva hasta verificar ese runtime. No se enviaron publicaciones.
+
+## Previsualización por terminal y agentes
+
+```bash
+node scripts/preview-reddit-notion.cjs ENV_FILE NOTION_PAGE_ID
+```
+
+El archivo solo necesita `NOTION_TOKEN`, `NOTION_DATABASE_ID` y, opcionalmente, `COMPOSIO_REDDIT_SUBREDDIT`. Las variables del proceso tienen prioridad. El comando realiza una única lectura GET de Notion; no inicia servidores, programadores ni herramientas de Composio. Comprueba que la página pertenece a la base configurada y que no está archivada, valida el contenido y exige las selecciones Channels=Reddit y Source Tags=Composio. Devuelve JSON con `payload`, `issues`, `contentValid` y `routingValid`; sale con código 1 si hay problemas. El payload contiene el borrador, por lo que debe tratarse como contenido privado.
+
+Comparte `src/services/reddit-content.ts` con el publicador. No necesita las credenciales de Gumroad/Postly ni prueba identidad, permisos de la comunidad, publicación o conexión del webhook. Una salida válida tampoco autoriza el envío.
+
+Verificado el 2026-09-18 contra la página privada de pruebas existente: lectura correcta, contenido válido y rechazo de la selección de ruta porque Channels y Source Tags están vacíos. Cero escrituras. El servicio del puerto local 3000 inspeccionado pertenece a Hermes; no demuestra que el publicador esté desplegado. La previsualización no sustituye ese despliegue pendiente.
