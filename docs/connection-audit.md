@@ -581,3 +581,18 @@ Web source `0f0c39f57ca9c02edbfc7d9dea9434b0e8e8021c` adds Reddit via Composio t
 Web source 4378f3c249372814b0005b52e4739828ad8b9ff2 adds native channel_settings via migration 0005. Editor/API/MCP handle reddit_title, reddit_subreddit, reddit_kind, reddit_link and reddit_flair. Omitted PATCH settings preserve values for old clients; explicit {} clears. Notion mapping v4 imports these fields, three-way merges them, and writes rich_text/select/url with the existing claim/readback/uncertain journal.
 
 Evidence: SQLite route tests, mapping/write/reconciliation regressions, TypeScript and scoped lint passed. HTTP and stdio MCP saved/read settings successfully. The HTTP test needed Connection: close on deliberately rejected requests to avoid a later empty 400 in local keep-alive cleanup; all leftover temporary tokens from these runs were revoked. Real local-server→Notion roundtrip passed on existing private sourceless fixture 3dbda243-5b46-81f8-9f8d-facb3b3ea0a9, now storing Reddit title Private Reddit settings roundtrip, community test, kind self, link https://example.com/. No Reddit posts. UI saved/reopened local fixture Prueba local de campos Reddit with title/community/type intact. At 320px document width stayed 320px; viewport reset. Actual phones and hosted writeback for these new typed fields remain unverified.
+
+## Revalidation — 2026-10-09
+
+Read-only checks from the review worktree used the existing `gumroad-published/.env` runtime configuration, without overlaying `.env.local`. No provider writes, scheduler starts or credential changes occurred.
+
+- Notion: HTTP 200, 167 properties and nine source tags.
+- Postly, Gumroad, GitHub and MySkool: HTTP 200 on their existing read probes.
+- Composio: HTTP 200; Typefully, Reddit and GitHub accounts reported ACTIVE. Typefully social-set and Reddit authenticated-preference calls independently passed.
+- Luma: HTTP 401 on get-self. The configured credential is not accepted by that endpoint; previously recorded success is historical, not current evidence.
+- Postiz: no key in this runtime file. The separate local installation has all eight containers exited, its API is unreachable, and its image still matches the checked-in 34-integration inventory. All 34 remain unverified in this check; this is not evidence of zero configured accounts. No containers were restarted.
+- ONCE: OAuth/tool access remains unverified.
+
+The initial check against a nonexistent `.env` in the newer repository incorrectly produced per-provider missing-configuration results. `check-connections.cjs` now exits with code 2 and `configuration_file_not_found` for an explicitly supplied missing file, before any provider request. The default process-environment mode remains supported. Regression check: `node scripts/check-connection-config.cjs` passed, including credential/path redaction.
+
+These probes establish reads only. They do not establish hosted connectivity, write permissions, subscriptions, complete pagination, publishing or token renewal. Next integration work must resolve Luma authentication and restore/verify the separately configured Postiz runtime, while retaining the full channel acceptance scope.

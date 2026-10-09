@@ -6,6 +6,12 @@ const { checkTypefullyConnection } = require('./lib/typefully-connection.cjs');
 
 async function main() {
   const file = process.argv[2] || '.env';
+  // An explicit missing file is an invocation error, not disconnected providers.
+  if (process.argv[2] && !fs.existsSync(file)) {
+    console.log(JSON.stringify({ state: 'configuration_file_not_found', scope: 'no provider requests made' }));
+    process.exitCode = 2;
+    return;
+  }
   const env = { ...(fs.existsSync(file) ? dotenv.parse(fs.readFileSync(file)) : {}), ...process.env };
   const checks = [
     ['notion', ['NOTION_TOKEN', 'NOTION_DATABASE_ID'], () => ['https://api.notion.com/v1/databases/' + encodeURIComponent(env.NOTION_DATABASE_ID), { Authorization: 'Bearer ' + env.NOTION_TOKEN, 'Notion-Version': '2022-06-28' }]],
