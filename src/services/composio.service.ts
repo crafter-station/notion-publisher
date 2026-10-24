@@ -1,10 +1,24 @@
 import { env } from '../config/env';
+import {
+  ConnectorResult,
+  isDryRun,
+  livePublishAllowed,
+  PublishModeOptions,
+} from '../connectors/dry-run';
 
 const API_BASE = 'https://backend.composio.dev/api/v3.1';
 
 /** Pin Reddit toolkit version from Composio catalog (20260724_00). */
 export const COMPOSIO_REDDIT_TOOLKIT_VERSION = '20260724_00';
 export const REDDIT_CREATE_POST_SLUG = 'REDDIT_CREATE_REDDIT_POST';
+export const EVENTBRITE_CREATE_EVENT_SLUG = 'EVENTBRITE_CREATE_EVENT';
+
+export type ComposioExecuteBody = {
+  user_id: string;
+  arguments: Record<string, unknown>;
+  version: string;
+  connected_account_id?: string;
+};
 
 export function isComposioConfigured(): boolean {
   return !!env.COMPOSIO_API_KEY;
@@ -25,6 +39,94 @@ export type RedditCreatePostArgs = {
   url?: string;
   flair_id?: string;
 };
+
+export type EventbriteCreateEventArgs = {
+  organization_id: string;
+  name: string;
+  start_utc: string;
+  end_utc: string;
+  timezone: string;
+  currency?: string;
+  description_html?: string;
+  online_event?: boolean;
+  venue_id?: string;
+  listed?: boolean;
+};
+
+export function toEventbriteUtc(raw: string): string {
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error(`Invalid Eventbrite datetime: ${raw}`);
+  }
+  return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+function asHtml(text: string): string {
+  const t = text.trim();
+  if (!t) return '';
+  if (/<[a-z][\s\S]*>/i.test(t)) return t;
+  return `<p>${t}</p>`;
+}
+
+export function buildRedditExecuteBody(
+  args: RedditCreatePostArgs,
+  auth: { userId: string; connectedAccountId?: string }
+): { body: ComposioExecuteBody; missing: string[] } {
+  const missing: string[] = [];
+  if (!auth.userId) missing.push('COMPOSIO_USER_ID');
+  if (!args.subreddit) missing.push('subreddit');
+  if (!args.title) missing.push('title');
+  const payload: Record<string, unknown> = {
+    subreddit: args.subreddit.replace(/^r\//i, ''),
+    title: args.title.slice(0, 300),
+  };
+  if (args.kind) payload.kind = args.kind;
+  if (args.text) payload.text = args.text;
+  if (args.url) payload.url = args.url;
+  if (args.flair_id) payload.flair_id = args.flair_id;
+  const body: ComposioExecuteBody = {
+    user_id: auth.userId,
+    arguments: payload,
+    version: COMPOSIO_REDDIT_TOOLKIT_VERSION,
+  };
+  if (auth.connectedAccountId) body.connected_account_id = auth.connectedAccountId;
+  return { body, missing };
+}
+
+export function buildEventbriteExecuteBody(
+  args: EventbriteCreateEventArgs,
+  auth: { userId: string; connectedAccountId?: string }
+): { body: ComposioExecuteBody; missing: string[] } {
+  const missing: string[] = [];
+  if (!auth.userId) missing.push('COMPOSIO_USER_ID');
+  if (!args.organization_id) missing.push('organization_id');
+  if (!args.name?.trim()) missing.push('event.name.html');
+  if (!args.start_utc) missing.push('event.start.utc');
+  if (!args.end_utc) missing.push('event.end.utc');
+  if (!args.timezone) missing.push('event.start.timezone');
+
+  const event: Record<string, unknown> = {
+    name: { html: asHtml(args.name) },
+    start: { utc: args.start_utc, timezone: args.timezone },
+    end: { utc: args.end_utc, timezone: args.timezone },
+    currency: (args.currency || env.COMPOSIO_EVENTBRITE_CURRENCY || 'USD').toUpperCase(),
+  };
+  if (args.description_html) event.description = { html: asHtml(args.description_html) };
+  if (args.online_event) event.online_event = true;
+  if (args.venue_id) event.venue_id = args.venue_id;
+  if (args.listed !== undefined) event.listed = args.listed;
+
+  const body: ComposioExecuteBody = {
+    user_id: auth.userId,
+    arguments: {
+      organization_id: args.organization_id,
+      event,
+    },
+    version: env.COMPOSIO_EVENTBRITE_TOOLKIT_VERSION || COMPOSIO_REDDIT_TOOLKIT_VERSION,
+  };
+  if (auth.connectedAccountId) body.connected_account_id = auth.connectedAccountId;
+  return { body, missing };
+}
 
 export type ComposioToolExecuteResult = {
   successful?: boolean;
@@ -128,24 +230,48 @@ export class ComposioService {
     };
   }
 
-  createRedditPost(
+  async createRedditPost(
     args: RedditCreatePostArgs,
-    auth: { userId: string; connectedAccountId?: string }
-  ) {
-    const payload: Record<string, unknown> = {
-      subreddit: args.subreddit.replace(/^r\//i, ''),
-      title: args.title.slice(0, 300),
-    };
-    if (args.kind) payload.kind = args.kind;
-    if (args.text) payload.text = args.text;
-    if (args.url) payload.url = args.url;
-    if (args.flair_id) payload.flair_id = args.flair_id;
+    auth: { userId: string; connectedAccountId?: string },
+    options: PublishModeOptions = {}
+  ): Promise<ConnectorResult<ComposioExecuteBody, ComposioToolExecuteResult>> {
+    const { body, missing } = buildRedditExecuteBody(args, auth);
+    if (missing.length) throw new Error(`Incomplete Composio Reddit payload: ${missing.join('; ')}`);
 
-    return this.executeTool(REDDIT_CREATE_POST_SLUG, {
+    if (isDryRun(options) || !livePublishAllowed(env.COMPOSIO_PUBLISH_LIVE)) {
+      return { dry_run: true, called_publish: false, payload: body };
+    }
+
+    const response = await this.executeTool(REDDIT_CREATE_POST_SLUG, {
       userId: auth.userId,
       connectedAccountId: auth.connectedAccountId,
-      arguments: payload,
+      arguments: body.arguments,
+      version: body.version,
     });
+    return { dry_run: false, called_publish: true, payload: body, response };
+  }
+
+  async createEventbriteEvent(
+    args: EventbriteCreateEventArgs,
+    auth: { userId: string; connectedAccountId?: string },
+    options: PublishModeOptions = {}
+  ): Promise<ConnectorResult<ComposioExecuteBody, ComposioToolExecuteResult>> {
+    const { body, missing } = buildEventbriteExecuteBody(args, auth);
+    if (missing.length) {
+      throw new Error(`Incomplete Composio Eventbrite payload: ${missing.join('; ')}`);
+    }
+
+    if (isDryRun(options) || !livePublishAllowed(env.COMPOSIO_PUBLISH_LIVE)) {
+      return { dry_run: true, called_publish: false, payload: body };
+    }
+
+    const response = await this.executeTool(EVENTBRITE_CREATE_EVENT_SLUG, {
+      userId: auth.userId,
+      connectedAccountId: auth.connectedAccountId,
+      arguments: body.arguments,
+      version: body.version,
+    });
+    return { dry_run: false, called_publish: true, payload: body, response };
   }
 }
 

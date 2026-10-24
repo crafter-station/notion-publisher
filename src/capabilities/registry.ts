@@ -3,7 +3,7 @@ import { DistributorCapability } from './types';
 
 /**
  * Distributors by layer (publish channels):
- * - Events: luma (live); Eventbrite via composio (pending connect)
+ * - Events: luma (live); Eventbrite via composio (live · dry-run default)
  * - Products: gumroad (live), github (live · TheVeller Releases), myskool (discover)
  * - Social: postly (live), composio (live · Reddit), typefully (live · dry-run default), postiz (live · dry-run default)
  * - Music/Podcast: once (stub)
@@ -54,7 +54,7 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'live',
     envKeys: ['COMPOSIO_API_KEY'],
     notes:
-      'Source Tag Composio. Reddit live via POST /webhooks/publish-composio (REDDIT_CREATE_REDDIT_POST). Eventbrite channel pending connect. Multi-account: COMPOSIO_USER_ID + COMPOSIO_CONNECTED_ACCOUNT_ID (Notion overrides).',
+      'Source Tag Composio. Reddit (REDDIT_CREATE_REDDIT_POST) and Eventbrite (EVENTBRITE_CREATE_EVENT) via POST /webhooks/publish-composio. Dry-run default. Live needs COMPOSIO_PUBLISH_LIVE=true. Multi-account: COMPOSIO_USER_ID + COMPOSIO_CONNECTED_ACCOUNT_ID / COMPOSIO_EVENTBRITE_CONNECTED_ACCOUNT_ID.',
   },
   {
     id: 'typefully',

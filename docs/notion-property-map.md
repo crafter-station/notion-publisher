@@ -34,7 +34,7 @@ Constant: `src/services/notion.service.ts` → `export const NOTION_VERSION`.
 | ONCE | `ONCE Publish Status` | `ONCE URL` | stub — no code write yet |
 | **Typefully** (live · dry-run) | `Typefully Publish Status` | `Typefully URL` | `POST /webhooks/publish-typefully`; never `publish_at` |
 | **Postiz** (live · dry-run) | `Postiz Publish Status` | `Postiz URLs` | `POST /webhooks/publish-postiz`; create only if `POSTIZ_PUBLISH_LIVE` |
-| **Composio** (live · Reddit) | `Composio Publish Status` | `Composio URL` | Source Tag; Reddit webhook live; Eventbrite pending |
+| **Composio** (live · Reddit + Eventbrite) | `Composio Publish Status` | `Composio URL` | Dry-run default; Eventbrite = `EVENTBRITE_CREATE_EVENT` |
 
 Aggregate row `Status` uses evergreen **`Error`** (was `Postly Error`; 41 rows migrated).
 
@@ -113,7 +113,7 @@ Ngrok: button → `POST /webhooks/publish-github` (optional `?draft=true`).
 
 ## Composio (live · Reddit) — Source Tag + channel fields
 
-Row recipe: `Source Tags`∋`Composio` + `Channels`∋`Reddit` (+ matching `Layer` Social). Eventbrite write deferred.
+Row recipe: `Source Tags`∋`Composio` + `Channels`∋`Reddit` (Social) and/or `Eventbrite` (Events). Dry-run default.
 
 | Notion property | Role |
 |-----------------|------|
@@ -125,7 +125,7 @@ Row recipe: `Source Tags`∋`Composio` + `Channels`∋`Reddit` (+ matching `Laye
 | `Reddit URL` | Reddit writeback permalink |
 | `Composio User ID` | optional override; else `COMPOSIO_USER_ID` |
 | `Composio Connected Account ID` | optional override; else `COMPOSIO_CONNECTED_ACCOUNT_ID` |
-| `Eventbrite Title`… | mapped for future; write blocked until Eventbrite connected in Composio |
+| `Eventbrite Title` / `Start` / `End` / `Organization ID` / `Currency` / `Online` / `Venue ID` | Eventbrite create (`EVENTBRITE_CREATE_EVENT`) |
 
 Webhook: button → `POST /webhooks/publish-composio` (optional `?kind=self|link`). Discover: `GET /capabilities/composio`.
 

@@ -25,6 +25,14 @@ const WANTED: Record<string, PropDef> = {
   'Composio Connected Account ID': { rich_text: {} },
   'Reddit URL': { url: {} },
   'Composio URL': { url: {} },
+  'Eventbrite Title': { rich_text: {} },
+  'Eventbrite Description': { rich_text: {} },
+  'Eventbrite Organization ID': { rich_text: {} },
+  'Eventbrite Venue ID': { rich_text: {} },
+  'Eventbrite Currency': { rich_text: {} },
+  'Eventbrite Timezone': { rich_text: {} },
+  'Eventbrite Connected Account ID': { rich_text: {} },
+  'Eventbrite URL': { url: {} },
   'Composio Publish Status': {
     status: {
       options: [

@@ -5,7 +5,7 @@
 | Layer | Surfaces |
 |---|---|
 | **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
-| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**pending connect**) |
+| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**live** · dry-run default) |
 | **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
 | **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**live** · dry-run), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
@@ -30,7 +30,7 @@ Self-check: `npm run capabilities:check`
 | <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | **live** | [github.com](https://github.com/) |
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | `myskool` | Products | **discover** | [myskool.xyz](https://myskool.xyz/) |
 | <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live** | [postly.ai](https://postly.ai/) |
-| <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | **live** · Reddit | [composio.dev](https://composio.dev/) |
+| <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | **live** · Reddit + Eventbrite | [composio.dev](https://composio.dev/) |
 | <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | **live** · dry-run | [typefully.com](https://typefully.com/) |
 | <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | **live** · dry-run | [postiz.com](https://postiz.com/) |
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | `once` | Music | stub | [beta.once.app](https://beta.once.app/) |
@@ -57,16 +57,21 @@ Self-check: `npm run capabilities:check`
 | email | `email` (+ providers) |
 | docs_only | `reddit` (**do not publish via Postly** — use Composio + `Channels`∋`Reddit`) |
 
-### Composio (live · Reddit)
+### Composio (live · Reddit + Eventbrite · dry-run default)
 
-Source Tag **`Composio`**. **Reddit** publish: `POST /webhooks/publish-composio` (`?kind=self|link`). Discover accounts: `GET /capabilities/composio`. **Eventbrite** still pending connect in Composio (no invent write). Env: `COMPOSIO_API_KEY`, optional `COMPOSIO_USER_ID` / `COMPOSIO_CONNECTED_ACCOUNT_ID` / `COMPOSIO_REDDIT_SUBREDDIT`.
+Source Tag **`Composio`**. `POST /webhooks/publish-composio` (`?kind=self|link`, dry-run default; `?live=true` + `COMPOSIO_PUBLISH_LIVE=true` to execute). Discover: `GET /capabilities/composio`.
+
+- Reddit: `REDDIT_CREATE_REDDIT_POST`
+- Eventbrite: `EVENTBRITE_CREATE_EVENT` (create only; no publish-event / tickets)
+
+Env: `COMPOSIO_API_KEY`, `COMPOSIO_USER_ID`, `COMPOSIO_CONNECTED_ACCOUNT_ID`, `COMPOSIO_REDDIT_SUBREDDIT`, `COMPOSIO_EVENTBRITE_ORGANIZATION_ID`, `COMPOSIO_EVENTBRITE_CONNECTED_ACCOUNT_ID`, `COMPOSIO_EVENTBRITE_CURRENCY`, `COMPOSIO_PUBLISH_LIVE`.
 
 | Property | Role |
 |---|---|
 | `Composio Publish Status` / `Composio URL` | Source writebacks |
 | `Reddit Title` / `Body` / `Subreddit` / `Link URL` / `Reddit URL` | Reddit channel |
 | `Composio User ID` / `Composio Connected Account ID` | optional multi-account overrides |
-| `Eventbrite Title` / `Start` / `End` / … | mapped; write deferred |
+| `Eventbrite Title` / `Start` / `End` / `Organization ID` / `Currency` / `Online` | Eventbrite create |
 
 ### Typefully (live · dry-run default)
 
@@ -127,5 +132,5 @@ Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts
 SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
 
 - **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit live
-- **Next:** Eventbrite via Composio (after connect); Phase A leftovers (#3)
+- **Next:** Phase A leftovers (#3)
 - **Later:** Skool write (#4, blocked); ONCE

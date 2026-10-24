@@ -1102,6 +1102,87 @@ export function extractComposioRedditContent(
   };
 }
 
+export interface ComposioEventbriteContent {
+  name: string;
+  description_html: string;
+  start_raw: string;
+  end_raw: string;
+  timezone: string;
+  currency: string;
+  organization_id: string;
+  venue_id: string;
+  online_event: boolean;
+  channels: string[];
+  composio_user_id: string;
+  composio_connected_account_id: string;
+  is_complete: boolean;
+  missing: string[];
+}
+
+const _checkbox = (p: any): boolean => p?.checkbox === true;
+
+/**
+ * Publisher Composio + Eventbrite props → EVENTBRITE_CREATE_EVENT arguments.
+ */
+export function extractComposioEventbriteContent(props: any): ComposioEventbriteContent {
+  const missing: string[] = [];
+  const name =
+    _richText(props['Eventbrite Title']) ||
+    _titleText(props['Name']) ||
+    '';
+  const description_html =
+    _richText(props['Eventbrite Description']) ||
+    _richText(props['Caption']) ||
+    '';
+  const start_raw = _dateStart(props['Eventbrite Start']) || _dateStart(props['Luma Start']);
+  const end_raw =
+    _dateEnd(props['Eventbrite End']) ||
+    _dateStart(props['Eventbrite End']) ||
+    _dateEnd(props['Eventbrite Start']) ||
+    _dateEnd(props['Luma End']) ||
+    '';
+  const timezone =
+    _richText(props['Eventbrite Timezone']) ||
+    env.GUMROAD_AUTOPILOT_TIMEZONE ||
+    'America/Lima';
+  const currency =
+    _richText(props['Eventbrite Currency']) ||
+    env.COMPOSIO_EVENTBRITE_CURRENCY ||
+    'USD';
+  const organization_id =
+    _richText(props['Eventbrite Organization ID']) ||
+    env.COMPOSIO_EVENTBRITE_ORGANIZATION_ID;
+  const venue_id = _richText(props['Eventbrite Venue ID']);
+  const online_event = _checkbox(props['Eventbrite Online']);
+  const channels = _multiSelectNames(props['Channels']);
+  const composio_user_id = _richText(props['Composio User ID']);
+  const composio_connected_account_id =
+    _richText(props['Eventbrite Connected Account ID']) ||
+    _richText(props['Composio Connected Account ID']);
+
+  if (!name) missing.push('Eventbrite Title (or Name)');
+  if (!start_raw) missing.push('Eventbrite Start');
+  if (!end_raw) missing.push('Eventbrite End');
+  if (!organization_id) missing.push('Eventbrite Organization ID (or COMPOSIO_EVENTBRITE_ORGANIZATION_ID)');
+
+  return {
+    name,
+    description_html,
+    start_raw,
+    end_raw,
+    timezone,
+    currency,
+    organization_id,
+    venue_id,
+    online_event,
+    channels,
+    composio_user_id,
+    composio_connected_account_id,
+    is_complete: missing.length === 0,
+    missing,
+  };
+}
+
 export async function updateComposioRedditMetadata(
   notion_page_id: string,
   data: {

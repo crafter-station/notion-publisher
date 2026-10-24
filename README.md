@@ -58,7 +58,7 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 
 ```text
 Notion CMS  →  notion-publisher (this repo · no UI)
-                    ├─ Events         → Luma (live) · Eventbrite via Composio (pending connect)
+                    ├─ Events         → Luma (live) · Eventbrite via Composio (live · dry-run)
                     ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
                     ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (live · dry-run) · Postiz (live · dry-run)
                     └─ Music/Podcast  → ONCE.app (stub)
@@ -68,8 +68,8 @@ Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds commu
 
 **Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
 **Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).  
-**Mapped (stub):** ONCE · Eventbrite (pending Composio connect).  
-**Typefully / Postiz:** live clients, **dry-run default**. Typefully never sends `publish_at` (draft / `plan_at` only).
+**Mapped (stub):** ONCE.  
+**Typefully / Postiz / Composio Eventbrite:** live clients, **dry-run default**. Typefully never sends `publish_at`.
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
@@ -84,7 +84,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | **live** (TheVeller Releases) |
 | <img src="docs/assets/logos/skool.png" width="20" alt=""> <img src="docs/assets/logos/myskool.png" width="20" alt=""> | **Skool (MySkool)** | [skool.com](https://www.skool.com/) · [myskool.xyz](https://myskool.xyz/) | Products + community | **discover** |
 | <img src="docs/assets/logos/postly.png" width="20" alt=""> | **Postly** | [postly.ai](https://postly.ai/) | Social | **live** |
-| <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio** | [composio.dev](https://composio.dev/) | Social + Events (transport) | live · Reddit |
+| <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio** | [composio.dev](https://composio.dev/) | Social + Events (transport) | live · Reddit + Eventbrite (dry-run) |
 | <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | **live** · dry-run default |
 | <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | **live** · dry-run default |
 | <img src="docs/assets/logos/once.png" width="20" alt=""> | **ONCE.app** | [beta.once.app](https://beta.once.app/) | Music / Podcast | stub |
@@ -122,7 +122,7 @@ One SSOT map of Notion `Channels` (+ distributor storefronts). **Delivery** = wh
 | <img src="docs/assets/logos/slack.png" width="18" alt=""> | Slack | [slack.com](https://slack.com/) | Social | Postiz | live · dry-run default |
 | <img src="docs/assets/logos/twitch.png" width="18" alt=""> | Twitch | [twitch.tv](https://twitch.tv/) | Social | Postiz | live · dry-run default |
 | <img src="docs/assets/logos/luma.png" width="18" alt=""> | Luma Event Page | [luma.com](https://luma.com/) | Events | native (Luma) | live |
-| <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite | [eventbrite.com](https://eventbrite.com/) | Events | **Composio** | pending connect |
+| <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite | [eventbrite.com](https://eventbrite.com/) | Events | **Composio** | live · dry-run default |
 | <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | Gumroad Storefront | [gumroad.com](https://gumroad.com/) | Products | native (Gumroad) | live |
 | <img src="docs/assets/logos/github.png" width="18" alt=""> | GitHub Releases | [github.com](https://github.com/) | Products | native (GitHub · TheVeller) | live |
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | Skool | [skool.com](https://skool.com/) | Products | MySkool | discover |
@@ -608,6 +608,8 @@ POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
 # COMPOSIO_USER_ID=
 # COMPOSIO_CONNECTED_ACCOUNT_ID=
 # COMPOSIO_REDDIT_SUBREDDIT=test
+# COMPOSIO_EVENTBRITE_ORGANIZATION_ID=
+# COMPOSIO_PUBLISH_LIVE=false
 # TYPEFULLY_API_KEY=
 # TYPEFULLY_SOCIAL_SET_ID=
 # TYPEFULLY_PUBLISH_LIVE=false

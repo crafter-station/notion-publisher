@@ -32,6 +32,13 @@ export const env = {
   COMPOSIO_CONNECTED_ACCOUNT_ID: process.env.COMPOSIO_CONNECTED_ACCOUNT_ID || '',
   /** Fallback subreddit if Notion `Reddit Subreddit` empty (smoke). */
   COMPOSIO_REDDIT_SUBREDDIT: process.env.COMPOSIO_REDDIT_SUBREDDIT || '',
+  /** Eventbrite org id (else Notion Eventbrite Organization ID). */
+  COMPOSIO_EVENTBRITE_ORGANIZATION_ID: process.env.COMPOSIO_EVENTBRITE_ORGANIZATION_ID || '',
+  COMPOSIO_EVENTBRITE_CONNECTED_ACCOUNT_ID: process.env.COMPOSIO_EVENTBRITE_CONNECTED_ACCOUNT_ID || '',
+  COMPOSIO_EVENTBRITE_CURRENCY: process.env.COMPOSIO_EVENTBRITE_CURRENCY || 'USD',
+  COMPOSIO_EVENTBRITE_TOOLKIT_VERSION: process.env.COMPOSIO_EVENTBRITE_TOOLKIT_VERSION || '20260724_00',
+  /** Must be "true" AND dryRun:false to execute Composio tools. Default off. */
+  COMPOSIO_PUBLISH_LIVE: process.env.COMPOSIO_PUBLISH_LIVE || '',
   /** Optional Postiz — public API. Prefer self-hosted. Not required to boot. */
   POSTIZ_API_KEY: process.env.POSTIZ_API_KEY || '',
   /** Self-hosted or cloud. Default https://api.postiz.com/public/v1 */

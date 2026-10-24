@@ -151,8 +151,8 @@ export const webhooksController = {
       return json(res, 200, {
         status: 'stub',
         distributor: 'composio',
-        message: 'Set COMPOSIO_API_KEY to enable Reddit publish / account discover.',
-        eventbrite: 'pending_connect',
+        message: 'Set COMPOSIO_API_KEY to enable Reddit / Eventbrite dry-run + account discover.',
+        eventbrite: 'dry_run_ready',
       });
     }
 
@@ -177,8 +177,9 @@ export const webhooksController = {
         eventbrite: {
           connected: eventbriteAccounts.length > 0,
           accounts: eventbriteAccounts,
-          status: eventbriteAccounts.length ? 'discover' : 'pending_connect',
-          note: 'Write deferred until Eventbrite connected in Composio dashboard.',
+          status: eventbriteAccounts.length ? 'live' : 'dry_run_ready',
+          note:
+            'EVENTBRITE_CREATE_EVENT wired. Dry-run default. Live needs COMPOSIO_PUBLISH_LIVE=true and a connected Eventbrite account.',
         },
         webhook: 'POST /webhooks/publish-composio',
       });
@@ -603,43 +604,70 @@ export const webhooksController = {
             : undefined;
 
         const content = extractComposioRedditContent(props, { kind });
+        const {
+          extractComposioEventbriteContent,
+        } = require('../services/notion.service');
+        const eventbrite = extractComposioEventbriteContent(props);
+        const channels = content.channels.length ? content.channels : eventbrite.channels;
+        const wantReddit = channels.includes('Reddit');
+        const wantEventbrite = channels.includes('Eventbrite');
 
-        if (!content.channels.includes('Reddit') && content.channels.includes('Eventbrite')) {
-          res.writeHead(503);
+        if (!wantReddit && !wantEventbrite) {
+          res.writeHead(400);
           return res.end(
-            JSON.stringify({
-              error: 'Eventbrite via Composio not connected yet',
-              action: 'Connect Eventbrite in Composio dashboard, then retry',
-            })
+            JSON.stringify({ error: 'Channels must include Reddit and/or Eventbrite' })
           );
         }
 
-        if (!content.is_complete) {
+        if (wantReddit && !content.is_complete) {
           updateComposioRedditMetadata(notion_page_id, {
             composio_status: 'Failed',
             final_status: 'Error',
           }).catch(() => undefined);
           res.writeHead(400);
           return res.end(
-            JSON.stringify({ error: 'Incomplete Notion content', missing: content.missing })
+            JSON.stringify({ error: 'Incomplete Notion Reddit content', missing: content.missing })
           );
         }
 
+        if (wantEventbrite && !eventbrite.is_complete) {
+          updateComposioRedditMetadata(notion_page_id, {
+            composio_status: 'Failed',
+            final_status: 'Error',
+          }).catch(() => undefined);
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({
+              error: 'Incomplete Notion Eventbrite content',
+              missing: eventbrite.missing,
+            })
+          );
+        }
+
+        const wantsLive = reqUrl.searchParams.get('live') === 'true';
+        const dryRun = !wantsLive || env.COMPOSIO_PUBLISH_LIVE !== 'true';
+
         console.log(
-          `[INFO] Starting Composio background job (notionPageId: ${notion_page_id}, kind: ${content.kind})`
+          `[INFO] Starting Composio job (notionPageId: ${notion_page_id}, reddit=${wantReddit}, eventbrite=${wantEventbrite}, dryRun=${dryRun})`
         );
-        executePublishComposioUseCase(notion_page_id, { kind }).catch(err => {
+        executePublishComposioUseCase(notion_page_id, { kind, dryRun }).catch(err => {
           console.error('[ERROR] Composio background job failed', err);
         });
 
         res.writeHead(202, { 'Content-Type': 'application/json' });
         res.end(
           JSON.stringify({
-            message: 'Accepted Composio Reddit publish task',
+            message: dryRun
+              ? 'Accepted Composio dry-run (tool payload validated, execute not called)'
+              : 'Accepted Composio publish task',
             notion_page_id,
-            kind: content.kind,
-            subreddit: content.subreddit,
-            title: content.title,
+            dry_run: dryRun,
+            reddit: wantReddit
+              ? { kind: content.kind, subreddit: content.subreddit, title: content.title }
+              : null,
+            eventbrite: wantEventbrite
+              ? { name: eventbrite.name, start: eventbrite.start_raw, end: eventbrite.end_raw }
+              : null,
           })
         );
       } catch (err: any) {
