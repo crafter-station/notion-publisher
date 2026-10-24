@@ -35,6 +35,9 @@ function startServer(port: number) {
       if (path === '/capabilities/typefully') {
         return webhooksController.handleCapabilitiesTypefully(req, res);
       }
+      if (path === '/capabilities/restream') {
+        return webhooksController.handleCapabilitiesRestream(req, res);
+      }
     }
 
     if (req.method === 'POST') {
@@ -61,6 +64,9 @@ function startServer(port: number) {
       }
       if (path === '/webhooks/publish-typefully') {
         return webhooksController.handlePublishTypefully(req, res);
+      }
+      if (path === '/webhooks/publish-restream') {
+        return webhooksController.handlePublishRestream(req, res);
       }
     }
 

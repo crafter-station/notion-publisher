@@ -1520,3 +1520,97 @@ export async function updateTypefullyMetadata(
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
+
+export type RestreamPublishStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
+
+export interface RestreamNotionContent {
+  title: string;
+  description: string;
+  scheduled_for: string;
+  stream_type: string;
+  file_id: string;
+  is_complete: boolean;
+  missing: string[];
+}
+
+export function extractRestreamContent(props: any): RestreamNotionContent {
+  const missing: string[] = [];
+  const title =
+    _richText(props['Restream Title']) ||
+    _titleText(props['Name']) ||
+    '';
+  const description =
+    _richText(props['Restream Description']) ||
+    _richText(props['Caption']) ||
+    '';
+  const scheduled_for =
+    _dateStart(props['Restream Start']) ||
+    _dateStart(props['Restream Schedule']) ||
+    _dateStart(props['Schedule']);
+  const stream_type =
+    _selectName(props['Restream Stream Type']) ||
+    _richText(props['Restream Stream Type']) ||
+    'encoder';
+  const file_id = _richText(props['Restream File ID']);
+
+  if (!title) missing.push('Restream Title (or Name)');
+
+  return {
+    title,
+    description,
+    scheduled_for,
+    stream_type,
+    file_id,
+    is_complete: missing.length === 0,
+    missing,
+  };
+}
+
+export async function updateRestreamMetadata(
+  notion_page_id: string,
+  data: {
+    restream_status?: RestreamPublishStatus;
+    restream_url?: string;
+    final_status?: FinalStatus;
+  }
+) {
+  if (!notionToken || !notion_page_id) {
+    return { success: false, error: 'Missing notion token or page id' };
+  }
+
+  const properties: any = {};
+  if (data.restream_status) {
+    properties['Restream Publish Status'] = { status: { name: data.restream_status } };
+  }
+  if (data.restream_url) {
+    properties['Restream URL'] = { url: data.restream_url };
+  }
+  if (data.final_status) {
+    properties['Status'] = { status: { name: data.final_status } };
+  }
+
+  if (Object.keys(properties).length === 0) {
+    return { success: true, updated_page_id: notion_page_id, noop: true };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${notion_page_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({ properties }),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] updateRestreamMetadata patch failed: ${err}`);
+      return { success: false, error: err };
+    }
+    return { success: true, updated_page_id: notion_page_id };
+  } catch (error: any) {
+    console.warn(`[NOTION] updateRestreamMetadata exception: ${error.message}`);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}

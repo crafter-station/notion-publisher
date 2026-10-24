@@ -58,6 +58,11 @@ export const env = {
   TYPEFULLY_SOCIAL_SET_ID: process.env.TYPEFULLY_SOCIAL_SET_ID || '',
   /** Must be "true" AND dryRun:false to POST a draft. Default off. */
   TYPEFULLY_PUBLISH_LIVE: process.env.TYPEFULLY_PUBLISH_LIVE || '',
+  /** Optional Restream OAuth access token — dry-run works without it. */
+  RESTREAM_ACCESS_TOKEN: process.env.RESTREAM_ACCESS_TOKEN || '',
+  RESTREAM_CLIENT_ID: process.env.RESTREAM_CLIENT_ID || '',
+  RESTREAM_CLIENT_SECRET: process.env.RESTREAM_CLIENT_SECRET || '',
+  RESTREAM_REFRESH_TOKEN: process.env.RESTREAM_REFRESH_TOKEN || '',
   POSTLY_QUEUE_ENABLED: process.env.POSTLY_QUEUE_ENABLED === 'true',
   POSTLY_QUEUE_DATABASE_ID: process.env.POSTLY_QUEUE_DATABASE_ID || process.env.NOTION_DATABASE_ID,
   POSTLY_QUEUE_INTERVAL_MS: Number(process.env.POSTLY_QUEUE_INTERVAL_MS) || 6 * 60 * 60 * 1000,

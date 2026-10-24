@@ -8,6 +8,7 @@ import { executePublishGithubUseCase } from '../use-cases/publish-github.use-cas
 import { executePublishComposioUseCase } from '../use-cases/publish-composio.use-case';
 import { executePublishPostizUseCase } from '../use-cases/publish-postiz.use-case';
 import { executePublishTypefullyUseCase } from '../use-cases/publish-typefully.use-case';
+import { executePublishRestreamUseCase } from '../use-cases/publish-restream.use-case';
 import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
 import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { getCapabilitiesSnapshot } from '../capabilities/registry';
@@ -17,6 +18,7 @@ import { isLumaConfigured } from '../services/luma.service';
 import { ComposioService, isComposioConfigured } from '../services/composio.service';
 import { isPostizConfigured, listWiredPostizChannels } from '../services/postiz.service';
 import { isTypefullyConfigured, TYPEFULLY_PLATFORMS } from '../services/typefully.service';
+import { isRestreamConfigured, RESTREAM_STREAM_TYPES } from '../services/restream.service';
 import {
   GITHUB_CATALOG_OWNERS,
   GITHUB_PRODUCT_OWNER,
@@ -190,6 +192,20 @@ export const webhooksController = {
         error: err.message || String(err),
       });
     }
+  },
+
+  async handleCapabilitiesRestream(_req: IncomingMessage, res: ServerResponse) {
+    json(res, 200, {
+      status: 'live',
+      distributor: 'restream',
+      dry_run_only: true,
+      configured: isRestreamConfigured(),
+      stream_types: RESTREAM_STREAM_TYPES,
+      webhook: 'POST /webhooks/publish-restream',
+      create_path: 'POST https://api.restream.io/v2/user/events/new',
+      note:
+        'Create or schedule only. Always dry-run — never calls Restream, never go-live. StreamYard excluded.',
+    });
   },
 
   async handleCapabilitiesTypefully(_req: IncomingMessage, res: ServerResponse) {
@@ -711,6 +727,39 @@ export const webhooksController = {
         );
       } catch (err: any) {
         console.error('[ERROR] handlePublishPostiz:', err.message);
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  },
+
+  async handlePublishRestream(req: IncomingMessage, res: ServerResponse) {
+    let body = '';
+    req.on('data', chunk => (body += chunk.toString()));
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const notion_page_id = payload.data?.id || payload.notion_page_id;
+        if (!notion_page_id) {
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({ error: 'Missing data.id (Notion webhook) or notion_page_id' })
+          );
+        }
+
+        const result = await executePublishRestreamUseCase(notion_page_id, { dryRun: true });
+        res.writeHead(202, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: 'Accepted Restream dry-run (create/schedule payload validated, API not called)',
+            notion_page_id,
+            dry_run: true,
+            called_publish: false,
+            payload: result.payload,
+          })
+        );
+      } catch (err: any) {
+        console.error('[ERROR] handlePublishRestream:', err.message);
         res.writeHead(400);
         res.end(JSON.stringify({ error: err.message }));
       }

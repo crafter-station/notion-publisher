@@ -33,6 +33,7 @@ Constant: `src/services/notion.service.ts` → `export const NOTION_VERSION`.
 | **Skool** (discover) | `Skool Publish Status` | `Skool Post URL` | props exist; **no** publish webhook until MySkool `POST /v1/posts` (#4) |
 | ONCE | `ONCE Publish Status` | `ONCE URL` | stub — no code write yet |
 | **Typefully** (live · dry-run) | `Typefully Publish Status` | `Typefully URL` | `POST /webhooks/publish-typefully`; never `publish_at` |
+| **Restream** (dry-run only) | `Restream Publish Status` | `Restream URL` | create/schedule payload only; no go-live |
 | **Postiz** (live · dry-run) | `Postiz Publish Status` | `Postiz URLs` | `POST /webhooks/publish-postiz`; create only if `POSTIZ_PUBLISH_LIVE` |
 | **Composio** (live · Reddit + Eventbrite) | `Composio Publish Status` | `Composio URL` | Dry-run default; Eventbrite = `EVENTBRITE_CREATE_EVENT` |
 
@@ -150,6 +151,7 @@ Discover: `GET /capabilities/skool` · needs valid `SKOOL_API_KEY=sk_live_…`. 
 | `Publish in Composio` (when added) | `/webhooks/publish-composio` |
 | `Publish in Postiz` (when added) | `/webhooks/publish-postiz` |
 | `Publish in Typefully` (when added) | `/webhooks/publish-typefully` |
+| `Publish in Restream` (when added) | `/webhooks/publish-restream` |
 | `Publish in Skool` | **not wired** — MySkool POST still Planned (#4) |
 
 Automations are **not** readable via API. After ngrok restart, open each button → Edit automation → confirm host.

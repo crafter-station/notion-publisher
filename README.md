@@ -58,7 +58,7 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 
 ```text
 Notion CMS  →  notion-publisher (this repo · no UI)
-                    ├─ Events         → Luma (live) · Eventbrite via Composio (live · dry-run)
+                    ├─ Events         → Luma (live) · Eventbrite via Composio (dry-run) · Restream (dry-run only)
                     ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
                     ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (live · dry-run) · Postiz (live · dry-run)
                     └─ Music/Podcast  → ONCE.app (stub)
@@ -88,6 +88,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | **live** · dry-run default |
 | <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | **live** · dry-run default |
 | <img src="docs/assets/logos/once.png" width="20" alt=""> | **ONCE.app** | [beta.once.app](https://beta.once.app/) | Music / Podcast | stub |
+| | **Restream** | [restream.io](https://restream.io/) | Events (live multistream) | **live** · dry-run only |
 
 ---
 
@@ -544,6 +545,27 @@ Tag `Source Tags` → `ONCE`.
 
 ---
 
+### Restream (live · dry-run only)
+
+Create or schedule a Restream event (`POST /v2/user/events/new`). **Always dry-run** — the exact payload is built and validated, the create endpoint is never called, and go-live is out of scope. StreamYard is excluded.
+
+Webhook: `POST /webhooks/publish-restream` · discover: `GET /capabilities/restream`.
+
+`streamType`: `studio` | `encoder` | `file`. File events need `Restream File ID`. Looping (`loopsCount`) is a paid feature and is rejected.
+
+Env: `RESTREAM_ACCESS_TOKEN` (optional for dry-run), plus OAuth extras `RESTREAM_CLIENT_ID` / `RESTREAM_CLIENT_SECRET` / `RESTREAM_REFRESH_TOKEN` if you later mint a token locally. Never commit secrets.
+
+| Property | Type | Role |
+|---|---|---|
+| `Restream Title` | Rich text | Event title (or `Name`) |
+| `Restream Description` | Rich text | Optional (or `Caption`) |
+| `Restream Start` / `Restream Schedule` | Date | Optional `scheduledFor` |
+| `Restream Stream Type` | Select / text | `studio` / `encoder` / `file` |
+| `Restream File ID` | Rich text | Required when `file` |
+| `Restream Publish Status` | Status | Output (unused on dry-run) |
+
+---
+
 ## HTTP surface
 
 | Method | Path | Role |
@@ -555,12 +577,14 @@ Tag `Source Tags` → `ONCE`.
 | `POST` | `/webhooks/publish-github` | Create TheVeller Release (+ asset; `?draft=true`) |
 | `POST` | `/webhooks/publish-postiz` | Postiz dry-run (default) or create (`?live=true` + `POSTIZ_PUBLISH_LIVE`) |
 | `POST` | `/webhooks/publish-typefully` | Typefully dry-run draft (default); never `publish_at` |
+| `POST` | `/webhooks/publish-restream` | Restream create/schedule dry-run only |
 | `GET` | `/capabilities` | Registry + layers + Postly catalog |
 | `GET` | `/capabilities/postly` | Live socials + audience groups |
 | `GET` | `/capabilities/skool` | MySkool discover (or stub message if no key) |
 | `GET` | `/capabilities/github` | GitHub catalog sample (`?owner=`) |
 | `GET` | `/capabilities/postiz` | Postiz wired channels + dry-run flag |
 | `GET` | `/capabilities/typefully` | Typefully platforms + dry-run flag |
+| `GET` | `/capabilities/restream` | Restream create/schedule dry-run only |
 
 ---
 
@@ -617,6 +641,7 @@ POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
 # POSTIZ_API_BASE=https://your-postiz.example/api/public/v1
 # POSTIZ_INTEGRATIONS=discord:id,slack:id
 # POSTIZ_PUBLISH_LIVE=false
+# RESTREAM_ACCESS_TOKEN=
 # ONCE_API_KEY=
 ```
 

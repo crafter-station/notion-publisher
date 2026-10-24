@@ -5,7 +5,7 @@
 | Layer | Surfaces |
 |---|---|
 | **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
-| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**live** · dry-run default) |
+| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**live** · dry-run), Restream (**live** · dry-run only) |
 | **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
 | **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**live** · dry-run), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
@@ -34,6 +34,7 @@ Self-check: `npm run capabilities:check`
 | <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | **live** · dry-run | [typefully.com](https://typefully.com/) |
 | <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | **live** · dry-run | [postiz.com](https://postiz.com/) |
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | `once` | Music | stub | [beta.once.app](https://beta.once.app/) |
+| | `restream` | Events | **live** · dry-run only | [restream.io](https://restream.io/) |
 
 ## Discovery endpoints
 
@@ -46,6 +47,7 @@ Self-check: `npm run capabilities:check`
 | `GET` | `/capabilities/composio` |
 | `GET` | `/capabilities/postiz` |
 | `GET` | `/capabilities/typefully` |
+| `GET` | `/capabilities/restream` |
 
 ### Postly (live)
 
@@ -97,6 +99,12 @@ Documented destinations: **Spotify**, **Apple Music**, **YouTube Music**, **Amaz
 
 Notion: `ONCE Title`, `ONCE Audio`, `ONCE Artwork`, `ONCE Metadata`, `ONCE Targets` (multi-select of the majors above).
 
+### Restream (live · dry-run only)
+
+Create/schedule only: `POST https://api.restream.io/v2/user/events/new` (`streamType` studio|encoder|file). Client: `src/services/restream.service.ts`. Webhook: `POST /webhooks/publish-restream`. Discover: `GET /capabilities/restream`.
+
+Always dry-run — never calls Restream, never go-live. StreamYard excluded. Looping is a paid feature and is rejected. Env: `RESTREAM_ACCESS_TOKEN` (optional for dry-run), `RESTREAM_CLIENT_ID`, `RESTREAM_CLIENT_SECRET`, `RESTREAM_REFRESH_TOKEN`.
+
 ### Luma (live)
 
 Env: `LUMA_API_KEY` · webhook `POST /webhooks/publish-luma` · client `src/services/luma.service.ts`.
@@ -124,6 +132,7 @@ Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts
 - Skool client: `src/services/skool.service.ts`
 - Luma client: `src/services/luma.service.ts`
 - GitHub client: `src/services/github.service.ts`
+- Restream client: `src/services/restream.service.ts`
 - Logos: `docs/assets/logos/` (incl. channel favicons)
 - Channel SSOT grid: [README.md](./README.md#channel-grid-all-destinations)
 

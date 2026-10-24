@@ -3,7 +3,7 @@ import { DistributorCapability } from './types';
 
 /**
  * Distributors by layer (publish channels):
- * - Events: luma (live); Eventbrite via composio (live · dry-run default)
+ * - Events: luma (live); Eventbrite via composio (live · dry-run default); restream (live · dry-run only)
  * - Products: gumroad (live), github (live · TheVeller Releases), myskool (discover)
  * - Social: postly (live), composio (live · Reddit), typefully (live · dry-run default), postiz (live · dry-run default)
  * - Music/Podcast: once (stub)
@@ -73,6 +73,14 @@ export const DISTRIBUTORS: DistributorCapability[] = [
       'Social layer. Public API POST /public/v1/posts. Wired channels: Discord, Slack, Mastodon, Skool, Twitch, Kick, Warpcast, Nostr, Lemmy, Listmonk. Dry-run default (exact payload, no create). Live needs POSTIZ_PUBLISH_LIVE=true. Prefer self-hosted POSTIZ_API_BASE — no paid cloud plan assumed. MySkool write stays out of scope.',
   },
   {
+    id: 'restream',
+    kind: 'other',
+    status: 'live',
+    envKeys: ['RESTREAM_ACCESS_TOKEN', 'RESTREAM_CLIENT_ID', 'RESTREAM_CLIENT_SECRET', 'RESTREAM_REFRESH_TOKEN'],
+    notes:
+      'Live multistream create/schedule only via POST /v2/user/events/new. Always dry-run — never calls create, never go-live. StreamYard excluded. OAuth token from env only.',
+  },
+  {
     id: 'once',
     kind: 'music',
     status: 'stub',
@@ -92,9 +100,9 @@ export function getDistributor(id: string): DistributorCapability | undefined {
 export function getCapabilitiesSnapshot() {
   return {
     intent:
-      'Notion CMS orchestrator — events (Luma; Eventbrite via Composio), products (Gumroad, GitHub, Skool), social (Postly, Composio/Reddit, Typefully, Postiz), music/podcast (ONCE.app)',
+      'Notion CMS orchestrator — events (Luma; Eventbrite via Composio; Restream dry-run), products (Gumroad, GitHub, Skool), social (Postly, Composio/Reddit, Typefully, Postiz), music/podcast (ONCE.app)',
     layers: {
-      events: ['luma', 'composio'],
+      events: ['luma', 'composio', 'restream'],
       products: ['gumroad', 'github', 'myskool'],
       social: ['postly', 'composio', 'typefully', 'postiz'],
       music: ['once'],
@@ -130,6 +138,7 @@ export function checkRegistryHealthy(): void {
   if (getDistributor('typefully')?.status !== 'live') throw new Error('typefully must be live');
   if (!getDistributor('once')) throw new Error('once stub missing');
   if (getDistributor('luma')?.status !== 'live') throw new Error('luma must be live');
+  if (getDistributor('restream')?.status !== 'live') throw new Error('restream must be live');
   if (getDistributor('nce') || getDistributor('postis')) {
     throw new Error('legacy nce/postis ids must be removed');
   }
