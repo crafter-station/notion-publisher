@@ -6,6 +6,7 @@ import { executePublishPostlyUseCase } from '../use-cases/publish-postly.use-cas
 import { executePublishLumaUseCase } from '../use-cases/publish-luma.use-case';
 import { executePublishGithubUseCase } from '../use-cases/publish-github.use-case';
 import { executePublishComposioUseCase } from '../use-cases/publish-composio.use-case';
+import { executePublishPostizUseCase } from '../use-cases/publish-postiz.use-case';
 import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
 import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { getCapabilitiesSnapshot } from '../capabilities/registry';
@@ -13,6 +14,7 @@ import { PostlyService } from '../services/postly.service';
 import { isSkoolConfigured, SkoolService } from '../services/skool.service';
 import { isLumaConfigured } from '../services/luma.service';
 import { ComposioService, isComposioConfigured } from '../services/composio.service';
+import { isPostizConfigured, listWiredPostizChannels } from '../services/postiz.service';
 import {
   GITHUB_CATALOG_OWNERS,
   GITHUB_PRODUCT_OWNER,
@@ -185,6 +187,22 @@ export const webhooksController = {
         error: err.message || String(err),
       });
     }
+  },
+
+  /** Postiz catalog + config (no publish). */
+  async handleCapabilitiesPostiz(_req: IncomingMessage, res: ServerResponse) {
+    json(res, 200, {
+      status: isPostizConfigured() ? 'live' : 'stub',
+      distributor: 'postiz',
+      dry_run_default: true,
+      publish_live: env.POSTIZ_PUBLISH_LIVE === 'true',
+      api_base: env.POSTIZ_API_BASE || 'https://api.postiz.com/public/v1',
+      integrations_env: env.POSTIZ_INTEGRATIONS || null,
+      channels: listWiredPostizChannels(),
+      webhook: 'POST /webhooks/publish-postiz',
+      note:
+        'Dry-run builds POST /public/v1/posts without calling it. Live requires POSTIZ_PUBLISH_LIVE=true and ?live=true. Prefer self-hosted. MySkool write is out of scope.',
+    });
   },
 
   /** Live Postly socials + audience groups (read-only, no publish). */
@@ -611,6 +629,45 @@ export const webhooksController = {
       } catch (err: any) {
         console.error('[ERROR] Synchronous error in handlePublishComposio:', err.message);
         res.writeHead(500);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  },
+
+  async handlePublishPostiz(req: IncomingMessage, res: ServerResponse) {
+    let body = '';
+    req.on('data', chunk => (body += chunk.toString()));
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const notion_page_id = payload.data?.id || payload.notion_page_id;
+        if (!notion_page_id) {
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({ error: 'Missing data.id (Notion webhook) or notion_page_id' })
+          );
+        }
+
+        const reqUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+        const wantsLive = reqUrl.searchParams.get('live') === 'true';
+        const dryRun = !wantsLive || env.POSTIZ_PUBLISH_LIVE !== 'true';
+
+        const result = await executePublishPostizUseCase(notion_page_id, { dryRun });
+        res.writeHead(202, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: result.dry_run
+              ? 'Accepted Postiz dry-run (payload validated, POST /posts not called)'
+              : 'Accepted Postiz create',
+            notion_page_id,
+            dry_run: result.dry_run,
+            called_publish: result.called_publish,
+            payload: result.payload,
+          })
+        );
+      } catch (err: any) {
+        console.error('[ERROR] handlePublishPostiz:', err.message);
+        res.writeHead(400);
         res.end(JSON.stringify({ error: err.message }));
       }
     });

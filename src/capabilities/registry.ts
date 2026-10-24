@@ -5,7 +5,7 @@ import { DistributorCapability } from './types';
  * Distributors by layer (publish channels):
  * - Events: luma (live); Eventbrite via composio (pending connect)
  * - Products: gumroad (live), github (live · TheVeller Releases), myskool (discover)
- * - Social: postly (live), composio (live · Reddit), typefully (stub), postiz (stub)
+ * - Social: postly (live), composio (live · Reddit), typefully (stub), postiz (live · dry-run default)
  * - Music/Podcast: once (stub)
  */
 export const DISTRIBUTORS: DistributorCapability[] = [
@@ -67,10 +67,10 @@ export const DISTRIBUTORS: DistributorCapability[] = [
   {
     id: 'postiz',
     kind: 'social',
-    status: 'stub',
-    envKeys: ['POSTIZ_API_KEY'],
+    status: 'live',
+    envKeys: ['POSTIZ_API_KEY', 'POSTIZ_API_BASE', 'POSTIZ_INTEGRATIONS'],
     notes:
-      'Social layer. Widest scheduler surface; prefer self-hosted over expensive cloud. Mapped only.',
+      'Social layer. Public API POST /public/v1/posts. Wired channels: Discord, Slack, Mastodon, Skool, Twitch, Kick, Warpcast, Nostr, Lemmy, Listmonk. Dry-run default (exact payload, no create). Live needs POSTIZ_PUBLISH_LIVE=true. Prefer self-hosted POSTIZ_API_BASE — no paid cloud plan assumed. MySkool write stays out of scope.',
   },
   {
     id: 'once',
@@ -126,7 +126,7 @@ export function checkRegistryHealthy(): void {
   if (getDistributor('myskool')?.status !== 'discover') throw new Error('myskool must be discover');
   if (getDistributor('github')?.status !== 'live') throw new Error('github must be live');
   if (getDistributor('composio')?.status !== 'live') throw new Error('composio must be live');
-  if (!getDistributor('postiz')) throw new Error('postiz stub missing');
+  if (getDistributor('postiz')?.status !== 'live') throw new Error('postiz must be live');
   if (!getDistributor('typefully')) throw new Error('typefully stub missing');
   if (!getDistributor('once')) throw new Error('once stub missing');
   if (getDistributor('luma')?.status !== 'live') throw new Error('luma must be live');

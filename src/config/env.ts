@@ -32,6 +32,19 @@ export const env = {
   COMPOSIO_CONNECTED_ACCOUNT_ID: process.env.COMPOSIO_CONNECTED_ACCOUNT_ID || '',
   /** Fallback subreddit if Notion `Reddit Subreddit` empty (smoke). */
   COMPOSIO_REDDIT_SUBREDDIT: process.env.COMPOSIO_REDDIT_SUBREDDIT || '',
+  /** Optional Postiz — public API. Prefer self-hosted. Not required to boot. */
+  POSTIZ_API_KEY: process.env.POSTIZ_API_KEY || '',
+  /** Self-hosted or cloud. Default https://api.postiz.com/public/v1 */
+  POSTIZ_API_BASE: process.env.POSTIZ_API_BASE || '',
+  /** identifier:id pairs for wired channels (discord:abc,slack:def). */
+  POSTIZ_INTEGRATIONS: process.env.POSTIZ_INTEGRATIONS || '',
+  /** Must be "true" AND dryRun:false to hit POST /posts. Default off. */
+  POSTIZ_PUBLISH_LIVE: process.env.POSTIZ_PUBLISH_LIVE || '',
+  POSTIZ_DISCORD_CHANNEL: process.env.POSTIZ_DISCORD_CHANNEL || '',
+  POSTIZ_SLACK_CHANNEL: process.env.POSTIZ_SLACK_CHANNEL || '',
+  POSTIZ_SKOOL_GROUP: process.env.POSTIZ_SKOOL_GROUP || '',
+  POSTIZ_SKOOL_LABEL: process.env.POSTIZ_SKOOL_LABEL || '',
+  POSTIZ_LISTMONK_LIST: process.env.POSTIZ_LISTMONK_LIST || '',
   POSTLY_QUEUE_ENABLED: process.env.POSTLY_QUEUE_ENABLED === 'true',
   POSTLY_QUEUE_DATABASE_ID: process.env.POSTLY_QUEUE_DATABASE_ID || process.env.NOTION_DATABASE_ID,
   POSTLY_QUEUE_INTERVAL_MS: Number(process.env.POSTLY_QUEUE_INTERVAL_MS) || 6 * 60 * 60 * 1000,

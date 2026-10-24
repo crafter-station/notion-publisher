@@ -1154,3 +1154,167 @@ export async function updateComposioRedditMetadata(
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
+
+export type PostizPublishStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
+
+export interface PostizNotionContent {
+  caption: string;
+  targets: string[];
+  schedule_at: string;
+  overrides: Record<string, string>;
+  settings: Record<string, Record<string, unknown>>;
+  integration_ids: Record<string, string>;
+  media_url?: string;
+  is_complete: boolean;
+  missing: string[];
+}
+
+/**
+ * Publisher Postiz props → per-channel content + provider settings.
+ * Empty channel override → shared Caption. Targets from `Postiz Targets` or `Channels`.
+ */
+export function extractPostizContent(props: any): PostizNotionContent {
+  const missing: string[] = [];
+  const caption = _richText(props['Caption']) || _richText(props['POV Text']) || '';
+  const targets = [
+    ..._multiSelectNames(props['Postiz Targets']),
+    ..._multiSelectNames(props['Channels']),
+  ].filter((name, i, all) => all.indexOf(name) === i);
+
+  const overrideKeys: Record<string, string> = {
+    discord: 'Postiz Discord',
+    slack: 'Postiz Slack',
+    mastodon: 'Postiz Mastodon',
+    skool: 'Postiz Skool',
+    twitch: 'Postiz Twitch',
+    kick: 'Postiz Kick',
+    warpcast: 'Postiz Farcaster',
+    nostr: 'Postiz Nostr',
+    lemmy: 'Postiz Lemmy',
+    listmonk: 'Postiz Listmonk',
+  };
+
+  const overrides: Record<string, string> = {};
+  for (const [id, key] of Object.entries(overrideKeys)) {
+    const text = _richText(props[key]);
+    if (text) overrides[id] = text;
+  }
+  if (_richText(props['Postiz Warpcast'])) {
+    overrides.warpcast = overrides.warpcast || _richText(props['Postiz Warpcast']);
+  }
+
+  const settings: Record<string, Record<string, unknown>> = {
+    discord: { channel: _richText(props['Postiz Discord Channel']) || env.POSTIZ_DISCORD_CHANNEL },
+    slack: { channel: _richText(props['Postiz Slack Channel']) || env.POSTIZ_SLACK_CHANNEL },
+    skool: {
+      group: _richText(props['Postiz Skool Group']) || env.POSTIZ_SKOOL_GROUP,
+      label: _richText(props['Postiz Skool Label']) || env.POSTIZ_SKOOL_LABEL,
+      title: _richText(props['Postiz Skool Title']) || _titleText(props['Name']),
+    },
+    twitch: {
+      messageType: _richText(props['Postiz Twitch Message Type']) || 'message',
+      announcementColor: _richText(props['Postiz Twitch Announcement Color']) || 'primary',
+    },
+    warpcast: {
+      channels: _richText(props['Postiz Warpcast Channels']) || _richText(props['Postiz Farcaster Channels']),
+    },
+    lemmy: {
+      community: _richText(props['Postiz Lemmy Community']),
+      community_id: _richText(props['Postiz Lemmy Community ID']),
+      title: _richText(props['Postiz Lemmy Title']) || _titleText(props['Name']),
+      url: _urlProp(props['Postiz Lemmy URL']),
+    },
+    listmonk: {
+      subject: _richText(props['Postiz Listmonk Subject']) || _titleText(props['Name']),
+      preview: _richText(props['Postiz Listmonk Preview']) || caption.slice(0, 140),
+      list: _richText(props['Postiz Listmonk List']) || env.POSTIZ_LISTMONK_LIST,
+      template: _richText(props['Postiz Listmonk Template']),
+    },
+  };
+
+  const integration_ids: Record<string, string> = {};
+  const notionIntegrationKeys: Record<string, string> = {
+    discord: 'Postiz Discord Integration ID',
+    slack: 'Postiz Slack Integration ID',
+    mastodon: 'Postiz Mastodon Integration ID',
+    skool: 'Postiz Skool Integration ID',
+    twitch: 'Postiz Twitch Integration ID',
+    kick: 'Postiz Kick Integration ID',
+    warpcast: 'Postiz Warpcast Integration ID',
+    nostr: 'Postiz Nostr Integration ID',
+    lemmy: 'Postiz Lemmy Integration ID',
+    listmonk: 'Postiz Listmonk Integration ID',
+  };
+  for (const [id, key] of Object.entries(notionIntegrationKeys)) {
+    const value = _richText(props[key]);
+    if (value) integration_ids[id] = value;
+  }
+
+  const schedule_at = _dateStart(props['Postiz Schedule']) || _dateStart(props['Schedule']);
+  const media_url = _fileUrl(props['Image']) || _fileUrl(props['GIF']) || _fileUrl(props['Video']);
+
+  if (!caption && !Object.keys(overrides).length) {
+    missing.push('Caption (or a Postiz {Channel} override)');
+  }
+
+  return {
+    caption,
+    targets,
+    schedule_at,
+    overrides,
+    settings,
+    integration_ids,
+    media_url,
+    is_complete: missing.length === 0,
+    missing,
+  };
+}
+
+export async function updatePostizMetadata(
+  notion_page_id: string,
+  data: {
+    postiz_status?: PostizPublishStatus;
+    postiz_urls?: string;
+    final_status?: FinalStatus;
+  }
+) {
+  if (!notionToken || !notion_page_id) {
+    return { success: false, error: 'Missing notion token or page id' };
+  }
+
+  const properties: any = {};
+  if (data.postiz_status) {
+    properties['Postiz Publish Status'] = { status: { name: data.postiz_status } };
+  }
+  if (data.postiz_urls) {
+    properties['Postiz URLs'] = { rich_text: [{ text: { content: data.postiz_urls } }] };
+  }
+  if (data.final_status) {
+    properties['Status'] = { status: { name: data.final_status } };
+  }
+
+  if (Object.keys(properties).length === 0) {
+    return { success: true, updated_page_id: notion_page_id, noop: true };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${notion_page_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({ properties }),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] updatePostizMetadata patch failed: ${err}`);
+      return { success: false, error: err };
+    }
+    return { success: true, updated_page_id: notion_page_id };
+  } catch (error: any) {
+    console.warn(`[NOTION] updatePostizMetadata exception: ${error.message}`);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}

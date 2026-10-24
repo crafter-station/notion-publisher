@@ -60,7 +60,7 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 Notion CMS  →  notion-publisher (this repo · no UI)
                     ├─ Events         → Luma (live) · Eventbrite via Composio (pending connect)
                     ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
-                    ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (stub) · Postiz (stub)
+                    ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (stub) · Postiz (live · dry-run default)
                     └─ Music/Podcast  → ONCE.app (stub)
 ```
 
@@ -68,7 +68,8 @@ Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds commu
 
 **Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
 **Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).  
-**Mapped (stub):** Typefully, Postiz, ONCE · Eventbrite (pending Composio connect).  
+**Mapped (stub):** Typefully, ONCE · Eventbrite (pending Composio connect).  
+**Postiz:** live client, **dry-run default** (exact `POST /public/v1/posts` payload, no create unless `POSTIZ_PUBLISH_LIVE=true`). Prefer self-hosted.
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
@@ -85,7 +86,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | <img src="docs/assets/logos/postly.png" width="20" alt=""> | **Postly** | [postly.ai](https://postly.ai/) | Social | **live** |
 | <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio** | [composio.dev](https://composio.dev/) | Social + Events (transport) | live · Reddit |
 | <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | stub |
-| <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | stub |
+| <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | **live** · dry-run default |
 | <img src="docs/assets/logos/once.png" width="20" alt=""> | **ONCE.app** | [beta.once.app](https://beta.once.app/) | Music / Podcast | stub |
 
 ---
@@ -115,11 +116,11 @@ One SSOT map of Notion `Channels` (+ distributor storefronts). **Delivery** = wh
 | <img src="docs/assets/logos/blogger.png" width="18" alt=""> | Blogger | [blogger.com](https://blogger.com/) | Social | Postly | live |
 | <img src="docs/assets/logos/email.png" width="18" alt=""> | Email | — | Social | Postly | live |
 | <img src="docs/assets/logos/reddit.png" width="18" alt=""> | Reddit | [reddit.com](https://reddit.com/) | Social | **Composio** | live |
-| <img src="docs/assets/logos/mastodon.png" width="18" alt=""> | Mastodon | [mastodon.social](https://mastodon.social/) | Social | Typefully / Postiz | stub |
-| <img src="docs/assets/logos/medium.png" width="18" alt=""> | Medium | [medium.com](https://medium.com/) | Social | Postiz | stub |
-| <img src="docs/assets/logos/discord.png" width="18" alt=""> | Discord | [discord.com](https://discord.com/) | Social | Postiz | stub |
-| <img src="docs/assets/logos/slack.png" width="18" alt=""> | Slack | [slack.com](https://slack.com/) | Social | Postiz | stub |
-| <img src="docs/assets/logos/twitch.png" width="18" alt=""> | Twitch | [twitch.tv](https://twitch.tv/) | Social | Postiz | stub |
+| <img src="docs/assets/logos/mastodon.png" width="18" alt=""> | Mastodon | [mastodon.social](https://mastodon.social/) | Social | Typefully / Postiz | stub / live (dry-run) |
+| <img src="docs/assets/logos/medium.png" width="18" alt=""> | Medium | [medium.com](https://medium.com/) | Social | Postiz | mapped (not in v1 write set) |
+| <img src="docs/assets/logos/discord.png" width="18" alt=""> | Discord | [discord.com](https://discord.com/) | Social | Postiz | live · dry-run default |
+| <img src="docs/assets/logos/slack.png" width="18" alt=""> | Slack | [slack.com](https://slack.com/) | Social | Postiz | live · dry-run default |
+| <img src="docs/assets/logos/twitch.png" width="18" alt=""> | Twitch | [twitch.tv](https://twitch.tv/) | Social | Postiz | live · dry-run default |
 | <img src="docs/assets/logos/luma.png" width="18" alt=""> | Luma Event Page | [luma.com](https://luma.com/) | Events | native (Luma) | live |
 | <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite | [eventbrite.com](https://eventbrite.com/) | Events | **Composio** | pending connect |
 | <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | Gumroad Storefront | [gumroad.com](https://gumroad.com/) | Products | native (Gumroad) | live |
@@ -130,7 +131,7 @@ One SSOT map of Notion `Channels` (+ distributor storefronts). **Delivery** = wh
 | <img src="docs/assets/logos/youtube.png" width="18" alt=""> | YouTube Music | [music.youtube.com](https://music.youtube.com/) | Music | ONCE | stub |
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | Amazon Music / Tidal / Deezer / Pandora | ONCE network | Music | ONCE | stub |
 
-Other Notion `Channels` options (Tumblr, VK, MeWe, Lemmy, Whop, Farcaster, Nostr, Kick, Dribbble, Listmonk, …) stay Postiz-mapped stubs until a client ships — same logos folder pattern when needed.
+Postiz v1 write set (dry-run default): **Discord, Slack, Mastodon, Skool, Twitch, Kick, Warpcast, Nostr, Lemmy, Listmonk**. Other Postiz-mapped Notion options (Tumblr, VK, MeWe, Whop, Dribbble, Medium, …) stay catalog-only. MySkool write stays out of scope.
 
 ---
 
@@ -472,34 +473,38 @@ Media: usually text-only; optional shared `Image` when the channel supports it. 
 
 ---
 
-### <img src="docs/assets/logos/postiz.png" width="22" alt=""> Postiz (stub)
+### <img src="docs/assets/logos/postiz.png" width="22" alt=""> Postiz (live · dry-run default)
 
-Widest scheduler surface (open-source). Prefer **self-hosted** over expensive cloud. Env: `POSTIZ_API_KEY`.
+Public API client (`POST /public/v1/posts`). Prefer **self-hosted** (`POSTIZ_API_BASE`) — no paid cloud plan assumed. Dry-run is the default: the exact create payload is built and validated, **`POST /posts` is not called**. Live create also needs `POSTIZ_PUBLISH_LIVE=true` and `?live=true`. Immediate `type=now` is never emitted.
 
-Provider list from official [`postiz-app` social integrations](https://github.com/gitroomhq/postiz-app/tree/main/libraries/nestjs-libraries/src/integrations/social).
+Webhook: `POST /webhooks/publish-postiz` · discover: `GET /capabilities/postiz`.
 
-#### Channels by family → suggested Notion overrides
+#### Wired channels (v1)
 
-Global: shared `Caption` + `Postiz Targets` (multi-select) + shared `Video` / `Image` / `GIF`. Empty channel override → `Caption`.
-
-| Family | Channels | Suggested overrides |
+| Family | Channels | Required settings |
 |---|---|---|
-| Social | X, Instagram (+ standalone), Facebook, LinkedIn (+ Page), TikTok, YouTube, Threads, Pinterest, Reddit, Bluesky, Mastodon (+ custom), Tumblr, VK, MeWe | `Postiz X`, `Postiz Instagram`, `Postiz Facebook`, `Postiz LinkedIn`, `Postiz TikTok`, `Postiz YouTube`, `Postiz Threads`, `Postiz Pinterest`, `Postiz Reddit`, `Postiz Bluesky`, `Postiz Mastodon`, `Postiz Tumblr`, `Postiz VK`, `Postiz MeWe` |
-| Communities / forums | Lemmy, Skool, Whop, Farcaster, Nostr | `Postiz Lemmy`, `Postiz Skool`, `Postiz Whop`, `Postiz Farcaster`, `Postiz Nostr` |
-| Messaging | Telegram, Discord, Slack | `Postiz Telegram`, `Postiz Discord`, `Postiz Slack` |
-| Live / creator | Twitch, Kick | `Postiz Twitch`, `Postiz Kick` |
-| Design | Dribbble | `Postiz Dribbble` |
-| Blog / newsletters | Medium, Dev.to, Hashnode, WordPress, Listmonk | `Postiz Medium`, `Postiz Devto`, `Postiz Hashnode`, `Postiz WordPress`, `Postiz Listmonk` |
-| Local | Google Business (GMB) | `Postiz Google` |
+| Messaging | Discord, Slack | `channel` |
+| Social | Mastodon, Warpcast (Farcaster), Nostr | Warpcast channels optional |
+| Communities | Lemmy, Skool (via Postiz — **not** MySkool write) | Lemmy community + title; Skool `group` / `label` / `title` |
+| Live / creator | Twitch, Kick | Twitch `messageType` optional |
+| Newsletter | Listmonk | `subject`, `preview`, `list` |
+
+Env: `POSTIZ_API_KEY`, optional `POSTIZ_API_BASE`, `POSTIZ_INTEGRATIONS=discord:id,slack:id,…`, channel fallbacks (`POSTIZ_DISCORD_CHANNEL`, `POSTIZ_SLACK_CHANNEL`, `POSTIZ_SKOOL_GROUP`, `POSTIZ_SKOOL_LABEL`, `POSTIZ_LISTMONK_LIST`).
 
 | Property | Type | Role |
 |---|---|---|
-| `Caption` | Rich text | Shared default (same Social model) |
-| `Postiz Targets` | Multi-select | Subset of channels above |
-| `Postiz Publish Status` | Status | Output |
-| `Postiz URLs` | Rich text / URL | Output (per-channel lines) |
+| `Caption` | Rich text | Shared default (empty override → this) |
+| `Postiz Targets` | Multi-select | Subset of wired channels |
+| `Postiz {Channel}` | Rich text | Per-channel copy |
+| `Postiz Discord Channel` / `Postiz Slack Channel` | Rich text | Provider `channel` |
+| `Postiz Skool Group` / `Label` / `Title` | Rich text | Skool settings |
+| `Postiz Lemmy Community` / `Community ID` / `Title` / `URL` | Rich text / URL | Lemmy settings |
+| `Postiz Listmonk Subject` / `Preview` / `List` / `Template` | Rich text | Listmonk settings |
+| `Postiz Schedule` | Date | If set → payload `type=schedule`, else `draft` |
+| `Postiz Publish Status` | Status | Output (live only) |
+| `Postiz URLs` | Rich text | Output (live only) |
 
-Tag `Source Tags` → `Postiz`. Full matrix also in [CAPABILITIES.md](./CAPABILITIES.md).
+Tag `Source Tags` → `Postiz`. Tests: `npm test` (mocked HTTP).
 
 ---
 
@@ -545,10 +550,12 @@ Tag `Source Tags` → `ONCE`.
 | `POST` | `/webhooks/publish-postly` | Social publish (`?target=` optional) |
 | `POST` | `/webhooks/publish-luma` | Create Luma event from Notion |
 | `POST` | `/webhooks/publish-github` | Create TheVeller Release (+ asset; `?draft=true`) |
+| `POST` | `/webhooks/publish-postiz` | Postiz dry-run (default) or create (`?live=true` + `POSTIZ_PUBLISH_LIVE`) |
 | `GET` | `/capabilities` | Registry + layers + Postly catalog |
 | `GET` | `/capabilities/postly` | Live socials + audience groups |
 | `GET` | `/capabilities/skool` | MySkool discover (or stub message if no key) |
 | `GET` | `/capabilities/github` | GitHub catalog sample (`?owner=`) |
+| `GET` | `/capabilities/postiz` | Postiz wired channels + dry-run flag |
 
 ---
 
@@ -569,6 +576,7 @@ ngrok http 3000
 #   https://<ngrok>/webhooks/publish-postly
 #   https://<ngrok>/webhooks/publish-luma
 #   https://<ngrok>/webhooks/publish-github   # optional ?draft=true
+#   https://<ngrok>/webhooks/publish-postiz   # dry-run default
 ```
 
 ### Environment (minimal)
@@ -597,6 +605,9 @@ POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
 # COMPOSIO_REDDIT_SUBREDDIT=test
 # TYPEFULLY_API_KEY=
 # POSTIZ_API_KEY=
+# POSTIZ_API_BASE=https://your-postiz.example/api/public/v1
+# POSTIZ_INTEGRATIONS=discord:id,slack:id
+# POSTIZ_PUBLISH_LIVE=false
 # ONCE_API_KEY=
 ```
 
@@ -607,6 +618,7 @@ Full knobs (queues, autopilot, comments): [`.env.example`](./.env.example). Matr
 ```bash
 npm run build && npm run dev
 npm run capabilities:check
+npm test                       # mocked HTTP; includes Postiz dry-run
 npm run notion:schema          # Publisher property dump (read-only)
 npm run publisher:report
 ```

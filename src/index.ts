@@ -29,6 +29,9 @@ function startServer(port: number) {
       if (path === '/capabilities/composio') {
         return webhooksController.handleCapabilitiesComposio(req, res);
       }
+      if (path === '/capabilities/postiz') {
+        return webhooksController.handleCapabilitiesPostiz(req, res);
+      }
     }
 
     if (req.method === 'POST') {
@@ -49,6 +52,9 @@ function startServer(port: number) {
       }
       if (path === '/webhooks/publish-composio') {
         return webhooksController.handlePublishComposio(req, res);
+      }
+      if (path === '/webhooks/publish-postiz') {
+        return webhooksController.handlePublishPostiz(req, res);
       }
     }
 

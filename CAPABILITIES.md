@@ -7,7 +7,7 @@
 | **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
 | **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**pending connect**) |
 | **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
-| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**stub**) |
+| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run default) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
 
 **CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#notion-db-setup--one-database-views-by-source)**.
@@ -32,7 +32,7 @@ Self-check: `npm run capabilities:check`
 | <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live** | [postly.ai](https://postly.ai/) |
 | <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | **live** · Reddit | [composio.dev](https://composio.dev/) |
 | <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | stub | [typefully.com](https://typefully.com/) |
-| <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | stub | [postiz.com](https://postiz.com/) |
+| <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | **live** · dry-run | [postiz.com](https://postiz.com/) |
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | `once` | Music | stub | [beta.once.app](https://beta.once.app/) |
 
 ## Discovery endpoints
@@ -44,6 +44,7 @@ Self-check: `npm run capabilities:check`
 | `GET` | `/capabilities/skool` |
 | `GET` | `/capabilities/github` |
 | `GET` | `/capabilities/composio` |
+| `GET` | `/capabilities/postiz` |
 
 ### Postly (live)
 
@@ -78,21 +79,15 @@ Shared `Caption` + optional channel overrides (empty → `Caption`). Plus `Typef
 | Mastodon | `Typefully Mastodon` |
 | Bluesky | `Typefully Bluesky` |
 
-### Postiz (stub — prefer self-hosted)
+### Postiz (live · dry-run default — prefer self-hosted)
 
-Source: [`postiz-app` social providers](https://github.com/gitroomhq/postiz-app/tree/main/libraries/nestjs-libraries/src/integrations/social).
+Public API: `Authorization: $POSTIZ_API_KEY` → `POST {POSTIZ_API_BASE}/posts`. Client: `src/services/postiz.service.ts`. Webhook: `POST /webhooks/publish-postiz`. Discover: `GET /capabilities/postiz`.
 
-| Family | Channels |
-|---|---|
-| Social | X, Instagram (+ standalone), Facebook, LinkedIn (+ Page), TikTok, YouTube, Threads, Pinterest, Reddit, Bluesky, Mastodon (+ custom), Tumblr, VK, MeWe |
-| Communities / forums | Lemmy, Skool, Whop, Farcaster, Nostr |
-| Messaging | Telegram, Discord, Slack |
-| Live / creator | Twitch, Kick |
-| Design | Dribbble |
-| Blog / newsletters | Medium, Dev.to, Hashnode, WordPress, Listmonk |
-| Local | Google Business (GMB) |
+Dry-run is the default (exact payload, **no** create). Live needs `POSTIZ_PUBLISH_LIVE=true` and `?live=true`. Immediate `type=now` is never sent. Prefer self-hosted `POSTIZ_API_BASE` — no paid cloud plan assumed.
 
-Notion: shared `Caption` + `Postiz Targets` + optional `Postiz {Channel}` overrides (see [README](./README.md)).
+Wired write channels: **Discord, Slack, Mastodon, Skool, Twitch, Kick, Warpcast, Nostr, Lemmy, Listmonk**. Skool here is Postiz's provider (not MySkool write).
+
+Env: `POSTIZ_API_KEY`, optional `POSTIZ_API_BASE`, `POSTIZ_INTEGRATIONS`, `POSTIZ_DISCORD_CHANNEL`, `POSTIZ_SLACK_CHANNEL`, `POSTIZ_SKOOL_GROUP`, `POSTIZ_SKOOL_LABEL`, `POSTIZ_LISTMONK_LIST`.
 
 ### ONCE.app (stub — music / podcast DSP)
 
@@ -136,4 +131,4 @@ SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com
 
 - **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit live
 - **Next:** Eventbrite via Composio (after connect); Phase A leftovers (#3)
-- **Later:** Typefully write (#6); Skool write (#4, blocked); Postiz / ONCE
+- **Later:** Typefully write (#6); Skool write (#4, blocked); ONCE
