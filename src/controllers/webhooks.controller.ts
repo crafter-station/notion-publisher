@@ -7,6 +7,7 @@ import { executePublishLumaUseCase } from '../use-cases/publish-luma.use-case';
 import { executePublishGithubUseCase } from '../use-cases/publish-github.use-case';
 import { executePublishComposioUseCase } from '../use-cases/publish-composio.use-case';
 import { executePublishPostizUseCase } from '../use-cases/publish-postiz.use-case';
+import { executePublishTypefullyUseCase } from '../use-cases/publish-typefully.use-case';
 import { PublishGumroadWebhookDto } from '../dtos/webhook.dto';
 import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { getCapabilitiesSnapshot } from '../capabilities/registry';
@@ -15,6 +16,7 @@ import { isSkoolConfigured, SkoolService } from '../services/skool.service';
 import { isLumaConfigured } from '../services/luma.service';
 import { ComposioService, isComposioConfigured } from '../services/composio.service';
 import { isPostizConfigured, listWiredPostizChannels } from '../services/postiz.service';
+import { isTypefullyConfigured, TYPEFULLY_PLATFORMS } from '../services/typefully.service';
 import {
   GITHUB_CATALOG_OWNERS,
   GITHUB_PRODUCT_OWNER,
@@ -187,6 +189,20 @@ export const webhooksController = {
         error: err.message || String(err),
       });
     }
+  },
+
+  async handleCapabilitiesTypefully(_req: IncomingMessage, res: ServerResponse) {
+    json(res, 200, {
+      status: isTypefullyConfigured() ? 'live' : 'stub',
+      distributor: 'typefully',
+      dry_run_default: true,
+      publish_live: env.TYPEFULLY_PUBLISH_LIVE === 'true',
+      social_set_id: env.TYPEFULLY_SOCIAL_SET_ID || null,
+      platforms: TYPEFULLY_PLATFORMS,
+      webhook: 'POST /webhooks/publish-typefully',
+      note:
+        'Dry-run builds POST /v2/social-sets/{id}/drafts without calling it. Never sends publish_at. Live requires TYPEFULLY_PUBLISH_LIVE=true and ?live=true.',
+    });
   },
 
   /** Postiz catalog + config (no publish). */
@@ -667,6 +683,45 @@ export const webhooksController = {
         );
       } catch (err: any) {
         console.error('[ERROR] handlePublishPostiz:', err.message);
+        res.writeHead(400);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  },
+
+  async handlePublishTypefully(req: IncomingMessage, res: ServerResponse) {
+    let body = '';
+    req.on('data', chunk => (body += chunk.toString()));
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const notion_page_id = payload.data?.id || payload.notion_page_id;
+        if (!notion_page_id) {
+          res.writeHead(400);
+          return res.end(
+            JSON.stringify({ error: 'Missing data.id (Notion webhook) or notion_page_id' })
+          );
+        }
+
+        const reqUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+        const wantsLive = reqUrl.searchParams.get('live') === 'true';
+        const dryRun = !wantsLive || env.TYPEFULLY_PUBLISH_LIVE !== 'true';
+
+        const result = await executePublishTypefullyUseCase(notion_page_id, { dryRun });
+        res.writeHead(202, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: result.dry_run
+              ? 'Accepted Typefully dry-run (draft payload validated, API not called)'
+              : 'Accepted Typefully draft create',
+            notion_page_id,
+            dry_run: result.dry_run,
+            called_publish: result.called_publish,
+            payload: result.payload,
+          })
+        );
+      } catch (err: any) {
+        console.error('[ERROR] handlePublishTypefully:', err.message);
         res.writeHead(400);
         res.end(JSON.stringify({ error: err.message }));
       }

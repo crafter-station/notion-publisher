@@ -5,7 +5,7 @@ import { DistributorCapability } from './types';
  * Distributors by layer (publish channels):
  * - Events: luma (live); Eventbrite via composio (pending connect)
  * - Products: gumroad (live), github (live · TheVeller Releases), myskool (discover)
- * - Social: postly (live), composio (live · Reddit), typefully (stub), postiz (live · dry-run default)
+ * - Social: postly (live), composio (live · Reddit), typefully (live · dry-run default), postiz (live · dry-run default)
  * - Music/Podcast: once (stub)
  */
 export const DISTRIBUTORS: DistributorCapability[] = [
@@ -59,10 +59,10 @@ export const DISTRIBUTORS: DistributorCapability[] = [
   {
     id: 'typefully',
     kind: 'social',
-    status: 'stub',
-    envKeys: ['TYPEFULLY_API_KEY'],
+    status: 'live',
+    envKeys: ['TYPEFULLY_API_KEY', 'TYPEFULLY_SOCIAL_SET_ID'],
     notes:
-      'Social layer. Text-first path: X, LinkedIn, Threads, Mastodon — strong per-account granularity. Same view as Composio. Mapped only.',
+      'Social layer. Typefully v2 drafts: X, LinkedIn, Threads, Mastodon, Bluesky. Dry-run default (exact POST /v2/social-sets/{id}/drafts payload). Never sends publish_at — draft or plan_at only. Live needs TYPEFULLY_PUBLISH_LIVE=true.',
   },
   {
     id: 'postiz',
@@ -127,7 +127,7 @@ export function checkRegistryHealthy(): void {
   if (getDistributor('github')?.status !== 'live') throw new Error('github must be live');
   if (getDistributor('composio')?.status !== 'live') throw new Error('composio must be live');
   if (getDistributor('postiz')?.status !== 'live') throw new Error('postiz must be live');
-  if (!getDistributor('typefully')) throw new Error('typefully stub missing');
+  if (getDistributor('typefully')?.status !== 'live') throw new Error('typefully must be live');
   if (!getDistributor('once')) throw new Error('once stub missing');
   if (getDistributor('luma')?.status !== 'live') throw new Error('luma must be live');
   if (getDistributor('nce') || getDistributor('postis')) {

@@ -32,6 +32,9 @@ function startServer(port: number) {
       if (path === '/capabilities/postiz') {
         return webhooksController.handleCapabilitiesPostiz(req, res);
       }
+      if (path === '/capabilities/typefully') {
+        return webhooksController.handleCapabilitiesTypefully(req, res);
+      }
     }
 
     if (req.method === 'POST') {
@@ -55,6 +58,9 @@ function startServer(port: number) {
       }
       if (path === '/webhooks/publish-postiz') {
         return webhooksController.handlePublishPostiz(req, res);
+      }
+      if (path === '/webhooks/publish-typefully') {
+        return webhooksController.handlePublishTypefully(req, res);
       }
     }
 

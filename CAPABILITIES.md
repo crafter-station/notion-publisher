@@ -7,7 +7,7 @@
 | **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
 | **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**pending connect**) |
 | **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
-| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**stub**), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run default) |
+| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**live** · dry-run), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
 
 **CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#notion-db-setup--one-database-views-by-source)**.
@@ -31,7 +31,7 @@ Self-check: `npm run capabilities:check`
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | `myskool` | Products | **discover** | [myskool.xyz](https://myskool.xyz/) |
 | <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live** | [postly.ai](https://postly.ai/) |
 | <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | **live** · Reddit | [composio.dev](https://composio.dev/) |
-| <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | stub | [typefully.com](https://typefully.com/) |
+| <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | **live** · dry-run | [typefully.com](https://typefully.com/) |
 | <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | **live** · dry-run | [postiz.com](https://postiz.com/) |
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | `once` | Music | stub | [beta.once.app](https://beta.once.app/) |
 
@@ -45,6 +45,7 @@ Self-check: `npm run capabilities:check`
 | `GET` | `/capabilities/github` |
 | `GET` | `/capabilities/composio` |
 | `GET` | `/capabilities/postiz` |
+| `GET` | `/capabilities/typefully` |
 
 ### Postly (live)
 
@@ -67,17 +68,13 @@ Source Tag **`Composio`**. **Reddit** publish: `POST /webhooks/publish-composio`
 | `Composio User ID` / `Composio Connected Account ID` | optional multi-account overrides |
 | `Eventbrite Title` / `Start` / `End` / … | mapped; write deferred |
 
-### Typefully (stub)
+### Typefully (live · dry-run default)
 
-Shared `Caption` + optional channel overrides (empty → `Caption`). Plus `Typefully Thread`, `Typefully Account`. See [README Social model](./README.md#social--shared-media--optional-channel-overrides).
+Public API v2 drafts: `Authorization: Bearer $TYPEFULLY_API_KEY` → `POST /v2/social-sets/{social_set_id}/drafts`. Client: `src/services/typefully.service.ts`. Webhook: `POST /webhooks/publish-typefully`. Discover: `GET /capabilities/typefully`.
 
-| Channel | Suggested Notion field |
-|---|---|
-| X | `X Post` / `Twitter Post` |
-| LinkedIn | `LinkedIn Post` |
-| Threads | `Twitter Post` |
-| Mastodon | `Typefully Mastodon` |
-| Bluesky | `Typefully Bluesky` |
+Dry-run is the default. **Never sends `publish_at`** (draft or `plan_at` only). Live needs `TYPEFULLY_PUBLISH_LIVE=true`. Platforms: X, LinkedIn, Threads, Mastodon, Bluesky.
+
+Env: `TYPEFULLY_API_KEY`, `TYPEFULLY_SOCIAL_SET_ID`.
 
 ### Postiz (live · dry-run default — prefer self-hosted)
 
@@ -131,4 +128,4 @@ SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com
 
 - **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit live
 - **Next:** Eventbrite via Composio (after connect); Phase A leftovers (#3)
-- **Later:** Typefully write (#6); Skool write (#4, blocked); ONCE
+- **Later:** Skool write (#4, blocked); ONCE

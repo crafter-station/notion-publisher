@@ -45,6 +45,12 @@ export const env = {
   POSTIZ_SKOOL_GROUP: process.env.POSTIZ_SKOOL_GROUP || '',
   POSTIZ_SKOOL_LABEL: process.env.POSTIZ_SKOOL_LABEL || '',
   POSTIZ_LISTMONK_LIST: process.env.POSTIZ_LISTMONK_LIST || '',
+  /** Optional Typefully — drafts only. Not required to boot. */
+  TYPEFULLY_API_KEY: process.env.TYPEFULLY_API_KEY || '',
+  /** Social set (account) id from GET /v2/social-sets */
+  TYPEFULLY_SOCIAL_SET_ID: process.env.TYPEFULLY_SOCIAL_SET_ID || '',
+  /** Must be "true" AND dryRun:false to POST a draft. Default off. */
+  TYPEFULLY_PUBLISH_LIVE: process.env.TYPEFULLY_PUBLISH_LIVE || '',
   POSTLY_QUEUE_ENABLED: process.env.POSTLY_QUEUE_ENABLED === 'true',
   POSTLY_QUEUE_DATABASE_ID: process.env.POSTLY_QUEUE_DATABASE_ID || process.env.NOTION_DATABASE_ID,
   POSTLY_QUEUE_INTERVAL_MS: Number(process.env.POSTLY_QUEUE_INTERVAL_MS) || 6 * 60 * 60 * 1000,

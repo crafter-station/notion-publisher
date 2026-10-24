@@ -31,7 +31,8 @@ Constant: `src/services/notion.service.ts` → `export const NOTION_VERSION`.
 | **Luma** (live) | `Luma Publish Status` | `Luma Event URL` | `POST /webhooks/publish-luma`; cover CDN upload |
 | **GitHub** (live) | `GitHub Publish Status` | `GitHub Release URL` (+ ID) | TheVeller Releases only; catalog import |
 | **Skool** (discover) | `Skool Publish Status` | `Skool Post URL` | props exist; **no** publish webhook until MySkool `POST /v1/posts` (#4) |
-| Typefully / ONCE | `* Publish Status` (props present) | `* URL` where present | stubs — no code write yet |
+| ONCE | `ONCE Publish Status` | `ONCE URL` | stub — no code write yet |
+| **Typefully** (live · dry-run) | `Typefully Publish Status` | `Typefully URL` | `POST /webhooks/publish-typefully`; never `publish_at` |
 | **Postiz** (live · dry-run) | `Postiz Publish Status` | `Postiz URLs` | `POST /webhooks/publish-postiz`; create only if `POSTIZ_PUBLISH_LIVE` |
 | **Composio** (live · Reddit) | `Composio Publish Status` | `Composio URL` | Source Tag; Reddit webhook live; Eventbrite pending |
 
@@ -148,6 +149,7 @@ Discover: `GET /capabilities/skool` · needs valid `SKOOL_API_KEY=sk_live_…`. 
 | `Publish in GitHub` (when added) | `/webhooks/publish-github` |
 | `Publish in Composio` (when added) | `/webhooks/publish-composio` |
 | `Publish in Postiz` (when added) | `/webhooks/publish-postiz` |
+| `Publish in Typefully` (when added) | `/webhooks/publish-typefully` |
 | `Publish in Skool` | **not wired** — MySkool POST still Planned (#4) |
 
 Automations are **not** readable via API. After ngrok restart, open each button → Edit automation → confirm host.

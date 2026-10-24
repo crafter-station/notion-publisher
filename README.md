@@ -60,7 +60,7 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 Notion CMS  →  notion-publisher (this repo · no UI)
                     ├─ Events         → Luma (live) · Eventbrite via Composio (pending connect)
                     ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
-                    ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (stub) · Postiz (live · dry-run default)
+                    ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (live · dry-run) · Postiz (live · dry-run)
                     └─ Music/Podcast  → ONCE.app (stub)
 ```
 
@@ -68,8 +68,8 @@ Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds commu
 
 **Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
 **Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).  
-**Mapped (stub):** Typefully, ONCE · Eventbrite (pending Composio connect).  
-**Postiz:** live client, **dry-run default** (exact `POST /public/v1/posts` payload, no create unless `POSTIZ_PUBLISH_LIVE=true`). Prefer self-hosted.
+**Mapped (stub):** ONCE · Eventbrite (pending Composio connect).  
+**Typefully / Postiz:** live clients, **dry-run default**. Typefully never sends `publish_at` (draft / `plan_at` only).
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ---
@@ -85,7 +85,7 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 | <img src="docs/assets/logos/skool.png" width="20" alt=""> <img src="docs/assets/logos/myskool.png" width="20" alt=""> | **Skool (MySkool)** | [skool.com](https://www.skool.com/) · [myskool.xyz](https://myskool.xyz/) | Products + community | **discover** |
 | <img src="docs/assets/logos/postly.png" width="20" alt=""> | **Postly** | [postly.ai](https://postly.ai/) | Social | **live** |
 | <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio** | [composio.dev](https://composio.dev/) | Social + Events (transport) | live · Reddit |
-| <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | stub |
+| <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | **live** · dry-run default |
 | <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | **live** · dry-run default |
 | <img src="docs/assets/logos/once.png" width="20" alt=""> | **ONCE.app** | [beta.once.app](https://beta.once.app/) | Music / Podcast | stub |
 
@@ -445,9 +445,13 @@ Uses the **shared Social model** above. Live parser keys today:
 
 ---
 
-### <img src="docs/assets/logos/typefully.png" width="22" alt=""> Typefully (stub)
+### <img src="docs/assets/logos/typefully.png" width="22" alt=""> Typefully (live · dry-run default)
 
-Cheaper **text-first** path with strong per-account granularity. Env: `TYPEFULLY_API_KEY`.
+Text-first drafts via Typefully Public API v2 (`POST /v2/social-sets/{social_set_id}/drafts`). Auth: `Authorization: Bearer $TYPEFULLY_API_KEY`.
+
+Dry-run is the default (exact payload, **no** HTTP create). The connector **never sends `publish_at`** — drafts, or `plan_at` when `Typefully Schedule` is set (dated but inert). Live create needs `TYPEFULLY_PUBLISH_LIVE=true` and `?live=true`.
+
+Webhook: `POST /webhooks/publish-typefully` · discover: `GET /capabilities/typefully`.
 
 #### Channels
 
@@ -455,21 +459,20 @@ Cheaper **text-first** path with strong per-account granularity. Env: `TYPEFULLY
 |---|---|
 | X (Twitter) | `X Post` / `Twitter Post` |
 | LinkedIn | `LinkedIn Post` |
-| Threads | `Twitter Post` (or Threads-specific later) |
-| Mastodon | `Typefully Mastodon` (optional) |
-| Bluesky | `Typefully Bluesky` (optional) |
-
-#### Suggested Notion fields
+| Threads | `Threads Post` / `Twitter Post` |
+| Mastodon | `Typefully Mastodon` |
+| Bluesky | `Typefully Bluesky` |
 
 | Property | Type | Role |
 |---|---|---|
 | `Caption` | Rich text | Shared draft (same as Social) |
-| `Typefully Thread` | Rich text | Multi-tweet / thread continuation |
-| `Typefully Account` | Rich text / select | Which connected account |
-| `Typefully Publish Status` | Status | Output |
-| `Typefully URL` | URL | Output |
+| `Typefully Thread` | Rich text | Appended with 4 newlines (API thread split) |
+| `Typefully Account` | Rich text | Social set id (else `TYPEFULLY_SOCIAL_SET_ID`) |
+| `Typefully Schedule` | Date | Optional → `plan_at` (never auto-publishes) |
+| `Typefully Publish Status` | Status | Output (live only) |
+| `Typefully URL` | URL | Output (live only) |
 
-Media: usually text-only; optional shared `Image` when the channel supports it. Tag `Source Tags` → `Typefully`.
+Env: `TYPEFULLY_API_KEY`, `TYPEFULLY_SOCIAL_SET_ID`. Tag `Source Tags` → `Typefully`.
 
 ---
 
@@ -551,11 +554,13 @@ Tag `Source Tags` → `ONCE`.
 | `POST` | `/webhooks/publish-luma` | Create Luma event from Notion |
 | `POST` | `/webhooks/publish-github` | Create TheVeller Release (+ asset; `?draft=true`) |
 | `POST` | `/webhooks/publish-postiz` | Postiz dry-run (default) or create (`?live=true` + `POSTIZ_PUBLISH_LIVE`) |
+| `POST` | `/webhooks/publish-typefully` | Typefully dry-run draft (default); never `publish_at` |
 | `GET` | `/capabilities` | Registry + layers + Postly catalog |
 | `GET` | `/capabilities/postly` | Live socials + audience groups |
 | `GET` | `/capabilities/skool` | MySkool discover (or stub message if no key) |
 | `GET` | `/capabilities/github` | GitHub catalog sample (`?owner=`) |
 | `GET` | `/capabilities/postiz` | Postiz wired channels + dry-run flag |
+| `GET` | `/capabilities/typefully` | Typefully platforms + dry-run flag |
 
 ---
 
@@ -604,6 +609,8 @@ POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
 # COMPOSIO_CONNECTED_ACCOUNT_ID=
 # COMPOSIO_REDDIT_SUBREDDIT=test
 # TYPEFULLY_API_KEY=
+# TYPEFULLY_SOCIAL_SET_ID=
+# TYPEFULLY_PUBLISH_LIVE=false
 # POSTIZ_API_KEY=
 # POSTIZ_API_BASE=https://your-postiz.example/api/public/v1
 # POSTIZ_INTEGRATIONS=discord:id,slack:id

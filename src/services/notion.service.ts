@@ -1318,3 +1318,124 @@ export async function updatePostizMetadata(
     return { success: false, error: error.message || 'Unknown error' };
   }
 }
+
+export type TypefullyPublishStatus = 'Not started' | 'In progress' | 'Failed' | 'Published';
+
+export interface TypefullyNotionContent {
+  draft_title: string;
+  caption: string;
+  thread: string;
+  social_set_id: string;
+  platforms: Partial<Record<'x' | 'linkedin' | 'threads' | 'mastodon' | 'bluesky', string>>;
+  plan_at: string;
+  is_complete: boolean;
+  missing: string[];
+}
+
+/**
+ * Shared Caption + optional channel overrides → Typefully v2 platforms.
+ * Typefully Thread is appended with 4 newlines (API thread split).
+ */
+export function extractTypefullyContent(props: any): TypefullyNotionContent {
+  const missing: string[] = [];
+  const caption = _richText(props['Caption']) || _richText(props['POV Text']) || '';
+  const thread = _richText(props['Typefully Thread']);
+  const x = _richText(props['X Post']) || _richText(props['Twitter Post']);
+  const linkedin = _richText(props['LinkedIn Post']);
+  const threads = _richText(props['Threads Post']) || _richText(props['Twitter Post']);
+  const mastodon = _richText(props['Typefully Mastodon']);
+  const bluesky = _richText(props['Typefully Bluesky']);
+
+  const withThread = (text: string) => {
+    const base = text || caption;
+    if (thread && base) return `${base}\n\n\n\n${thread}`;
+    return base || thread;
+  };
+
+  const platforms: TypefullyNotionContent['platforms'] = {};
+  const xText = withThread(x);
+  const liText = withThread(linkedin);
+  const thText = withThread(threads);
+  const maText = withThread(mastodon);
+  const bsText = withThread(bluesky);
+
+  if (xText) platforms.x = xText;
+  if (liText) platforms.linkedin = liText;
+  if (thText) platforms.threads = thText;
+  if (maText) platforms.mastodon = maText;
+  if (bsText) platforms.bluesky = bsText;
+
+  if (!Object.keys(platforms).length && caption) {
+    platforms.x = withThread('');
+  }
+
+  const social_set_id =
+    _richText(props['Typefully Account']) ||
+    _richText(props['Typefully Social Set ID']) ||
+    env.TYPEFULLY_SOCIAL_SET_ID;
+  const draft_title = _titleText(props['Name']) || _richText(props['Typefully Title']);
+  const plan_at = _dateStart(props['Typefully Schedule']) || _dateStart(props['Schedule']);
+
+  if (!Object.keys(platforms).length) missing.push('Caption (or a Typefully / X / LinkedIn override)');
+  if (!social_set_id) missing.push('Typefully Account (or TYPEFULLY_SOCIAL_SET_ID)');
+
+  return {
+    draft_title,
+    caption,
+    thread,
+    social_set_id,
+    platforms,
+    plan_at,
+    is_complete: missing.length === 0,
+    missing,
+  };
+}
+
+export async function updateTypefullyMetadata(
+  notion_page_id: string,
+  data: {
+    typefully_status?: TypefullyPublishStatus;
+    typefully_url?: string;
+    final_status?: FinalStatus;
+  }
+) {
+  if (!notionToken || !notion_page_id) {
+    return { success: false, error: 'Missing notion token or page id' };
+  }
+
+  const properties: any = {};
+  if (data.typefully_status) {
+    properties['Typefully Publish Status'] = { status: { name: data.typefully_status } };
+  }
+  if (data.typefully_url) {
+    properties['Typefully URL'] = { url: data.typefully_url };
+  }
+  if (data.final_status) {
+    properties['Status'] = { status: { name: data.final_status } };
+  }
+
+  if (Object.keys(properties).length === 0) {
+    return { success: true, updated_page_id: notion_page_id, noop: true };
+  }
+
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${notion_page_id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({ properties }),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      console.warn(`[NOTION] updateTypefullyMetadata patch failed: ${err}`);
+      return { success: false, error: err };
+    }
+    return { success: true, updated_page_id: notion_page_id };
+  } catch (error: any) {
+    console.warn(`[NOTION] updateTypefullyMetadata exception: ${error.message}`);
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+}
