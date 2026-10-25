@@ -353,6 +353,7 @@ export const PIEZAS_SCHEMA: SchemaBase = {
   properties: defineProps('piezas', [
     ['nombre', 'Nombre', 'title'],
     ['status', 'Status', 'status', { options: ['Idea', 'Borrador', 'Lista', 'Programada', 'Publicada'] }],
+    ['claveDeIdempotencia', 'Clave de idempotencia', 'rich_text'],
     ['captionBase', 'Caption base', 'rich_text'],
     ['fechaDePublicacion', 'Fecha de publicación', 'date'],
     ['file', 'File', 'files'],

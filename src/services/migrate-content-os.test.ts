@@ -90,6 +90,10 @@ test('migrate passes through optional Pieza design fields and Image (versión)',
   assert.deepEqual((pieza.props['Módulo'] as any).select, { name: 'Content' });
   assert.deepEqual((pieza.props.Formato as any).select, { name: 'post' });
   assert.equal((pieza.props.Slides as any).number, 2);
+  assert.equal(
+    (pieza.props['Clave de idempotencia'] as any).rich_text[0].text.content,
+    'publisher:legacy-design'
+  );
   assert.equal((pub.props['Image (versión)'] as any).files[0].external.url, 'https://cdn.example/ver.png');
 });
 
@@ -123,4 +127,46 @@ test('migrate is idempotent via Clave de idempotencia keys', async () => {
   assert.ok(report.publicaciones.skipped_existing >= 1);
   assert.equal(report.piezas.created, 0);
   assert.equal(report.publicaciones.created, 0);
+});
+
+test('Publicacion key prefix does not skip a Pieza; existingPiezaKeys does', async () => {
+  const row = { id: 'legacy-1', title: 'Old row', sources: ['Postly'] };
+  const catalog = { source: 'static' as const, canales: STATIC_CANALES, cuentas: STATIC_CUENTAS };
+  const created: string[] = [];
+  const transport: NotionTransport = {
+    async getPage(id) {
+      return { id };
+    },
+    async queryAll() {
+      return [];
+    },
+    async createPage(db) {
+      created.push(db);
+      return { id: `new-${created.length}` };
+    },
+    async updatePage() {},
+  };
+  const prefixOnly = await migrateContentOs({
+    rows: [row],
+    catalog,
+    transport,
+    ids: { piezas: 'piezas', publicaciones: 'pubs' },
+    dryRun: true,
+    offline: true,
+    existingKeys: new Set(['publisher:legacy-1:Postly:static-cuenta']),
+  });
+  assert.equal(prefixOnly.piezas.would_create, 1);
+  assert.equal(prefixOnly.piezas.skipped_existing, 0);
+
+  const piezaKeys = await migrateContentOs({
+    rows: [row],
+    catalog,
+    transport,
+    ids: { piezas: 'piezas', publicaciones: 'pubs' },
+    dryRun: true,
+    offline: true,
+    existingPiezaKeys: new Set([piezaKey(row)]),
+  });
+  assert.equal(piezaKeys.piezas.skipped_existing, 1);
+  assert.equal(piezaKeys.piezas.would_create, 0);
 });

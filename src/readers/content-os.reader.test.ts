@@ -37,6 +37,7 @@ test('parsePieza / parsePublicacion use dump property names including emojis', (
       ...title('Nombre', 'Launch clip'),
       ...status('Status', 'Lista'),
       ...rt('Caption base', 'hello world'),
+      ...rt('Clave de idempotencia', 'publisher:pieza-1'),
       ...select('Tipo', 'Social'),
       ...rel('📡 Canales objetivo', 'canal-1'),
       ...rel('🥇 Producto', 'prod-1'),
@@ -45,6 +46,7 @@ test('parsePieza / parsePublicacion use dump property names including emojis', (
   });
   assert.equal(pieza.nombre, 'Launch clip');
   assert.equal(pieza.captionBase, 'hello world');
+  assert.equal(pieza.claveDeIdempotencia, 'publisher:pieza-1');
   assert.deepEqual(pieza.canalIds, ['canal-1']);
   assert.deepEqual(pieza.productoIds, ['prod-1']);
 

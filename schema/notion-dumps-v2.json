@@ -29,6 +29,7 @@
     "piezas": [
       { "name": "Nombre", "type": "title" },
       { "name": "Status", "type": "status" },
+      { "name": "Clave de idempotencia", "type": "text" },
       { "name": "Caption base", "type": "text" },
       { "name": "Fecha de publicación", "type": "date" },
       { "name": "File", "type": "file" },

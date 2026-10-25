@@ -28,6 +28,7 @@ export type PiezaRecord = {
   codigoDePlantilla: string;
   templateOrigenFuturaria: string;
   statusDeDiseno: string;
+  claveDeIdempotencia: string;
   canalIds: string[];
   productoIds: string[];
   publicacionIds: string[];
@@ -96,6 +97,7 @@ export function parsePieza(page: NotionPage): PiezaRecord {
     codigoDePlantilla: r.richText(propertyName('piezas', 'codigoDePlantilla')),
     templateOrigenFuturaria: r.richText(propertyName('piezas', 'templateOrigenFuturaria')),
     statusDeDiseno: r.select(propertyName('piezas', 'statusDeDiseno')),
+    claveDeIdempotencia: r.richText(propertyName('piezas', 'claveDeIdempotencia')),
     canalIds: r.relationIds(propertyName('piezas', 'canalesObjetivo')),
     productoIds: r.relationIds(propertyName('piezas', 'producto')),
     publicacionIds: r.relationIds(propertyName('piezas', 'publicaciones')),

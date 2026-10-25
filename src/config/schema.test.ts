@@ -83,6 +83,8 @@ test('v2 Piezas design fields and expanded Marca stay declared', () => {
   assert.equal(piezas.codigoDePlantilla.name, 'Código de plantilla');
   assert.equal(piezas.templateOrigenFuturaria.name, 'Template origen Futuraria');
   assert.equal(piezas.statusDeDiseno.name, 'Status de diseño');
+  assert.equal(piezas.claveDeIdempotencia.name, 'Clave de idempotencia');
+  assert.equal(piezas.claveDeIdempotencia.type, 'rich_text');
   for (const brand of ['TheVeller', 'Núcleo', 'Crafter', 'Sundai', 'hack0', 'GPT-Chain', 'Notion']) {
     assert.ok(piezas.marca.options?.includes(brand), `missing Piezas Marca ${brand}`);
   }

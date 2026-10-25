@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
-import { runMigrateContentOsCli, shouldRunOffline } from './migrate-content-os-cli';
+import { parseExcludeRefs, runMigrateContentOsCli, shouldRunOffline } from './migrate-content-os-cli';
 
 const SAMPLE = {
   pages: [
@@ -76,6 +76,44 @@ test('spawned migrate-content-os dry-run exits 0 with empty env', () => {
   assert.ok(payload.report.publicaciones.would_create >= 1);
   assert.ok(payload.report.errors.length >= 1);
   assert.ok(Array.isArray(payload.report.missing_cuentas));
+});
+
+test('parseExcludeRefs accepts a comma list or a file of ids/urls', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'exclude-'));
+  const file = path.join(dir, 'exclude.txt');
+  fs.writeFileSync(file, 'prod-1\n# comment\nhttps://www.notion.so/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n');
+  assert.deepEqual(parseExcludeRefs('prod-1, prod-2', dir), ['prod-1', 'prod-2']);
+  assert.deepEqual(parseExcludeRefs(file, dir), [
+    'prod-1',
+    'https://www.notion.so/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+  ]);
+  assert.deepEqual(parseExcludeRefs(undefined, dir), []);
+});
+
+test('CLI --exclude-ids skips listed rows and reports excluded', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'migrate-os-'));
+  const snapshot = path.join(dir, 'snapshot.json');
+  fs.writeFileSync(
+    snapshot,
+    JSON.stringify({
+      pages: [
+        { id: 'row-keep', title: 'Keep', sources: ['Postly'] },
+        { id: 'row-skip', title: 'Skip', sources: ['Postly'] },
+        { id: 'row-arch', title: 'Archived', sources: ['Postly'], status: 'Archived' },
+      ],
+    })
+  );
+  const result = await runMigrateContentOsCli(
+    ['node', 'migrate-content-os', `--snapshot=${snapshot}`, '--offline', '--exclude-ids=row-skip'],
+    { env: {} }
+  );
+  assert.equal(result.exitCode, 0, result.stderr);
+  assert.ok(result.payload);
+  assert.equal(result.payload.report.excluded.by_id, 1);
+  assert.equal(result.payload.report.excluded.archived, 1);
+  assert.equal(result.payload.report.excluded.total, 2);
+  assert.equal(result.payload.report.piezas.would_create, 1);
+  assert.match(result.stdout, /"excluded"/);
 });
 
 test('--live without NOTION_TOKEN fails with a clear message', async () => {

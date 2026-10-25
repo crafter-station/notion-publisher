@@ -50,7 +50,7 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 
 | Layer | Surface | Status | Issue |
 |---|---|---|---|
-| CMS | Notion Content OS (Canales / Cuentas / Piezas / Publicaciones / My Templates) | **wired · dry-run default** · schema v2 (design fields + `Image (versión)`) · parent `404da243…` under Workspaces `e28e7216-8dc3-4a77-a7ef-e81606bf39c8` | — |
+| CMS | Notion Content OS (Canales / Cuentas / Piezas / Publicaciones / My Templates) | **wired · dry-run default** · Piezas `Clave de idempotencia` · `--exclude-ids` / `--exclude-urls` · parent `404da243…` under Workspaces `e28e7216-8dc3-4a77-a7ef-e81606bf39c8` | — |
 | CMS | Notion `Publisher` (one DB, aliases) | **live** | [#1](https://github.com/crafter-station/notion-publisher/issues/1) |
 | Products | Gumroad | **live** | [#12](https://github.com/crafter-station/notion-publisher/issues/12) |
 | Social | Postly | **live** | [#13](https://github.com/crafter-station/notion-publisher/issues/13) |

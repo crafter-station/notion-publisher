@@ -15,6 +15,28 @@ import {
   type MigrationReport,
 } from './migrate-content-os';
 
+export function parseExcludeRefs(value: string | undefined, cwd: string): string[] {
+  if (!value) return [];
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  const asPath = path.resolve(cwd, trimmed);
+  try {
+    if (fs.existsSync(asPath) && fs.statSync(asPath).isFile()) {
+      return fs
+        .readFileSync(asPath, 'utf8')
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'));
+    }
+  } catch {
+    // treat as a comma list
+  }
+  return trimmed
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
 export type MigrateCliResult = {
   exitCode: number;
   stdout: string;
@@ -59,7 +81,9 @@ export async function runMigrateContentOsCli(
 
   const snapshotPath = arg(argv, 'snapshot');
   if (!snapshotPath) {
-    error('Usage: npm run migrate-content-os -- --snapshot=<json> [--offline|--dry-run|--live]');
+    error(
+      'Usage: npm run migrate-content-os -- --snapshot=<json> [--offline|--dry-run|--live] [--exclude-ids=<list|file>] [--exclude-urls=<list|file>]'
+    );
     error('Dry-run (default) needs no env. A real run (--live) needs NOTION_TOKEN.');
     return { exitCode: 2, stdout: logs.join('\n'), stderr: errs.join('\n') };
   }
@@ -79,6 +103,8 @@ export async function runMigrateContentOsCli(
 
   const dryRun = !live;
   const offline = shouldRunOffline(argv, env);
+  const excludeIds = parseExcludeRefs(arg(argv, 'exclude-ids'), cwd);
+  const excludeUrls = parseExcludeRefs(arg(argv, 'exclude-urls'), cwd);
 
   let rows;
   let unknownColumns: string[] = [];
@@ -102,7 +128,7 @@ export async function runMigrateContentOsCli(
 
     const { createHttpNotionTransport } = await import('../readers/notion-transport');
     const { loadChannelAccountCatalog } = await import('../catalog/channels');
-    const { loadExistingIdempotencyKeys } = await import('./migrate-content-os');
+    const { loadExistingIdempotencyKeys, loadExistingPiezaKeys } = await import('./migrate-content-os');
     const ids = contentOsDatabaseIds();
     const transport = createHttpNotionTransport(token);
     let catalog;
@@ -116,7 +142,10 @@ export async function runMigrateContentOsCli(
       error(err?.message || String(err));
       return { exitCode: 1, stdout: logs.join('\n'), stderr: errs.join('\n') };
     }
-    const existingKeys = await loadExistingIdempotencyKeys(transport, ids.publicaciones);
+    const [existingKeys, existingPiezaKeys] = await Promise.all([
+      loadExistingIdempotencyKeys(transport, ids.publicaciones),
+      loadExistingPiezaKeys(transport, ids.piezas),
+    ]);
     const report = await migrateContentOs({
       rows,
       catalog,
@@ -124,6 +153,9 @@ export async function runMigrateContentOsCli(
       ids,
       dryRun: false,
       existingKeys,
+      existingPiezaKeys,
+      excludeIds,
+      excludeUrls,
       offline: false,
       unknownColumns,
     });
@@ -145,6 +177,8 @@ export async function runMigrateContentOsCli(
     transport: createOfflineNotionTransport(),
     ids: { piezas: 'offline-piezas', publicaciones: 'offline-publicaciones' },
     dryRun,
+    excludeIds,
+    excludeUrls,
     offline: true,
     unknownColumns,
   });

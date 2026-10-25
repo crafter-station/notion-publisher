@@ -45,6 +45,7 @@
       "properties": [
         { "name": "Nombre", "type": "title" },
         { "name": "Status", "type": "status" },
+        { "name": "Clave de idempotencia", "type": "rich_text" },
         { "name": "Caption base", "type": "rich_text" },
         { "name": "Fecha de publicación", "type": "date" },
         { "name": "File", "type": "files" },

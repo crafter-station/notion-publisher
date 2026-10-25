@@ -1,17 +1,12 @@
 /**
  * Map legacy Publisher rows (or a snapshot JSON) to 🧩 Piezas + 🚀 Publicaciones.
- * --dry-run is the default. Idempotent via Clave de idempotencia.
- *
- * Piezas have no dedicated idempotency property in the live schema.
- * Skip uses `publisher:<page_id>` derived from Publicaciones keys
- * (`publisher:<page_id>:<hint>:<cuentaId>`). See README for the proposed
- * Piezas `Clave de idempotencia` addition.
+ * --dry-run is the default. Idempotent via Clave de idempotencia on each Pieza.
  */
 
 import { CatalogCanal, CatalogCuenta, ChannelAccountCatalog } from '../catalog/channels';
 import { listDeclaredPropertyNames } from '../config/schema';
 import { propertyName } from '../config/content-os';
-import { parsePublicacion } from '../readers/content-os.reader';
+import { parsePieza, parsePublicacion } from '../readers/content-os.reader';
 import { createPropertyReader } from '../readers/props';
 import type { NotionTransport } from '../readers/notion-transport';
 import { applyOptionalPiezaDesignFields, applyOptionalPublicacionImageVersion } from './content-os-fields';
@@ -24,6 +19,10 @@ export type LegacyPublisherRow = {
   sources?: string[];
   channels?: string[];
   layer?: string;
+  status?: string;
+  url?: string;
+  archived?: boolean;
+  inTrash?: boolean;
 };
 
 export type MigrationTarget = {
@@ -58,6 +57,7 @@ export type MigrationReport = {
   unknown_columns: string[];
   warnings: string[];
   errors: string[];
+  excluded: { archived: number; by_id: number; by_url: number; total: number };
 };
 
 /** Flat snapshot keys we accept (case-insensitive). Everything else is reported. */
@@ -78,6 +78,9 @@ export const FLAT_SNAPSHOT_KEYS = [
   'status',
   'url',
   'urls',
+  'archived',
+  'in_trash',
+  'in trash',
   'fields',
   'properties',
   'props',
@@ -132,6 +135,7 @@ function emptyReport(dryRun: boolean, sourceRows: number): MigrationReport {
     unknown_columns: [],
     warnings: [],
     errors: [],
+    excluded: { archived: 0, by_id: 0, by_url: 0, total: 0 },
   };
 }
 
@@ -152,19 +156,39 @@ function pushUnique(list: string[], value: string): void {
   if (value && !list.includes(value)) list.push(value);
 }
 
-function asStringList(value: unknown): string[] {
+export function cleanChannelName(raw: string): string {
+  return String(raw || '')
+    .trim()
+    .replace(/^[\s"'`\[\]]+|[\s"'`\[\]]+$/g, '')
+    .replace(/["'`[\]]/g, '')
+    .trim();
+}
+
+/** Parse Channels from a real array, a JSON-array string, or a comma/semicolon list. */
+export function parseChannelList(value: unknown): string[] {
   if (value == null || value === '') return [];
   if (Array.isArray(value)) {
-    return value.flatMap(v => asStringList(v));
+    return value.flatMap(v => parseChannelList(v));
   }
   if (typeof value === 'object') {
     const o = value as any;
-    if (o.name) return [String(o.name)];
-    if (Array.isArray(o.multi_select)) return o.multi_select.map((x: any) => String(x?.name || '')).filter(Boolean);
+    if (o.name) return [cleanChannelName(String(o.name))].filter(Boolean);
+    if (Array.isArray(o.multi_select)) {
+      return o.multi_select.map((x: any) => cleanChannelName(String(x?.name || ''))).filter(Boolean);
+    }
   }
-  return String(value)
+  const text = String(value).trim();
+  if (text.startsWith('[') && text.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return parseChannelList(parsed);
+    } catch {
+      // malformed bracket string → fallback split
+    }
+  }
+  return text
     .split(/[,;]/)
-    .map(s => s.trim())
+    .map(s => cleanChannelName(s))
     .filter(Boolean);
 }
 
@@ -222,8 +246,12 @@ function normalizeRow(row: any): LegacyPublisherRow {
       fields: row.fields,
       title: row.title,
       sources: row.sources,
-      channels: row.channels,
+      channels: row.channels ? parseChannelList(row.channels) : undefined,
       layer: row.layer,
+      status: row.status,
+      url: row.url,
+      archived: row.archived === true || row.in_trash === true,
+      inTrash: row.in_trash === true || row.inTrash === true,
     };
   }
   const flat = lowerKeyMap(row);
@@ -231,8 +259,8 @@ function normalizeRow(row: any): LegacyPublisherRow {
   const title = firstText(flat.name, flat.title);
   const caption = firstText(flat.caption);
   const layer = firstText(flat.layer);
-  const channels = asStringList(flat.channels);
-  const sources = asStringList(flat['source tags'] ?? flat.sources ?? flat.source);
+  const channels = parseChannelList(flat.channels);
+  const sources = parseChannelList(flat['source tags'] ?? flat.sources ?? flat.source);
   const fields: Record<string, string | number | undefined> = { ...(row.fields || {}) };
   if (caption) fields.Caption = caption;
   if (title) fields.Name = title;
@@ -244,7 +272,17 @@ function normalizeRow(row: any): LegacyPublisherRow {
     sources: sources.length ? sources : undefined,
     channels: channels.length ? channels : undefined,
     layer: layer || undefined,
+    status: firstText(flat.status) || undefined,
+    url: firstText(flat.url, flat.urls) || undefined,
+    archived: truthyFlag(flat.archived),
+    inTrash: truthyFlag(flat.in_trash) || truthyFlag(flat['in trash']),
   };
+}
+
+function truthyFlag(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  const s = String(value ?? '').trim().toLowerCase();
+  return s === 'true' || s === '1' || s === 'yes';
 }
 
 function firstText(...values: unknown[]): string {
@@ -260,7 +298,7 @@ function rowChannels(row: LegacyPublisherRow): string[] {
   const r = createPropertyReader(row.properties || {});
   const fromRow = row.channels || [];
   const fromProps = r.multiSelect('Channels').concat(r.multiSelect('Postiz Targets'));
-  return [...fromRow, ...fromProps].map(s => String(s).trim()).filter(Boolean);
+  return [...fromRow, ...fromProps].map(s => cleanChannelName(String(s))).filter(Boolean);
 }
 
 function rowSources(row: LegacyPublisherRow): string[] {
@@ -312,7 +350,7 @@ export function inferTargets(
   for (const name of channels) {
     const canal = findCanalByName(catalog, name);
     if (!canal) {
-      pushUnique(unmatched, name);
+      pushUnique(unmatched, cleanChannelName(name));
       continue;
     }
     add(targetFromCanal(canal));
@@ -406,6 +444,64 @@ export async function loadExistingIdempotencyKeys(
   return keys;
 }
 
+export async function loadExistingPiezaKeys(
+  transport: NotionTransport,
+  piezasId: string
+): Promise<Set<string>> {
+  const pages = await transport.queryAll(piezasId);
+  const keys = new Set<string>();
+  for (const page of pages) {
+    const pieza = parsePieza(page);
+    if (pieza.claveDeIdempotencia) keys.add(pieza.claveDeIdempotencia);
+  }
+  return keys;
+}
+
+const ARCHIVED_STATUS = new Set(['archived', 'archivado', 'archive', 'in_trash', 'in trash', 'trash', 'deleted']);
+
+export function isArchivedRow(row: LegacyPublisherRow): boolean {
+  if (row.archived || row.inTrash) return true;
+  const r = createPropertyReader(row.properties || {});
+  const status = String(row.status || r.status('Status') || r.select('Status') || '').trim().toLowerCase();
+  if (ARCHIVED_STATUS.has(status)) return true;
+  const archivedProp = row.fields?.archived ?? row.fields?.in_trash ?? row.properties?.archived ?? row.properties?.in_trash;
+  return truthyFlag(archivedProp);
+}
+
+export function normalizeNotionRef(raw: string): string {
+  const text = String(raw || '').trim();
+  if (!text) return '';
+  const dashed = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if (dashed) return dashed[0].replace(/-/g, '').toLowerCase();
+  const compact = text.replace(/-/g, '').match(/[0-9a-f]{32}/i);
+  if (compact) return compact[0].toLowerCase();
+  return text.toLowerCase();
+}
+
+export function buildExcludeSet(refs: string[]): Set<string> {
+  const out = new Set<string>();
+  for (const ref of refs) {
+    const trimmed = String(ref || '').trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    out.add(trimmed);
+    out.add(trimmed.toLowerCase());
+    const id = normalizeNotionRef(trimmed);
+    if (id) out.add(id);
+  }
+  return out;
+}
+
+function rowMatchesExclude(row: LegacyPublisherRow, exclude: Set<string>): 'id' | 'url' | null {
+  if (!exclude.size) return null;
+  const idKeys = [row.id, normalizeNotionRef(row.id)].filter(Boolean);
+  if (idKeys.some(k => exclude.has(k) || exclude.has(k.toLowerCase()))) return 'id';
+  const url = row.url || firstText(row.fields?.url, row.fields?.URL);
+  if (url && (exclude.has(url) || exclude.has(url.toLowerCase()) || exclude.has(normalizeNotionRef(url)))) {
+    return 'url';
+  }
+  return null;
+}
+
 /** Activa cuentas linked to the target canal — never every cuenta that shares a Conector. */
 export function matchCuentas(catalog: ChannelAccountCatalog, target: MigrationTarget | string): CatalogCuenta[] {
   const resolved: MigrationTarget =
@@ -442,17 +538,22 @@ export async function migrateContentOs(options: {
   ids: { piezas: string; publicaciones: string };
   dryRun: boolean;
   existingKeys?: Set<string>;
+  existingPiezaKeys?: Set<string>;
+  excludeIds?: string[];
+  excludeUrls?: string[];
   offline?: boolean;
   unknownColumns?: string[];
 }): Promise<MigrationReport> {
   const report = emptyReport(options.dryRun, options.rows.length);
   report.unknown_columns = [...(options.unknownColumns || [])];
 
-  const existing = new Set(options.existingKeys || []);
-  for (const key of [...existing]) {
-    const m = key.match(/^(publisher:[^:]+)/);
-    if (m) existing.add(m[1]);
+  const existingPubs = new Set(options.existingKeys || []);
+  const existingPiezas = new Set(options.existingPiezaKeys || []);
+  for (const key of existingPubs) {
+    if (/^publisher:[^:]+$/.test(key)) existingPiezas.add(key);
   }
+  const excludeIds = buildExcludeSet(options.excludeIds || []);
+  const excludeUrls = buildExcludeSet(options.excludeUrls || []);
 
   if (!activaCuentas(options.catalog).length) {
     report.status = 'error';
@@ -471,6 +572,21 @@ export async function migrateContentOs(options: {
   }
 
   for (const row of options.rows) {
+    if (isArchivedRow(row)) {
+      report.excluded.archived += 1;
+      report.excluded.total += 1;
+      continue;
+    }
+    if (rowMatchesExclude(row, excludeIds)) {
+      report.excluded.by_id += 1;
+      report.excluded.total += 1;
+      continue;
+    }
+    if (rowMatchesExclude(row, excludeUrls)) {
+      report.excluded.by_url += 1;
+      report.excluded.total += 1;
+      continue;
+    }
     if (!row.id) {
       report.status = 'error';
       report.errors.push('row missing id');
@@ -508,16 +624,19 @@ export async function migrateContentOs(options: {
 
     const pKey = piezaKey(row);
     let piezaId: string | undefined;
-    if (existing.has(pKey)) {
+    if (existingPiezas.has(pKey)) {
       report.piezas.skipped_existing += 1;
     } else if (options.dryRun) {
       report.piezas.would_create += 1;
       counts.piezas_would_create += 1;
-      existing.add(pKey);
+      existingPiezas.add(pKey);
     } else {
       const piezaProps: Record<string, unknown> = {
         [propertyName('piezas', 'nombre')]: { title: [{ text: { content: title.slice(0, 2000) } }] },
         [propertyName('piezas', 'status')]: { status: { name: 'Lista' } },
+        [propertyName('piezas', 'claveDeIdempotencia')]: {
+          rich_text: [{ text: { content: pKey } }],
+        },
         [propertyName('piezas', 'captionBase')]: {
           rich_text: [{ text: { content: (firstText(row.fields?.Caption) || title).slice(0, 2000) } }],
         },
@@ -525,21 +644,21 @@ export async function migrateContentOs(options: {
       applyOptionalPiezaDesignFields(piezaProps, { properties: row.properties, fields: row.fields });
       const created = await options.transport.createPage(options.ids.piezas, piezaProps);
       piezaId = created.id;
-      existing.add(pKey);
+      existingPiezas.add(pKey);
       report.piezas.created += 1;
     }
 
     for (const { target, cuentas } of resolved) {
       for (const cuenta of cuentas) {
         const key = publicacionKey(row, `${target.hint}:${cuenta.id}`);
-        if (existing.has(key)) {
+        if (existingPubs.has(key)) {
           report.publicaciones.skipped_existing += 1;
           continue;
         }
         if (options.dryRun) {
           report.publicaciones.would_create += 1;
           counts.publicaciones_would_create += 1;
-          existing.add(key);
+          existingPubs.add(key);
           continue;
         }
         const pubProps: Record<string, unknown> = {
@@ -561,7 +680,7 @@ export async function migrateContentOs(options: {
           fields: row.fields,
         });
         await options.transport.createPage(options.ids.publicaciones, pubProps);
-        existing.add(key);
+        existingPubs.add(key);
         report.publicaciones.created += 1;
       }
     }
