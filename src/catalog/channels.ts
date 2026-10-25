@@ -5,7 +5,7 @@
 
 import { propertyName } from '../config/content-os';
 import { createPropertyReader } from '../readers/props';
-import { NotionTransport } from '../readers/notion-transport';
+import type { NotionTransport } from '../readers/notion-transport';
 
 export type CatalogCanal = {
   id: string;

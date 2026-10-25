@@ -1,4 +1,4 @@
-import { NOTION_VERSION } from '../services/notion.service';
+const NOTION_VERSION = process.env.NOTION_VERSION || '2022-06-28';
 
 export type NotionPage = {
   id: string;
@@ -11,6 +11,24 @@ export interface NotionTransport {
   queryAll(databaseId: string, filter?: unknown): Promise<NotionPage[]>;
   createPage(databaseId: string, properties: Record<string, unknown>): Promise<NotionPage>;
   updatePage(pageId: string, properties: Record<string, unknown>): Promise<void>;
+}
+
+/** Dry-run / --offline: never talks to Notion. Writes throw. */
+export function createOfflineNotionTransport(): NotionTransport {
+  return {
+    async getPage() {
+      throw new Error('offline: Notion getPage is disabled');
+    },
+    async queryAll() {
+      return [];
+    },
+    async createPage() {
+      throw new Error('offline: Notion createPage is disabled');
+    },
+    async updatePage() {
+      throw new Error('offline: Notion updatePage is disabled');
+    },
+  };
 }
 
 export function createHttpNotionTransport(token: string): NotionTransport {

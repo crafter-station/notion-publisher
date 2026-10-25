@@ -5,7 +5,7 @@
 
 import { propertyName, publicacionReadyStatuses } from '../config/content-os';
 import { createPropertyReader, NotionPropertyReader } from './props';
-import { NotionPage, NotionTransport } from './notion-transport';
+import type { NotionPage, NotionTransport } from './notion-transport';
 
 export type PiezaRecord = {
   id: string;

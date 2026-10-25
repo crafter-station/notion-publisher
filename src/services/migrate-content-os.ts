@@ -7,7 +7,7 @@ import { CatalogCuenta, ChannelAccountCatalog } from '../catalog/channels';
 import { propertyName } from '../config/content-os';
 import { parsePublicacion } from '../readers/content-os.reader';
 import { createPropertyReader } from '../readers/props';
-import { NotionTransport } from '../readers/notion-transport';
+import type { NotionTransport } from '../readers/notion-transport';
 import { applyOptionalPiezaDesignFields, applyOptionalPublicacionImageVersion } from './content-os-fields';
 
 export type LegacyPublisherRow = {
