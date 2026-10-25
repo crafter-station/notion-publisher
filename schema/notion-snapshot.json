@@ -1,0 +1,125 @@
+{
+  "generated_at": "2026-10-25",
+  "source": "notion-fetch dumps (Content OS)",
+  "parent_page_id": "404da2435b4681eebbe6c73f68060bdd",
+  "notion_version": "2022-06-28",
+  "bases": {
+    "canales": {
+      "database_id": "2d899274cb8a4efdb299c70dfa3184e9",
+      "data_source": "ac54e98d-760a-4332-83c9-44fbb552fec6",
+      "title": "Canales",
+      "properties": [
+        { "name": "Nombre", "type": "title" },
+        { "name": "Conector", "type": "select" },
+        { "name": "Docs", "type": "url" },
+        { "name": "Estado del conector", "type": "select" },
+        { "name": "Familia", "type": "select" },
+        { "name": "Límites", "type": "rich_text" },
+        { "name": "Settings requeridos", "type": "rich_text" },
+        { "name": "Verificado el", "type": "date" },
+        { "name": "🧩 Piezas", "type": "relation" },
+        { "name": "🪪 Cuentas", "type": "relation" }
+      ]
+    },
+    "cuentas": {
+      "database_id": "3d2b898f61d7481087452508051c60a4",
+      "data_source": "56981bc9-71d3-4f54-af62-eb87cd049d1e",
+      "title": "Cuentas",
+      "properties": [
+        { "name": "Cuenta", "type": "title" },
+        { "name": "Estado", "type": "select" },
+        { "name": "Alta el", "type": "date" },
+        { "name": "Conector", "type": "select" },
+        { "name": "Handle", "type": "rich_text" },
+        { "name": "ID de integración", "type": "rich_text" },
+        { "name": "Marca", "type": "select" },
+        { "name": "📡 Canal", "type": "relation" },
+        { "name": "🚀 Publicaciones", "type": "relation" }
+      ]
+    },
+    "piezas": {
+      "database_id": "0733dfa0b7fa430d8a8fb4b97693ea17",
+      "data_source": "3c631277-3d99-4a39-8ff1-d0a4503443b1",
+      "title": "Piezas",
+      "properties": [
+        { "name": "Nombre", "type": "title" },
+        { "name": "Status", "type": "status" },
+        { "name": "Caption base", "type": "rich_text" },
+        { "name": "Fecha de publicación", "type": "date" },
+        { "name": "File", "type": "files" },
+        { "name": "GIF", "type": "files" },
+        { "name": "Image", "type": "files" },
+        { "name": "Video", "type": "files" },
+        { "name": "Audio", "type": "files" },
+        { "name": "Idioma base", "type": "select" },
+        { "name": "Marca", "type": "select" },
+        { "name": "Tipo", "type": "select" },
+        { "name": "Publicaciones (publicadas)", "type": "rollup" },
+        { "name": "Publicaciones (total)", "type": "rollup" },
+        { "name": "Publicadas / total", "type": "formula" },
+        { "name": "📡 Canales objetivo", "type": "relation" },
+        { "name": "🚀 Publicaciones", "type": "relation" },
+        { "name": "🥇 Producto", "type": "relation" }
+      ]
+    },
+    "publicaciones": {
+      "database_id": "7ba3eb3574794182ab3628c4d708fca0",
+      "data_source": "2a8f086d-8f50-45c4-adeb-4e0e90642ec4",
+      "title": "Publicaciones",
+      "properties": [
+        { "name": "Título", "type": "title" },
+        { "name": "Caption override", "type": "rich_text" },
+        { "name": "Clave de idempotencia", "type": "rich_text" },
+        { "name": "Error", "type": "rich_text" },
+        { "name": "ID externo", "type": "rich_text" },
+        { "name": "Idioma", "type": "select" },
+        { "name": "Modo", "type": "select" },
+        { "name": "Métricas", "type": "number" },
+        { "name": "Programar para", "type": "date" },
+        { "name": "Publicado el", "type": "date" },
+        { "name": "Settings", "type": "rich_text" },
+        { "name": "Status", "type": "status" },
+        { "name": "URL publicada", "type": "url" },
+        { "name": "🧩 Pieza", "type": "relation" },
+        { "name": "🪪 Cuenta", "type": "relation" }
+      ]
+    },
+    "productos": {
+      "database_id": "c753239a6ce24175a3d198a3d24bbfe5",
+      "data_source": "d144b811-bb04-486b-99d5-89e6911ba71c",
+      "title": "🥇 My Templates",
+      "read_only_schema": true,
+      "properties": [
+        { "name": "Name", "type": "title" },
+        { "name": "Status", "type": "status" },
+        { "name": "Do Date", "type": "date" },
+        { "name": "Creative Type", "type": "select" },
+        { "name": "Formats", "type": "relation" },
+        { "name": "Listings", "type": "relation" },
+        { "name": "Parent", "type": "relation" },
+        { "name": "Pricing", "type": "select" },
+        { "name": "Pricing 1", "type": "number" },
+        { "name": "Pricing 2", "type": "number" },
+        { "name": "Pricing 3", "type": "number" },
+        { "name": "Pricing 4", "type": "number" },
+        { "name": "50% - Pricing 1", "type": "formula" },
+        { "name": "50% - Pricing 2", "type": "formula" },
+        { "name": "50% - Pricing 3", "type": "formula" },
+        { "name": "50% - Pricing 4", "type": "formula" },
+        { "name": "Related to Integrations & Automations (Templates)", "type": "relation" },
+        { "name": "Related to Integrations & Automations (Templates) 1", "type": "relation" },
+        { "name": "Repurpose", "type": "relation" },
+        { "name": "Revenue", "type": "number" },
+        { "name": "Revenue if the goal is met", "type": "formula" },
+        { "name": "Revenue per sale", "type": "formula" },
+        { "name": "Sales", "type": "number" },
+        { "name": "Sales Goal", "type": "number" },
+        { "name": "Simplicity", "type": "select" },
+        { "name": "Sources", "type": "relation" },
+        { "name": "Tiendas", "type": "relation" },
+        { "name": "URL", "type": "url" },
+        { "name": "⚙Integrations & Automations", "type": "relation" }
+      ]
+    }
+  }
+}

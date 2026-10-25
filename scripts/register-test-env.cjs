@@ -8,3 +8,4 @@ process.env.POSTLY_API_KEY = process.env.POSTLY_API_KEY || 'test-postly-key';
 process.env.POSTLY_WORKSPACE_ID = process.env.POSTLY_WORKSPACE_ID || 'test-workspace';
 process.env.POSTLY_TARGET_PLATFORMS = process.env.POSTLY_TARGET_PLATFORMS || 'x:1';
 process.env.NOTION_PUBLISHER_TEST = '1';
+process.env.COMPOSIO_API_KEY = process.env.COMPOSIO_API_KEY || 'test-composio-key';

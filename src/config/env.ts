@@ -77,6 +77,17 @@ export const env = {
   GUMROAD_AUTOPILOT_TIMEZONE: process.env.GUMROAD_AUTOPILOT_TIMEZONE || 'America/Lima',
   GUMROAD_AUTOPILOT_PUBLISH_LIVE: process.env.GUMROAD_AUTOPILOT_PUBLISH_LIVE === 'true',
   PORT: Number(process.env.PORT) || 3000,
+  /**
+   * Content OS ids default in src/config/schema.ts. Env overrides only.
+   * CONTENT_OS_PUBLISH_LIVE must be the string "true" to open the live gate.
+   */
+  CONTENT_OS_PUBLISH_LIVE: process.env.CONTENT_OS_PUBLISH_LIVE || '',
+  NOTION_CANALES_DATABASE_ID: process.env.NOTION_CANALES_DATABASE_ID || '',
+  NOTION_CUENTAS_DATABASE_ID: process.env.NOTION_CUENTAS_DATABASE_ID || '',
+  NOTION_PIEZAS_DATABASE_ID: process.env.NOTION_PIEZAS_DATABASE_ID || '',
+  NOTION_PUBLICACIONES_DATABASE_ID: process.env.NOTION_PUBLICACIONES_DATABASE_ID || '',
+  NOTION_PRODUCTOS_DATABASE_ID: process.env.NOTION_PRODUCTOS_DATABASE_ID || '',
+  NOTION_CONTENT_OS_PARENT_PAGE_ID: process.env.NOTION_CONTENT_OS_PARENT_PAGE_ID || '',
 };
 
 // Validation logic
