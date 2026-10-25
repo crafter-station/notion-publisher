@@ -666,11 +666,19 @@ npm run notion:schema          # Publisher property dump (read-only)
 npm run publisher:report
 ```
 
+`migrate-content-os` is **dry-run by default** and needs **no env** (no `NOTION_TOKEN`, `GUMROAD_TOKEN`, or `POSTLY_*`). With `--dry-run` and no token — or with `--offline` — it uses the static Canales/Cuentas catalog, never reads or writes Notion, and prints a JSON report (Piezas/Publicaciones `would_create`, `skipped_existing`, and rows with problems). A real write needs `--live` and `NOTION_TOKEN` only:
+
+```bash
+npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json
+npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json --offline
+npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json --live
+```
+
 ---
 
 ## Roadmap
 
-Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/crafter-station/notion-publisher/issues)
+Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [repo](https://github.com/crafter-station/notion-publisher) · [issues](https://github.com/crafter-station/notion-publisher/issues)
 
 - **Completed:** [#12](https://github.com/crafter-station/notion-publisher/issues/12) Gumroad · [#13](https://github.com/crafter-station/notion-publisher/issues/13) Postly · [#14](https://github.com/crafter-station/notion-publisher/issues/14) Skool discover · [#1](https://github.com/crafter-station/notion-publisher/issues/1) Publisher unify · [#2](https://github.com/crafter-station/notion-publisher/issues/2) Caption · [#5](https://github.com/crafter-station/notion-publisher/issues/5) GitHub · [#9](https://github.com/crafter-station/notion-publisher/issues/9) Luma create · [#3](https://github.com/crafter-station/notion-publisher/issues/3) Notion MCP/CLI · [#16](https://github.com/crafter-station/notion-publisher/issues/16) docs reconcile  
 - **Next:** [#17](https://github.com/crafter-station/notion-publisher/issues/17)–[#19](https://github.com/crafter-station/notion-publisher/issues/19) planning (handoff / newsletter / metrics)  

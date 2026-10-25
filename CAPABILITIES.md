@@ -138,7 +138,7 @@ Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts
 
 ## Roadmap
 
-SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/crafter-station/notion-publisher/issues)
+SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [repo](https://github.com/crafter-station/notion-publisher) · [issues](https://github.com/crafter-station/notion-publisher/issues)
 
 - **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit live
 - **Next:** Phase A leftovers (#3)

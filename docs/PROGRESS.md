@@ -4,7 +4,7 @@ How to read this file: **completed work first** (Gumroad + Postly), then what’
 
 | Layer | Link |
 |---|---|
-| **Project** | [Nucleo-Lab/projects/2 — notion-publisher](https://github.com/orgs/Nucleo-Lab/projects/2) |
+| **Project** | [crafter-station/notion-publisher](https://github.com/crafter-station/notion-publisher) |
 | **Issues** | [crafter-station/notion-publisher/issues](https://github.com/crafter-station/notion-publisher/issues) |
 | **Milestones** | Shipped · Phase A CMS · Phase B Products · Phase C Social · Phase D Events/Music |
 
