@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   CONTENT_OS_BASE_IDS,
+  CONTENT_OS_PARENT_PAGE_ID_DEFAULT,
   CONTENT_OS_PUBLISH_LIVE_ENV,
+  CONTENT_OS_WORKSPACES_DATA_SOURCE_ID,
   listDeclaredPropertyNames,
   SCHEMA_BASES,
 } from './schema';
@@ -69,4 +71,24 @@ test('database ids default to the live Content OS pages', () => {
   delete process.env.NOTION_PIEZAS_DATABASE_ID;
   assert.equal(contentOsDatabaseId('piezas'), '0733dfa0b7fa430d8a8fb4b97693ea17');
   if (prev !== undefined) process.env.NOTION_PIEZAS_DATABASE_ID = prev;
+});
+
+test('v2 Piezas design fields and expanded Marca stay declared', () => {
+  const piezas = SCHEMA_BASES.piezas.properties;
+  assert.equal(piezas.modulo.name, 'Módulo');
+  assert.equal(piezas.formato.name, 'Formato');
+  assert.equal(piezas.ratio.name, 'Ratio');
+  assert.equal(piezas.tamanoPx.name, 'Tamaño px');
+  assert.equal(piezas.slides.type, 'number');
+  assert.equal(piezas.codigoDePlantilla.name, 'Código de plantilla');
+  assert.equal(piezas.templateOrigenFuturaria.name, 'Template origen Futuraria');
+  assert.equal(piezas.statusDeDiseno.name, 'Status de diseño');
+  for (const brand of ['TheVeller', 'Núcleo', 'Crafter', 'Sundai', 'hack0', 'GPT-Chain', 'Notion']) {
+    assert.ok(piezas.marca.options?.includes(brand), `missing Piezas Marca ${brand}`);
+  }
+  assert.deepEqual(SCHEMA_BASES.cuentas.properties.marca.options, ['nebulabs', 'gptchain']);
+  assert.equal(SCHEMA_BASES.publicaciones.properties.imageVersion.name, 'Image (versión)');
+  assert.equal(SCHEMA_BASES.publicaciones.properties.imageVersion.type, 'files');
+  assert.equal(CONTENT_OS_PARENT_PAGE_ID_DEFAULT, '404da2435b4681eebbe6c73f68060bdd');
+  assert.equal(CONTENT_OS_WORKSPACES_DATA_SOURCE_ID, 'e28e7216-8dc3-4a77-a7ef-e81606bf39c8');
 });

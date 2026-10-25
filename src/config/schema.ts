@@ -1,7 +1,7 @@
 /**
  * Authoritative Notion schema for notion-publisher.
  *
- * Content OS names and types come from the live dumps (Canales, Cuentas,
+ * Content OS names and types come from the live dumps v2 (Canales, Cuentas,
  * Piezas, Publicaciones, 🥇 My Templates). Publisher remains the legacy
  * single-DB contract used by existing extract* aliases.
  *
@@ -361,12 +361,54 @@ export const PIEZAS_SCHEMA: SchemaBase = {
     ['video', 'Video', 'files'],
     ['audio', 'Audio', 'files'],
     ['idiomaBase', 'Idioma base', 'select', { options: ['es', 'en', 'pt'] }],
-    ['marca', 'Marca', 'select', { options: ['nebulabs', 'gptchain'] }],
+    [
+      'marca',
+      'Marca',
+      'select',
+      {
+        options: [
+          'nebulabs',
+          'gptchain',
+          'TheVeller',
+          'Núcleo',
+          'Crafter',
+          'Sundai',
+          'hack0',
+          'GPT-Chain',
+          'Notion',
+        ],
+      },
+    ],
     [
       'tipo',
       'Tipo',
       'select',
       { options: ['Social', 'Producto', 'Evento', 'Release', 'Música', 'Live', 'Email'] },
+    ],
+    ['modulo', 'Módulo', 'select', { options: ['Content', 'YT', 'Luma', 'Product Mockups'] }],
+    [
+      'formato',
+      'Formato',
+      'select',
+      { options: ['post', 'carrusel', 'story', 'miniatura', 'cover de evento'] },
+    ],
+    [
+      'ratio',
+      'Ratio',
+      'select',
+      {
+        options: ['1:1', '4:5', '9:16', '16:9', 'YT 1280x720', 'Luma cover 1:1', 'Luma calendario 2:1'],
+      },
+    ],
+    ['tamanoPx', 'Tamaño px', 'rich_text'],
+    ['slides', 'Slides', 'number'],
+    ['codigoDePlantilla', 'Código de plantilla', 'rich_text'],
+    ['templateOrigenFuturaria', 'Template origen Futuraria', 'rich_text'],
+    [
+      'statusDeDiseno',
+      'Status de diseño',
+      'select',
+      { options: ['Brief', 'Diseño', 'Listo para revisar', 'Aprobado'] },
     ],
     ['publicacionesPublicadas', 'Publicaciones (publicadas)', 'rollup', { readOnly: true }],
     ['publicacionesTotal', 'Publicaciones (total)', 'rollup', { readOnly: true }],
@@ -403,6 +445,7 @@ export const PUBLICACIONES_SCHEMA: SchemaBase = {
       { options: ['Pendiente', 'Dry-run OK', 'En cola', 'Fallido', 'Publicado'] },
     ],
     ['urlPublicada', 'URL publicada', 'url'],
+    ['imageVersion', 'Image (versión)', 'files'],
     ['pieza', '🧩 Pieza', 'relation'],
     ['cuenta', '🪪 Cuenta', 'relation'],
   ]),
@@ -429,6 +472,19 @@ export type ContentOsBaseId = (typeof CONTENT_OS_BASE_IDS)[number];
 
 export const CONTENT_OS_PARENT_PAGE_ID_DEFAULT = '404da2435b4681eebbe6c73f68060bdd';
 export const CONTENT_OS_PARENT_PAGE_ENV = 'NOTION_CONTENT_OS_PARENT_PAGE_ID';
+/** Workspaces collection the Content OS page sits under. Not a database id. */
+export const CONTENT_OS_WORKSPACES_DATA_SOURCE_ID = 'e28e7216-8dc3-4a77-a7ef-e81606bf39c8';
+
+export const PIEZA_OPTIONAL_DESIGN_KEYS = [
+  'modulo',
+  'formato',
+  'ratio',
+  'tamanoPx',
+  'slides',
+  'codigoDePlantilla',
+  'templateOrigenFuturaria',
+  'statusDeDiseno',
+] as const;
 
 export const PUBLICACION_READY_STATUSES = ['Pendiente', 'Dry-run OK', 'En cola'] as const;
 export const PUBLICACION_READY_STATUSES_ENV = 'NOTION_PUBLICACION_READY_STATUSES';

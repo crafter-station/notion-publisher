@@ -1,7 +1,8 @@
 {
   "generated_at": "2026-10-25",
-  "source": "notion-fetch dumps (Content OS)",
+  "source": "notion-fetch dumps v2 (Content OS)",
   "parent_page_id": "404da2435b4681eebbe6c73f68060bdd",
+  "workspaces_data_source": "e28e7216-8dc3-4a77-a7ef-e81606bf39c8",
   "notion_version": "2022-06-28",
   "bases": {
     "canales": {
@@ -54,6 +55,14 @@
         { "name": "Idioma base", "type": "select" },
         { "name": "Marca", "type": "select" },
         { "name": "Tipo", "type": "select" },
+        { "name": "Módulo", "type": "select" },
+        { "name": "Formato", "type": "select" },
+        { "name": "Ratio", "type": "select" },
+        { "name": "Tamaño px", "type": "rich_text" },
+        { "name": "Slides", "type": "number" },
+        { "name": "Código de plantilla", "type": "rich_text" },
+        { "name": "Template origen Futuraria", "type": "rich_text" },
+        { "name": "Status de diseño", "type": "select" },
         { "name": "Publicaciones (publicadas)", "type": "rollup" },
         { "name": "Publicaciones (total)", "type": "rollup" },
         { "name": "Publicadas / total", "type": "formula" },
@@ -80,6 +89,7 @@
         { "name": "Settings", "type": "rich_text" },
         { "name": "Status", "type": "status" },
         { "name": "URL publicada", "type": "url" },
+        { "name": "Image (versión)", "type": "files" },
         { "name": "🧩 Pieza", "type": "relation" },
         { "name": "🪪 Cuenta", "type": "relation" }
       ]
