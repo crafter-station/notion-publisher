@@ -66,7 +66,10 @@ Notion CMS  →  notion-publisher (this repo · no UI)
 
 Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social: Postly = broad cloud; **Composio** = Reddit (+ Eventbrite on Events); Typefully = text drafts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**.
 
-**Live publish today:** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
+**Content OS (new):** five Notion databases (📡 Canales, 🪪 Cuentas, 🧩 Piezas, 🚀 Publicaciones, 🥇 My Templates).  
+`POST /webhooks/publish` takes a Pieza and routes each ready Publicacion by Cuenta Connector. **Dry-run default.** Live needs `CONTENT_OS_PUBLISH_LIVE=true` + Cuenta Estado=`Activa` + Publicacion Modo=`live` (empty Modo = dry-run) + Canal Estado del conector=`live`. `Publicado el` is written only on a real publish (feeds the Piezas `Publicaciones (publicadas)` rollup).
+
+**Live publish today (legacy Publisher aliases):** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
 **Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).  
 **Mapped (stub):** ONCE.  
 **Typefully / Postiz / Composio Eventbrite:** live clients, **dry-run default**. Typefully never sends `publish_at`.
@@ -570,6 +573,7 @@ Env: `RESTREAM_ACCESS_TOKEN` (optional for dry-run), plus OAuth extras `RESTREAM
 
 | Method | Path | Role |
 |---|---|---|
+| `POST` | `/webhooks/publish` | Content OS: Pieza → ready Publicaciones (dry-run default) |
 | `POST` | `/webhooks/publish-gumroad` | Create / publish product |
 | `POST` | `/webhooks/unpublish-gumroad` | Unpublish product |
 | `POST` | `/webhooks/publish-postly` | Social publish (`?target=` optional) |
@@ -600,6 +604,7 @@ npm run capabilities:check
 
 ```bash
 ngrok http 3000
+#   https://<ngrok>/webhooks/publish          # Content OS Pieza
 #   https://<ngrok>/webhooks/publish-gumroad
 #   https://<ngrok>/webhooks/unpublish-gumroad
 #   https://<ngrok>/webhooks/publish-postly
@@ -653,6 +658,9 @@ Full knobs (queues, autopilot, comments): [`.env.example`](./.env.example). Matr
 npm run build && npm run dev
 npm run capabilities:check
 npm test                       # mocked HTTP; includes Postiz dry-run
+npm run schema:verify          # code ⊆ schema + Content OS dump snapshot
+npm run schema:snapshot        # refresh schema/notion-snapshot.json (needs NOTION_TOKEN)
+npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json
 npm run notion:schema          # Publisher property dump (read-only)
 npm run publisher:report
 ```

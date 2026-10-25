@@ -50,7 +50,8 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 
 | Layer | Surface | Status | Issue |
 |---|---|---|---|
-| CMS | Notion `Publisher` (one DB) | **live** | [#1](https://github.com/crafter-station/notion-publisher/issues/1) |
+| CMS | Notion Content OS (Canales / Cuentas / Piezas / Publicaciones / My Templates) | **wired · dry-run default** | — |
+| CMS | Notion `Publisher` (one DB, aliases) | **live** | [#1](https://github.com/crafter-station/notion-publisher/issues/1) |
 | Products | Gumroad | **live** | [#12](https://github.com/crafter-station/notion-publisher/issues/12) |
 | Social | Postly | **live** | [#13](https://github.com/crafter-station/notion-publisher/issues/13) |
 | Products | Skool / MySkool | **discover** (key in `.env`; smoke 401 until valid `sk_live_…`) | [#14](https://github.com/crafter-station/notion-publisher/issues/14) · write [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked |
