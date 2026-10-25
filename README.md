@@ -661,7 +661,7 @@ npm run publisher:report
 
 ## Roadmap
 
-Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
+Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/crafter-station/notion-publisher/issues)
 
 - **Completed:** [#12](https://github.com/crafter-station/notion-publisher/issues/12) Gumroad · [#13](https://github.com/crafter-station/notion-publisher/issues/13) Postly · [#14](https://github.com/crafter-station/notion-publisher/issues/14) Skool discover · [#1](https://github.com/crafter-station/notion-publisher/issues/1) Publisher unify · [#2](https://github.com/crafter-station/notion-publisher/issues/2) Caption · [#5](https://github.com/crafter-station/notion-publisher/issues/5) GitHub · [#9](https://github.com/crafter-station/notion-publisher/issues/9) Luma create · [#3](https://github.com/crafter-station/notion-publisher/issues/3) Notion MCP/CLI · [#16](https://github.com/crafter-station/notion-publisher/issues/16) docs reconcile  
 - **Next:** [#17](https://github.com/crafter-station/notion-publisher/issues/17)–[#19](https://github.com/crafter-station/notion-publisher/issues/19) planning (handoff / newsletter / metrics)  

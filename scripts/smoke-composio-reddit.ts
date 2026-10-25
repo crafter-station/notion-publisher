@@ -60,7 +60,7 @@ async function ensureSmokePage(existingId?: string): Promise<string> {
     'Reddit Subreddit': {
       rich_text: [{ text: { content: env.COMPOSIO_REDDIT_SUBREDDIT || 'test' } }],
     },
-    'Reddit Link URL': { url: 'https://github.com/Nucleo-Lab/notion-publisher' },
+    'Reddit Link URL': { url: 'https://github.com/crafter-station/notion-publisher' },
   };
   if (env.COMPOSIO_USER_ID) {
     properties['Composio User ID'] = {
@@ -140,7 +140,7 @@ async function main() {
       'Reddit Title': {
         rich_text: [{ text: { content: `Publisher smoke link ${stamp2}` } }],
       },
-      'Reddit Link URL': { url: 'https://github.com/Nucleo-Lab/notion-publisher' },
+      'Reddit Link URL': { url: 'https://github.com/crafter-station/notion-publisher' },
       'Composio Publish Status': { status: { name: 'Not started' } },
     },
   });

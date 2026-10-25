@@ -38,7 +38,7 @@ async function main() {
       'Reddit Title': {
         rich_text: [{ text: { content: `Publisher smoke link retry ${stamp}` } }],
       },
-      'Reddit Link URL': { url: 'https://github.com/Nucleo-Lab/notion-publisher' },
+      'Reddit Link URL': { url: 'https://github.com/crafter-station/notion-publisher' },
       'Composio Publish Status': { status: { name: 'Not started' } },
     },
   });

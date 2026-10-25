@@ -1,6 +1,6 @@
 # Publisher Capability Kit
 
-<img src="docs/assets/logos/notion.png" width="22" alt=""> **Notion is the CMS.** Repo: [`Nucleo-Lab/notion-publisher`](https://github.com/Nucleo-Lab/notion-publisher).
+<img src="docs/assets/logos/notion.png" width="22" alt=""> **Notion is the CMS.** Repo: [`crafter-station/notion-publisher`](https://github.com/crafter-station/notion-publisher).
 
 | Layer | Surfaces |
 |---|---|
@@ -119,11 +119,11 @@ Ngrok checklist: see README Luma section (button → `/webhooks/publish-luma`).
 
 Env: `GITHUB_TOKEN` · webhook `POST /webhooks/publish-github` · product owner **TheVeller** only.
 
-Catalog: `GET /capabilities/github` · `npm run github:import-repos -- --owner=TheVeller`. Releases refuse non-TheVeller owners ([#5](https://github.com/Nucleo-Lab/notion-publisher/issues/5)). Ngrok checklist: README GitHub section.
+Catalog: `GET /capabilities/github` · `npm run github:import-repos -- --owner=TheVeller`. Releases refuse non-TheVeller owners ([#5](https://github.com/crafter-station/notion-publisher/issues/5)). Ngrok checklist: README GitHub section.
 
 ### Skool (discover)
 
-Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts` ([#4](https://github.com/Nucleo-Lab/notion-publisher/issues/4)). Key must be `sk_live_…`.
+Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts` ([#4](https://github.com/crafter-station/notion-publisher/issues/4)). Key must be `sk_live_…`.
 
 ## Code map
 
@@ -138,7 +138,7 @@ Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts
 
 ## Roadmap
 
-SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/Nucleo-Lab/notion-publisher/issues)
+SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [Project](https://github.com/orgs/Nucleo-Lab/projects/2) · [issues](https://github.com/crafter-station/notion-publisher/issues)
 
 - **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit live
 - **Next:** Phase A leftovers (#3)
