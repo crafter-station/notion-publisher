@@ -31,6 +31,49 @@ test('buildContentOsIngest creates one Publicacion per Cuenta with dry-run Modo'
   }
 });
 
+test('buildContentOsIngest passes optional Pieza design fields and Image (versión)', () => {
+  const withDesign: ResolvedIngest = {
+    ...resolved,
+    pages: [
+      {
+        ...resolved.pages[0],
+        fields: {
+          Caption: 'hi',
+          Módulo: 'YT',
+          Formato: 'miniatura',
+          Ratio: '16:9',
+          'Tamaño px': '1280x720',
+          Slides: '3',
+          'Código de plantilla': 'yt-thumb',
+          'Template origen Futuraria': 'fut-yt',
+          'Status de diseño': 'Diseño',
+          'Image (versión)': 'https://cdn.example/ig.png',
+        },
+      },
+    ],
+  };
+  const plan = buildContentOsIngest(withDesign, STATIC_CUENTAS.filter(c => c.conector === 'Postly').slice(0, 1));
+  assert.deepEqual((plan.pieza.properties['Módulo'] as any).select, { name: 'YT' });
+  assert.deepEqual((plan.pieza.properties.Formato as any).select, { name: 'miniatura' });
+  assert.deepEqual((plan.pieza.properties.Ratio as any).select, { name: '16:9' });
+  assert.equal((plan.pieza.properties['Tamaño px'] as any).rich_text[0].text.content, '1280x720');
+  assert.equal((plan.pieza.properties.Slides as any).number, 3);
+  assert.equal((plan.pieza.properties['Código de plantilla'] as any).rich_text[0].text.content, 'yt-thumb');
+  assert.deepEqual((plan.pieza.properties['Status de diseño'] as any).select, { name: 'Diseño' });
+  assert.equal(
+    (plan.publicaciones[0].properties['Image (versión)'] as any).files[0].external.url,
+    'https://cdn.example/ig.png'
+  );
+});
+
+test('buildContentOsIngest omits design fields when the input has none', () => {
+  const plan = buildContentOsIngest(resolved, STATIC_CUENTAS.filter(c => c.conector === 'Postly').slice(0, 1));
+  assert.equal(plan.pieza.properties['Módulo'], undefined);
+  assert.equal(plan.pieza.properties.Formato, undefined);
+  assert.equal(plan.pieza.properties.Slides, undefined);
+  assert.equal(plan.publicaciones[0].properties['Image (versión)'], undefined);
+});
+
 test('createContentOsIngest writes Pieza then links each Publicacion', async () => {
   const created: Array<{ db: string; props: Record<string, unknown> }> = [];
   const transport: NotionTransport = {

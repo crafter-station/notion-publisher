@@ -5,6 +5,7 @@
 
 import { propertyName } from '../config/content-os';
 import { CatalogCuenta } from '../catalog/channels';
+import { applyOptionalPiezaDesignFields, applyOptionalPublicacionImageVersion } from './content-os-fields';
 import { ResolvedIngest } from './to-cms-ingest';
 
 export type ContentOsIngestPlan = {
@@ -54,20 +55,20 @@ export function buildContentOsIngest(
   if (options.canalIds?.length) {
     piezaProps[propertyName('piezas', 'canalesObjetivo')] = relation(options.canalIds);
   }
+  applyOptionalPiezaDesignFields(piezaProps, { fields: resolved.pages[0]?.fields });
 
   const publicaciones = cuentas.map(cuenta => {
     const key = `tocms:${slug(resolved.title)}:${cuenta.id}`;
-    return {
-      cuentaId: cuenta.id,
-      properties: {
-        [propertyName('publicaciones', 'titulo')]: title(`${resolved.title} · ${cuenta.nombre}`),
-        [propertyName('publicaciones', 'status')]: status('Pendiente'),
-        [propertyName('publicaciones', 'modo')]: select('dry-run'),
-        [propertyName('publicaciones', 'claveDeIdempotencia')]: rt(key),
-        [propertyName('publicaciones', 'cuenta')]: relation([cuenta.id]),
-        [propertyName('publicaciones', 'captionOverride')]: rt(caption || ''),
-      },
+    const properties: Record<string, unknown> = {
+      [propertyName('publicaciones', 'titulo')]: title(`${resolved.title} · ${cuenta.nombre}`),
+      [propertyName('publicaciones', 'status')]: status('Pendiente'),
+      [propertyName('publicaciones', 'modo')]: select('dry-run'),
+      [propertyName('publicaciones', 'claveDeIdempotencia')]: rt(key),
+      [propertyName('publicaciones', 'cuenta')]: relation([cuenta.id]),
+      [propertyName('publicaciones', 'captionOverride')]: rt(caption || ''),
     };
+    applyOptionalPublicacionImageVersion(properties, { fields: resolved.pages[0]?.fields });
+    return { cuentaId: cuenta.id, properties };
   });
 
   return { pieza: { properties: piezaProps }, publicaciones };

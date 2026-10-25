@@ -8,10 +8,12 @@ import { propertyName } from '../config/content-os';
 import { parsePublicacion } from '../readers/content-os.reader';
 import { createPropertyReader } from '../readers/props';
 import { NotionTransport } from '../readers/notion-transport';
+import { applyOptionalPiezaDesignFields, applyOptionalPublicacionImageVersion } from './content-os-fields';
 
 export type LegacyPublisherRow = {
   id: string;
   properties?: Record<string, any>;
+  fields?: Record<string, string | number | undefined>;
   title?: string;
   sources?: string[];
   channels?: string[];
@@ -43,6 +45,7 @@ function normalizeRow(row: any): LegacyPublisherRow {
   return {
     id: String(row.id || row.page_id || row.notion_page_id || ''),
     properties: row.properties || row.props || {},
+    fields: row.fields,
     title: row.title,
     sources: row.sources,
     channels: row.channels,
@@ -155,13 +158,15 @@ export async function migrateContentOs(options: {
       report.piezas.would_create += 1;
       existing.add(pKey);
     } else {
-      const created = await options.transport.createPage(options.ids.piezas, {
+      const piezaProps: Record<string, unknown> = {
         [propertyName('piezas', 'nombre')]: { title: [{ text: { content: title.slice(0, 2000) } }] },
         [propertyName('piezas', 'status')]: { status: { name: 'Lista' } },
         [propertyName('piezas', 'captionBase')]: {
           rich_text: [{ text: { content: title.slice(0, 2000) } }],
         },
-      });
+      };
+      applyOptionalPiezaDesignFields(piezaProps, { properties: row.properties, fields: row.fields });
+      const created = await options.transport.createPage(options.ids.piezas, piezaProps);
       piezaId = created.id;
       existing.add(pKey);
       report.piezas.created += 1;
@@ -184,7 +189,7 @@ export async function migrateContentOs(options: {
           existing.add(key);
           continue;
         }
-        await options.transport.createPage(options.ids.publicaciones, {
+        const pubProps: Record<string, unknown> = {
           [propertyName('publicaciones', 'titulo')]: {
             title: [{ text: { content: `${title} · ${cuenta.nombre}`.slice(0, 2000) } }],
           },
@@ -197,7 +202,12 @@ export async function migrateContentOs(options: {
           ...(piezaId
             ? { [propertyName('publicaciones', 'pieza')]: { relation: [{ id: piezaId }] } }
             : {}),
+        };
+        applyOptionalPublicacionImageVersion(pubProps, {
+          properties: row.properties,
+          fields: row.fields,
         });
+        await options.transport.createPage(options.ids.publicaciones, pubProps);
         existing.add(key);
         report.publicaciones.created += 1;
       }

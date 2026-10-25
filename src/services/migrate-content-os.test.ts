@@ -46,6 +46,51 @@ test('migrate --dry-run counts would_create and never writes', async () => {
   assert.equal(created.length, 0);
 });
 
+test('migrate passes through optional Pieza design fields and Image (versión)', async () => {
+  const created: Array<{ db: string; props: Record<string, unknown> }> = [];
+  const transport: NotionTransport = {
+    async getPage(id) {
+      return { id };
+    },
+    async queryAll() {
+      return [];
+    },
+    async createPage(db, properties) {
+      created.push({ db, props: properties });
+      return { id: `new-${created.length}` };
+    },
+    async updatePage() {},
+  };
+  const postly = STATIC_CUENTAS.filter(c => c.conector === 'Postly' && c.estado === 'Activa');
+  await migrateContentOs({
+    rows: [
+      {
+        id: 'legacy-design',
+        title: 'Designed row',
+        sources: ['Postly'],
+        fields: {
+          Módulo: 'Content',
+          Formato: 'post',
+          Slides: 2,
+          'Image (versión)': 'https://cdn.example/ver.png',
+        },
+      },
+    ],
+    catalog: { source: 'static', canales: STATIC_CANALES, cuentas: postly.slice(0, 1) },
+    transport,
+    ids: { piezas: 'piezas', publicaciones: 'pubs' },
+    dryRun: false,
+  });
+  const pieza = created.find(c => c.db === 'piezas');
+  const pub = created.find(c => c.db === 'pubs');
+  assert.ok(pieza);
+  assert.ok(pub);
+  assert.deepEqual((pieza.props['Módulo'] as any).select, { name: 'Content' });
+  assert.deepEqual((pieza.props.Formato as any).select, { name: 'post' });
+  assert.equal((pieza.props.Slides as any).number, 2);
+  assert.equal((pub.props['Image (versión)'] as any).files[0].external.url, 'https://cdn.example/ver.png');
+});
+
 test('migrate is idempotent via Clave de idempotencia keys', async () => {
   const row = { id: 'legacy-1', title: 'Old row', sources: ['Postly'] };
   const existing = new Set<string>([

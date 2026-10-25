@@ -20,6 +20,14 @@ export type PiezaRecord = {
   gifUrl: string;
   videoUrl: string;
   fileUrl: string;
+  modulo: string;
+  formato: string;
+  ratio: string;
+  tamanoPx: string;
+  slides: number | null;
+  codigoDePlantilla: string;
+  templateOrigenFuturaria: string;
+  statusDeDiseno: string;
   canalIds: string[];
   productoIds: string[];
   publicacionIds: string[];
@@ -39,6 +47,7 @@ export type PublicacionRecord = {
   urlPublicada: string;
   claveDeIdempotencia: string;
   idExterno: string;
+  imageVersionUrl: string;
   piezaIds: string[];
   cuentaIds: string[];
   reader: NotionPropertyReader;
@@ -79,6 +88,14 @@ export function parsePieza(page: NotionPage): PiezaRecord {
     gifUrl: r.fileUrl(propertyName('piezas', 'gif')),
     videoUrl: r.fileUrl(propertyName('piezas', 'video')),
     fileUrl: r.fileUrl(propertyName('piezas', 'file')),
+    modulo: r.select(propertyName('piezas', 'modulo')),
+    formato: r.select(propertyName('piezas', 'formato')),
+    ratio: r.select(propertyName('piezas', 'ratio')),
+    tamanoPx: r.richText(propertyName('piezas', 'tamanoPx')),
+    slides: r.number(propertyName('piezas', 'slides')),
+    codigoDePlantilla: r.richText(propertyName('piezas', 'codigoDePlantilla')),
+    templateOrigenFuturaria: r.richText(propertyName('piezas', 'templateOrigenFuturaria')),
+    statusDeDiseno: r.select(propertyName('piezas', 'statusDeDiseno')),
     canalIds: r.relationIds(propertyName('piezas', 'canalesObjetivo')),
     productoIds: r.relationIds(propertyName('piezas', 'producto')),
     publicacionIds: r.relationIds(propertyName('piezas', 'publicaciones')),
@@ -101,6 +118,7 @@ export function parsePublicacion(page: NotionPage): PublicacionRecord {
     urlPublicada: r.url(propertyName('publicaciones', 'urlPublicada')),
     claveDeIdempotencia: r.richText(propertyName('publicaciones', 'claveDeIdempotencia')),
     idExterno: r.richText(propertyName('publicaciones', 'idExterno')),
+    imageVersionUrl: r.fileUrl(propertyName('publicaciones', 'imageVersion')),
     piezaIds: r.relationIds(propertyName('publicaciones', 'pieza')),
     cuentaIds: r.relationIds(propertyName('publicaciones', 'cuenta')),
     reader: r,
@@ -191,12 +209,13 @@ export function mergedPublishProperties(
   pub: PublicacionRecord
 ): Record<string, any> {
   const caption = pub.captionOverride || pieza.captionBase;
+  const imageUrl = pub.imageVersionUrl || pieza.imageUrl;
   return {
     Name: { title: [{ plain_text: pub.titulo || pieza.nombre }] },
     Caption: { rich_text: [{ plain_text: caption }] },
     'POV Text': { rich_text: [{ plain_text: caption }] },
-    Image: pieza.imageUrl
-      ? { files: [{ type: 'external', external: { url: pieza.imageUrl } }] }
+    Image: imageUrl
+      ? { files: [{ type: 'external', external: { url: imageUrl } }] }
       : { files: [] },
     GIF: pieza.gifUrl ? { files: [{ type: 'external', external: { url: pieza.gifUrl } }] } : { files: [] },
     Video: pieza.videoUrl

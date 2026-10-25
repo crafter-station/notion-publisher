@@ -105,6 +105,64 @@ test('mergedPublishProperties prefers Caption override and keeps Publisher names
   assert.equal(merged.Name.title[0].plain_text, 'T');
 });
 
+function file(name: string, url: string) {
+  return { [name]: { files: [{ type: 'external', external: { url } }] } };
+}
+
+test('parsePieza reads optional v2 design fields without requiring them', () => {
+  const empty = parsePieza({ id: 'p', properties: title('Nombre', 'P') });
+  assert.equal(empty.modulo, '');
+  assert.equal(empty.slides, null);
+
+  const pieza = parsePieza({
+    id: 'p2',
+    properties: {
+      ...title('Nombre', 'Carousel'),
+      ...select('Módulo', 'Content'),
+      ...select('Formato', 'carrusel'),
+      ...select('Ratio', '4:5'),
+      ...rt('Tamaño px', '1080x1350'),
+      Slides: { number: 5 },
+      ...rt('Código de plantilla', 'tpl-1'),
+      ...rt('Template origen Futuraria', 'fut-9'),
+      ...select('Status de diseño', 'Aprobado'),
+    },
+  });
+  assert.equal(pieza.modulo, 'Content');
+  assert.equal(pieza.formato, 'carrusel');
+  assert.equal(pieza.ratio, '4:5');
+  assert.equal(pieza.tamanoPx, '1080x1350');
+  assert.equal(pieza.slides, 5);
+  assert.equal(pieza.codigoDePlantilla, 'tpl-1');
+  assert.equal(pieza.templateOrigenFuturaria, 'fut-9');
+  assert.equal(pieza.statusDeDiseno, 'Aprobado');
+});
+
+test('mergedPublishProperties uses Image (versión) over Pieza Image', () => {
+  const pieza = parsePieza({
+    id: 'p',
+    properties: { ...title('Nombre', 'P'), ...file('Image', 'https://cdn.example/pieza.png') },
+  });
+  const fallback = parsePublicacion({ id: 'u1', properties: title('Título', 'T') });
+  assert.equal(
+    mergedPublishProperties(pieza, fallback).Image.files[0].external.url,
+    'https://cdn.example/pieza.png'
+  );
+
+  const override = parsePublicacion({
+    id: 'u2',
+    properties: {
+      ...title('Título', 'T'),
+      ...file('Image (versión)', 'https://cdn.example/version.png'),
+    },
+  });
+  assert.equal(override.imageVersionUrl, 'https://cdn.example/version.png');
+  assert.equal(
+    mergedPublishProperties(pieza, override).Image.files[0].external.url,
+    'https://cdn.example/version.png'
+  );
+});
+
 test('ContentOsReader.listReadyPublicaciones filters by Pieza + ready statuses', async () => {
   const pages: NotionPage[] = [
     {
