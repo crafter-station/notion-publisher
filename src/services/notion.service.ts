@@ -1,4 +1,6 @@
 import { env } from '../config/env';
+import { PUBLISHER_PROPERTY_NAMES as PN } from '../config/schema';
+import { createPropertyReader } from '../readers/props';
 import { markdownToGumroadHtml } from './markdown.service';
 
 const notionToken = env.NOTION_TOKEN;
@@ -222,24 +224,25 @@ const _fileUrl = (p: any): string | undefined => {
  * EN-only (v1). Multilingual support (ES/PT prefixed fields) deferred.
  */
 export function extractPostlyContent(props: any): PostlyContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
 
-  const caption_instagram = _richText(props['Instagram Caption']);
-  const caption_facebook = _richText(props['Facebook Post']);
-  const caption_linkedin = _richText(props['LinkedIn Post']);
-  const caption_tiktok = _richText(props['TikTok Caption']);
-  const caption_threads = _richText(props['Twitter Post']);
-  const pinterest_title = _richText(props['Pinterest Title']);
-  const pinterest_description = _richText(props['Pinterest Description']);
-  const youtube_title = _richText(props['YouTube Title']);
-  const youtube_caption = _richText(props['YouTube Caption']);
-  const first_comment = _richText(props['Universal First Comment']);
+  const caption_instagram = r.richText(PN.instagramCaption);
+  const caption_facebook = r.richText(PN.facebookPost);
+  const caption_linkedin = r.richText(PN.linkedinPost);
+  const caption_tiktok = r.richText(PN.tiktokCaption);
+  const caption_threads = r.richText(PN.twitterPost);
+  const pinterest_title = r.richText(PN.pinterestTitle);
+  const pinterest_description = r.richText(PN.pinterestDescription);
+  const youtube_title = r.richText(PN.youtubeTitle);
+  const youtube_caption = r.richText(PN.youtubeCaption);
+  const first_comment = r.richText(PN.universalFirstComment);
   // ponytail: Caption preferred when set; POV Text kept as legacy alias
-  const caption = _richText(props['Caption']);
-  const pov_text = _richText(props['POV Text']);
-  const brand = _selectName(props['Brand']);
-  const select = _selectName(props['Select']);
-  const source_url = props['url']?.url || '';
+  const caption = r.richText(PN.caption);
+  const pov_text = r.richText(PN.povText);
+  const brand = r.select(PN.brand);
+  const select = r.select(PN.select);
+  const source_url = r.url(PN.url);
 
   // Global fallback: Caption → POV Text → else first non-empty platform caption
   const global_text =
@@ -257,10 +260,10 @@ export function extractPostlyContent(props: any): PostlyContent {
   if (!global_text) missing.push('All caption fields empty (Caption/POV Text + per-platform)');
 
   // Media priority: Video → GIF → Image → Screenshot
-  const videoUrl = _fileUrl(props['Video']);
-  const gifUrl = _fileUrl(props['GIF']);
-  const imageUrl = _fileUrl(props['Image']);
-  const screenshotUrl = _fileUrl(props['Screenshot']);
+  const videoUrl = r.fileUrl(PN.video) || undefined;
+  const gifUrl = r.fileUrl(PN.gif) || undefined;
+  const imageUrl = r.fileUrl(PN.image) || undefined;
+  const screenshotUrl = r.fileUrl(PN.screenshot) || undefined;
 
   let media_url: string | undefined;
   let media_type: PostlyContent['media_type'] = 'image/jpeg';
@@ -502,17 +505,18 @@ const _dateEnd = (p: any): string => (p?.date?.end || '').trim();
  * Cover: local Notion file URL; use-case uploads to Luma CDN.
  */
 export function extractLumaContent(props: any): LumaContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
   const name =
-    _richText(props['Luma Title']) ||
-    _richText(props['Luma Name']) ||
-    _titleText(props['Name']) ||
+    r.richText(PN.lumaTitle) ||
+    r.richText(PN.lumaName) ||
+    r.title(PN.name) ||
     '';
-  const start_at = _dateStart(props['Luma Start']);
-  const end_at = _dateEnd(props['Luma End']) || _dateStart(props['Luma End']) || '';
-  const location = _richText(props['Luma Location']);
-  const description_md = _richText(props['Luma Description']);
-  const cover_url = _fileUrl(props['Luma Cover']);
+  const start_at = r.dateStart(PN.lumaStart);
+  const end_at = r.dateEnd(PN.lumaEnd) || r.dateStart(PN.lumaEnd) || '';
+  const location = r.richText(PN.lumaLocation);
+  const description_md = r.richText(PN.lumaDescription);
+  const cover_url = r.fileUrl(PN.lumaCover) || undefined;
   const timezone = env.GUMROAD_AUTOPILOT_TIMEZONE || 'America/Lima';
 
   if (!name) missing.push('Luma Title (or Name)');
@@ -816,23 +820,24 @@ export function parseGithubRepoField(raw: string): { owner: string; repo: string
 }
 
 export function extractGithubPublishContent(props: any): GithubPublishContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
-  const repoRaw = _richText(props['GitHub Repo']);
+  const repoRaw = r.richText(PN.githubRepo);
   const parsed = parseGithubRepoField(repoRaw);
   const owner = parsed?.owner || '';
   const repo = parsed?.repo || '';
   const full_name = owner && repo ? `${owner}/${repo}` : '';
-  let tag = _richText(props['Release Tag']);
-  const release_notes = _richText(props['Release Notes']);
-  const landing_page_md = _richText(props['Landing Page Copy']);
-  const asset_url = _fileUrl(props['GitHub Asset']) || _fileUrl(props['File']);
-  const template_json = _richText(props['Template']);
-  const gumroad_url = props['Gumroad URL']?.url || '';
-  const cover_url = _fileUrl(props['Gumroad Cover']) || undefined;
-  const thumbnail_url = _fileUrl(props['Gumroad Thumbnail']) || undefined;
+  let tag = r.richText(PN.releaseTag);
+  const release_notes = r.richText(PN.releaseNotes);
+  const landing_page_md = r.richText(PN.landingPageCopy);
+  const asset_url = r.fileUrl(PN.githubAsset) || r.fileUrl(PN.file) || undefined;
+  const template_json = r.richText(PN.template);
+  const gumroad_url = r.url(PN.gumroadUrl);
+  const cover_url = r.fileUrl(PN.gumroadCover) || undefined;
+  const thumbnail_url = r.fileUrl(PN.gumroadThumbnail) || undefined;
   const title =
-    _richText(props['Gumroad Title']) ||
-    _titleText(props['Name']) ||
+    r.richText(PN.gumroadTitle) ||
+    r.title(PN.name) ||
     repo ||
     'release';
 
@@ -1058,18 +1063,19 @@ export function extractComposioRedditContent(
   props: any,
   options: { kind?: ComposioRedditKind } = {}
 ): ComposioRedditContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
-  const title = _richText(props['Reddit Title']) || _titleText(props['Name']) || '';
-  const body = _richText(props['Reddit Body']);
+  const title = r.richText(PN.redditTitle) || r.title(PN.name) || '';
+  const body = r.richText(PN.redditBody);
   const subreddit =
-    normalizeSubreddit(_richText(props['Reddit Subreddit'])) ||
+    normalizeSubreddit(r.richText(PN.redditSubreddit)) ||
     normalizeSubreddit(env.COMPOSIO_REDDIT_SUBREDDIT);
-  const linkFromProp = _urlProp(props['Reddit Link URL']);
-  const mediaUrl = _fileUrl(props['Image']) || _fileUrl(props['Screenshot']) || '';
+  const linkFromProp = r.url(PN.redditLinkUrl);
+  const mediaUrl = r.fileUrl(PN.image) || r.fileUrl(PN.screenshot) || '';
   const link_url = linkFromProp || mediaUrl;
-  const channels = _multiSelectNames(props['Channels']);
-  const composio_user_id = _richText(props['Composio User ID']);
-  const composio_connected_account_id = _richText(props['Composio Connected Account ID']);
+  const channels = r.multiSelect(PN.channels);
+  const composio_user_id = r.richText(PN.composioUserId);
+  const composio_connected_account_id = r.richText(PN.composioConnectedAccountId);
 
   let kind: ComposioRedditKind = options.kind || (link_url ? 'link' : 'self');
   if (options.kind === 'link' && !link_url) {
@@ -1125,40 +1131,41 @@ const _checkbox = (p: any): boolean => p?.checkbox === true;
  * Publisher Composio + Eventbrite props → EVENTBRITE_CREATE_EVENT arguments.
  */
 export function extractComposioEventbriteContent(props: any): ComposioEventbriteContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
   const name =
-    _richText(props['Eventbrite Title']) ||
-    _titleText(props['Name']) ||
+    r.richText(PN.eventbriteTitle) ||
+    r.title(PN.name) ||
     '';
   const description_html =
-    _richText(props['Eventbrite Description']) ||
-    _richText(props['Caption']) ||
+    r.richText(PN.eventbriteDescription) ||
+    r.richText(PN.caption) ||
     '';
-  const start_raw = _dateStart(props['Eventbrite Start']) || _dateStart(props['Luma Start']);
+  const start_raw = r.dateStart(PN.eventbriteStart) || r.dateStart(PN.lumaStart);
   const end_raw =
-    _dateEnd(props['Eventbrite End']) ||
-    _dateStart(props['Eventbrite End']) ||
-    _dateEnd(props['Eventbrite Start']) ||
-    _dateEnd(props['Luma End']) ||
+    r.dateEnd(PN.eventbriteEnd) ||
+    r.dateStart(PN.eventbriteEnd) ||
+    r.dateEnd(PN.eventbriteStart) ||
+    r.dateEnd(PN.lumaEnd) ||
     '';
   const timezone =
-    _richText(props['Eventbrite Timezone']) ||
+    r.richText(PN.eventbriteTimezone) ||
     env.GUMROAD_AUTOPILOT_TIMEZONE ||
     'America/Lima';
   const currency =
-    _richText(props['Eventbrite Currency']) ||
+    r.richText(PN.eventbriteCurrency) ||
     env.COMPOSIO_EVENTBRITE_CURRENCY ||
     'USD';
   const organization_id =
-    _richText(props['Eventbrite Organization ID']) ||
+    r.richText(PN.eventbriteOrganizationId) ||
     env.COMPOSIO_EVENTBRITE_ORGANIZATION_ID;
-  const venue_id = _richText(props['Eventbrite Venue ID']);
-  const online_event = _checkbox(props['Eventbrite Online']);
-  const channels = _multiSelectNames(props['Channels']);
-  const composio_user_id = _richText(props['Composio User ID']);
+  const venue_id = r.richText(PN.eventbriteVenueId);
+  const online_event = r.checkbox(PN.eventbriteOnline);
+  const channels = r.multiSelect(PN.channels);
+  const composio_user_id = r.richText(PN.composioUserId);
   const composio_connected_account_id =
-    _richText(props['Eventbrite Connected Account ID']) ||
-    _richText(props['Composio Connected Account ID']);
+    r.richText(PN.eventbriteConnectedAccountId) ||
+    r.richText(PN.composioConnectedAccountId);
 
   if (!name) missing.push('Eventbrite Title (or Name)');
   if (!start_raw) missing.push('Eventbrite Start');
@@ -1255,84 +1262,85 @@ export interface PostizNotionContent {
  * Empty channel override → shared Caption. Targets from `Postiz Targets` or `Channels`.
  */
 export function extractPostizContent(props: any): PostizNotionContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
-  const caption = _richText(props['Caption']) || _richText(props['POV Text']) || '';
+  const caption = r.richText(PN.caption) || r.richText(PN.povText) || '';
   const targets = [
-    ..._multiSelectNames(props['Postiz Targets']),
-    ..._multiSelectNames(props['Channels']),
+    ...r.multiSelect(PN.postizTargets),
+    ...r.multiSelect(PN.channels),
   ].filter((name, i, all) => all.indexOf(name) === i);
 
   const overrideKeys: Record<string, string> = {
-    discord: 'Postiz Discord',
-    slack: 'Postiz Slack',
-    mastodon: 'Postiz Mastodon',
-    skool: 'Postiz Skool',
-    twitch: 'Postiz Twitch',
-    kick: 'Postiz Kick',
-    warpcast: 'Postiz Farcaster',
-    nostr: 'Postiz Nostr',
-    lemmy: 'Postiz Lemmy',
-    listmonk: 'Postiz Listmonk',
+    discord: PN.postizDiscord,
+    slack: PN.postizSlack,
+    mastodon: PN.postizMastodon,
+    skool: PN.postizSkool,
+    twitch: PN.postizTwitch,
+    kick: PN.postizKick,
+    warpcast: PN.postizFarcaster,
+    nostr: PN.postizNostr,
+    lemmy: PN.postizLemmy,
+    listmonk: PN.postizListmonk,
   };
 
   const overrides: Record<string, string> = {};
   for (const [id, key] of Object.entries(overrideKeys)) {
-    const text = _richText(props[key]);
+    const text = r.richText(key);
     if (text) overrides[id] = text;
   }
-  if (_richText(props['Postiz Warpcast'])) {
-    overrides.warpcast = overrides.warpcast || _richText(props['Postiz Warpcast']);
+  if (r.richText(PN.postizWarpcast)) {
+    overrides.warpcast = overrides.warpcast || r.richText(PN.postizWarpcast);
   }
 
   const settings: Record<string, Record<string, unknown>> = {
-    discord: { channel: _richText(props['Postiz Discord Channel']) || env.POSTIZ_DISCORD_CHANNEL },
-    slack: { channel: _richText(props['Postiz Slack Channel']) || env.POSTIZ_SLACK_CHANNEL },
+    discord: { channel: r.richText(PN.postizDiscordChannel) || env.POSTIZ_DISCORD_CHANNEL },
+    slack: { channel: r.richText(PN.postizSlackChannel) || env.POSTIZ_SLACK_CHANNEL },
     skool: {
-      group: _richText(props['Postiz Skool Group']) || env.POSTIZ_SKOOL_GROUP,
-      label: _richText(props['Postiz Skool Label']) || env.POSTIZ_SKOOL_LABEL,
-      title: _richText(props['Postiz Skool Title']) || _titleText(props['Name']),
+      group: r.richText(PN.postizSkoolGroup) || env.POSTIZ_SKOOL_GROUP,
+      label: r.richText(PN.postizSkoolLabel) || env.POSTIZ_SKOOL_LABEL,
+      title: r.richText(PN.postizSkoolTitle) || r.title(PN.name),
     },
     twitch: {
-      messageType: _richText(props['Postiz Twitch Message Type']) || 'message',
-      announcementColor: _richText(props['Postiz Twitch Announcement Color']) || 'primary',
+      messageType: r.richText(PN.postizTwitchMessageType) || 'message',
+      announcementColor: r.richText(PN.postizTwitchAnnouncementColor) || 'primary',
     },
     warpcast: {
-      channels: _richText(props['Postiz Warpcast Channels']) || _richText(props['Postiz Farcaster Channels']),
+      channels: r.richText(PN.postizWarpcastChannels) || r.richText(PN.postizFarcasterChannels),
     },
     lemmy: {
-      community: _richText(props['Postiz Lemmy Community']),
-      community_id: _richText(props['Postiz Lemmy Community ID']),
-      title: _richText(props['Postiz Lemmy Title']) || _titleText(props['Name']),
-      url: _urlProp(props['Postiz Lemmy URL']),
+      community: r.richText(PN.postizLemmyCommunity),
+      community_id: r.richText(PN.postizLemmyCommunityId),
+      title: r.richText(PN.postizLemmyTitle) || r.title(PN.name),
+      url: r.url(PN.postizLemmyUrl),
     },
     listmonk: {
-      subject: _richText(props['Postiz Listmonk Subject']) || _titleText(props['Name']),
-      preview: _richText(props['Postiz Listmonk Preview']) || caption.slice(0, 140),
-      list: _richText(props['Postiz Listmonk List']) || env.POSTIZ_LISTMONK_LIST,
-      template: _richText(props['Postiz Listmonk Template']),
+      subject: r.richText(PN.postizListmonkSubject) || r.title(PN.name),
+      preview: r.richText(PN.postizListmonkPreview) || caption.slice(0, 140),
+      list: r.richText(PN.postizListmonkList) || env.POSTIZ_LISTMONK_LIST,
+      template: r.richText(PN.postizListmonkTemplate),
     },
   };
 
   const integration_ids: Record<string, string> = {};
   const notionIntegrationKeys: Record<string, string> = {
-    discord: 'Postiz Discord Integration ID',
-    slack: 'Postiz Slack Integration ID',
-    mastodon: 'Postiz Mastodon Integration ID',
-    skool: 'Postiz Skool Integration ID',
-    twitch: 'Postiz Twitch Integration ID',
-    kick: 'Postiz Kick Integration ID',
-    warpcast: 'Postiz Warpcast Integration ID',
-    nostr: 'Postiz Nostr Integration ID',
-    lemmy: 'Postiz Lemmy Integration ID',
-    listmonk: 'Postiz Listmonk Integration ID',
+    discord: PN.postizDiscordIntegrationId,
+    slack: PN.postizSlackIntegrationId,
+    mastodon: PN.postizMastodonIntegrationId,
+    skool: PN.postizSkoolIntegrationId,
+    twitch: PN.postizTwitchIntegrationId,
+    kick: PN.postizKickIntegrationId,
+    warpcast: PN.postizWarpcastIntegrationId,
+    nostr: PN.postizNostrIntegrationId,
+    lemmy: PN.postizLemmyIntegrationId,
+    listmonk: PN.postizListmonkIntegrationId,
   };
   for (const [id, key] of Object.entries(notionIntegrationKeys)) {
-    const value = _richText(props[key]);
+    const value = r.richText(key);
     if (value) integration_ids[id] = value;
   }
 
-  const schedule_at = _dateStart(props['Postiz Schedule']) || _dateStart(props['Schedule']);
-  const media_url = _fileUrl(props['Image']) || _fileUrl(props['GIF']) || _fileUrl(props['Video']);
+  const schedule_at = r.dateStart(PN.postizSchedule) || r.dateStart(PN.schedule);
+  const media_url = r.fileUrl(PN.image) || r.fileUrl(PN.gif) || r.fileUrl(PN.video) || undefined;
 
   if (!caption && !Object.keys(overrides).length) {
     missing.push('Caption (or a Postiz {Channel} override)');
@@ -1418,14 +1426,15 @@ export interface TypefullyNotionContent {
  * Typefully Thread is appended with 4 newlines (API thread split).
  */
 export function extractTypefullyContent(props: any): TypefullyNotionContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
-  const caption = _richText(props['Caption']) || _richText(props['POV Text']) || '';
-  const thread = _richText(props['Typefully Thread']);
-  const x = _richText(props['X Post']) || _richText(props['Twitter Post']);
-  const linkedin = _richText(props['LinkedIn Post']);
-  const threads = _richText(props['Threads Post']) || _richText(props['Twitter Post']);
-  const mastodon = _richText(props['Typefully Mastodon']);
-  const bluesky = _richText(props['Typefully Bluesky']);
+  const caption = r.richText(PN.caption) || r.richText(PN.povText) || '';
+  const thread = r.richText(PN.typefullyThread);
+  const x = r.richText(PN.xPost) || r.richText(PN.twitterPost);
+  const linkedin = r.richText(PN.linkedinPost);
+  const threads = r.richText(PN.threadsPost) || r.richText(PN.twitterPost);
+  const mastodon = r.richText(PN.typefullyMastodon);
+  const bluesky = r.richText(PN.typefullyBluesky);
 
   const withThread = (text: string) => {
     const base = text || caption;
@@ -1451,11 +1460,11 @@ export function extractTypefullyContent(props: any): TypefullyNotionContent {
   }
 
   const social_set_id =
-    _richText(props['Typefully Account']) ||
-    _richText(props['Typefully Social Set ID']) ||
+    r.richText(PN.typefullyAccount) ||
+    r.richText(PN.typefullySocialSetId) ||
     env.TYPEFULLY_SOCIAL_SET_ID;
-  const draft_title = _titleText(props['Name']) || _richText(props['Typefully Title']);
-  const plan_at = _dateStart(props['Typefully Schedule']) || _dateStart(props['Schedule']);
+  const draft_title = r.title(PN.name) || r.richText(PN.typefullyTitle);
+  const plan_at = r.dateStart(PN.typefullySchedule) || r.dateStart(PN.schedule);
 
   if (!Object.keys(platforms).length) missing.push('Caption (or a Typefully / X / LinkedIn override)');
   if (!social_set_id) missing.push('Typefully Account (or TYPEFULLY_SOCIAL_SET_ID)');
@@ -1534,24 +1543,25 @@ export interface RestreamNotionContent {
 }
 
 export function extractRestreamContent(props: any): RestreamNotionContent {
+  const r = createPropertyReader(props || {});
   const missing: string[] = [];
   const title =
-    _richText(props['Restream Title']) ||
-    _titleText(props['Name']) ||
+    r.richText(PN.restreamTitle) ||
+    r.title(PN.name) ||
     '';
   const description =
-    _richText(props['Restream Description']) ||
-    _richText(props['Caption']) ||
+    r.richText(PN.restreamDescription) ||
+    r.richText(PN.caption) ||
     '';
   const scheduled_for =
-    _dateStart(props['Restream Start']) ||
-    _dateStart(props['Restream Schedule']) ||
-    _dateStart(props['Schedule']);
+    r.dateStart(PN.restreamStart) ||
+    r.dateStart(PN.restreamSchedule) ||
+    r.dateStart(PN.schedule);
   const stream_type =
-    _selectName(props['Restream Stream Type']) ||
-    _richText(props['Restream Stream Type']) ||
+    r.select(PN.restreamStreamType) ||
+    r.richText(PN.restreamStreamType) ||
     'encoder';
-  const file_id = _richText(props['Restream File ID']);
+  const file_id = r.richText(PN.restreamFileId);
 
   if (!title) missing.push('Restream Title (or Name)');
 
