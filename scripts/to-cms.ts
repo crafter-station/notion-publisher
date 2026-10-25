@@ -1,17 +1,28 @@
 /**
- * /to-cms live ingest: content package → Publisher page(s), Not started.
- * Never calls publish webhooks.
+ * /to-cms ingest: content package → one 🧩 Pieza + one 🚀 Publicacion per
+ * target 🪪 Cuenta. Never publishes. Dry-run is the default (pass --live
+ * to create Notion rows). Use --publisher for the legacy single-DB path.
  *
  * Usage (from notion-publisher root):
  *   npm run to-cms -- --package=/abs/path/package.md
  *   npm run to-cms -- --package=./fixtures/x.md --dry-run
  *   npm run to-cms -- --package=./x.md --sources=Gumroad,Postly
+ *   npm run to-cms -- --package=./x.md --publisher --live
  */
 import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
+import {
+  loadChannelAccountCatalog,
+  selectTargetCuentas,
+  STATIC_CANALES,
+  STATIC_CUENTAS,
+} from '../src/catalog/channels';
+import { contentOsDatabaseIds } from '../src/config/content-os';
 import { env } from '../src/config/env';
+import { createHttpNotionTransport } from '../src/readers/notion-transport';
+import { buildContentOsIngest, createContentOsIngest } from '../src/services/to-cms-content-os';
 import { NOTION_VERSION } from '../src/services/notion.service';
 import {
   buildIngestPages,
@@ -93,7 +104,70 @@ async function main() {
   }
 
   const resolved = resolvePackage(packagePath);
-  const payloads = buildIngestPages(resolved);
+
+  if (hasFlag('publisher')) {
+    const payloads = buildIngestPages(resolved);
+    console.log(
+      JSON.stringify(
+        {
+          title: resolved.title,
+          layers: resolved.layers,
+          sources: resolved.sources,
+          channels: resolved.channels,
+          missing: resolved.missing,
+          recommended: resolved.recommended,
+          buttons: resolved.buttons,
+          pageCount: payloads.length,
+          path: 'publisher',
+        },
+        null,
+        2
+      )
+    );
+
+    if (!resolved.ok) process.exit(1);
+    if (hasFlag('dry-run') || !hasFlag('live')) {
+      console.log('\n[to-cms] dry-run only (pass --live to create Notion pages). Never publishes.');
+      console.log(JSON.stringify({ payloads }, null, 2));
+      return;
+    }
+
+    const databaseId = env.NOTION_DATABASE_ID;
+    if (!databaseId) throw new Error('NOTION_DATABASE_ID required');
+
+    const created: { id: string; url: string; layer: string }[] = [];
+    for (const p of payloads) {
+      const page = await notion('POST', '/pages', {
+        parent: { database_id: databaseId },
+        properties: p.properties,
+      });
+      const id = page.id as string;
+      const url = (page.url as string) || `https://notion.so/${id.replace(/-/g, '')}`;
+      created.push({ id, url, layer: p.layer });
+      console.log(`[to-cms] created ${p.layer}: ${url}`);
+    }
+
+    console.log('\nPress Notion buttons (do not re-run publish from this script):');
+    for (const b of resolved.buttons) console.log(`  - ${b}`);
+    if (resolved.recommended.length) {
+      console.log('\nRecommended fields still empty:', resolved.recommended.join(', '));
+    }
+    console.log(JSON.stringify({ created }, null, 2));
+    return;
+  }
+
+  const ids = contentOsDatabaseIds();
+  const transport = createHttpNotionTransport(env.NOTION_TOKEN);
+  const catalog = await loadChannelAccountCatalog(transport, {
+    canales: ids.canales,
+    cuentas: ids.cuentas,
+  }).catch(() => ({ source: 'static' as const, canales: STATIC_CANALES, cuentas: STATIC_CUENTAS }));
+  const cuentas = selectTargetCuentas(catalog, [
+    ...resolved.channels,
+    ...resolved.sources,
+  ]);
+  const canalIds = [...new Set(cuentas.flatMap(c => c.canalIds))];
+  const plan = buildContentOsIngest(resolved, cuentas, { canalIds });
 
   console.log(
     JSON.stringify(
@@ -103,9 +177,11 @@ async function main() {
         sources: resolved.sources,
         channels: resolved.channels,
         missing: resolved.missing,
-        recommended: resolved.recommended,
-        buttons: resolved.buttons,
-        pageCount: payloads.length,
+        catalog_source: catalog.source,
+        cuentas: cuentas.map(c => ({ id: c.id, nombre: c.nombre, conector: c.conector })),
+        pieza_props: Object.keys(plan.pieza.properties),
+        publicaciones: plan.publicaciones.length,
+        path: 'content-os',
       },
       null,
       2
@@ -114,32 +190,23 @@ async function main() {
 
   if (!resolved.ok) process.exit(1);
   if (hasFlag('dry-run') || !hasFlag('live')) {
-    console.log('\n[to-cms] dry-run only (pass --live to create Notion pages). Never publishes.');
-    console.log(JSON.stringify({ payloads }, null, 2));
+    console.log('\n[to-cms] dry-run only (pass --live to create Pieza + Publicaciones). Never publishes.');
+    console.log(JSON.stringify({ plan }, null, 2));
     return;
   }
 
-  const databaseId = env.NOTION_DATABASE_ID;
-  if (!databaseId) throw new Error('NOTION_DATABASE_ID required');
-
-  const created: { id: string; url: string; layer: string }[] = [];
-  for (const p of payloads) {
-    const page = await notion('POST', '/pages', {
-      parent: { database_id: databaseId },
-      properties: p.properties,
-    });
-    const id = page.id as string;
-    const url = (page.url as string) || `https://notion.so/${id.replace(/-/g, '')}`;
-    created.push({ id, url, layer: p.layer });
-    console.log(`[to-cms] created ${p.layer}: ${url}`);
-  }
-
-  console.log('\nPress Notion buttons (do not re-run publish from this script):');
-  for (const b of resolved.buttons) console.log(`  - ${b}`);
-  if (resolved.recommended.length) {
-    console.log('\nRecommended fields still empty:', resolved.recommended.join(', '));
-  }
-  console.log(JSON.stringify({ created }, null, 2));
+  const created = await createContentOsIngest(transport, ids, plan);
+  console.log(
+    JSON.stringify(
+      {
+        pieza_id: created.piezaId,
+        publicacion_ids: created.publicacionIds,
+        note: 'Created as Pendiente / Modo dry-run. POST /webhooks/publish to route.',
+      },
+      null,
+      2
+    )
+  );
 }
 
 main().catch(err => {
