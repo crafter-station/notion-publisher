@@ -1,0 +1,44 @@
+[
+  {
+    "page_id": "prod-1",
+    "Name": "Starter kit",
+    "Layer": "Products",
+    "Caption": "A starter product",
+    "Status": "Published"
+  },
+  {
+    "page_id": "prod-2",
+    "Name": "Pro kit",
+    "Layer": "products",
+    "Channels": "",
+    "Extra Widget": "ignore-me"
+  },
+  {
+    "page_id": "prod-num",
+    "Name": "21",
+    "Layer": "Products"
+  },
+  {
+    "page_id": "soc-ig",
+    "Name": "Launch clip",
+    "Layer": "Social",
+    "Channels": "Instagram"
+  },
+  {
+    "page_id": "soc-x",
+    "Name": "Thread",
+    "Layer": "Social",
+    "Channels": "x; Twitter"
+  },
+  {
+    "page_id": "soc-reddit",
+    "Name": "Ask the community",
+    "Layer": "Social",
+    "Channels": "Reddit"
+  },
+  {
+    "page_id": "evt-1",
+    "Name": "Office hours",
+    "Layer": "Events"
+  }
+]

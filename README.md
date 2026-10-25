@@ -666,13 +666,27 @@ npm run notion:schema          # Publisher property dump (read-only)
 npm run publisher:report
 ```
 
-`migrate-content-os` is **dry-run by default** and needs **no env** (no `NOTION_TOKEN`, `GUMROAD_TOKEN`, or `POSTLY_*`). With `--dry-run` and no token — or with `--offline` — it uses the static Canales/Cuentas catalog, never reads or writes Notion, and prints a JSON report (Piezas/Publicaciones `would_create`, `skipped_existing`, and rows with problems). A real write needs `--live` and `NOTION_TOKEN` only:
+`migrate-content-os` is **dry-run by default** and needs **no env** (no `NOTION_TOKEN`, `GUMROAD_TOKEN`, or `POSTLY_*`). With `--dry-run` and no token — or with `--offline` — it uses the static Canales/Cuentas catalog, never reads or writes Notion, and prints a JSON report (per-layer counts, expected Publicaciones, `would_create`, `skipped_existing`, unmatched channels, unknown columns, and warnings). A real write needs `--live` and `NOTION_TOKEN` only.
 
 ```bash
 npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json
 npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json --offline
 npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json --live
 ```
+
+Accepted snapshot shapes: Notion API `{ id, properties }` pages, **or a flat table** (array / `{ pages|rows|results }`). Flat keys are case-insensitive and optional:
+
+| Key | Role |
+|---|---|
+| `page_id` (`id`, `notion_page_id`) | Source id → Pieza key `publisher:<page_id>` |
+| `Name` (`title`) | Title. Numeric-only names warn; they do not fail the run |
+| `Layer` | `Products` → Gumroad only · `Events` → Luma · `Social` uses `Channels` |
+| `Channels` | Comma/semicolon list; matched to a Canal by name (accents/case-insensitive). Unknown names are reported, never defaulted to Postly |
+| `Caption` | Caption base when present |
+| `Source Tags` / `sources` | Legacy API-shaped rows |
+| `Status`, `url`, Publisher columns | Tolerated; extra columns are listed as `unknown_columns` |
+
+Matching is by **Canal identity** (name / family), never by Conector alone — a Products row does not fan out to GitHub, Luma, or Restream. Empty Cuentas (or a row with no resolvable Cuenta) sets `status: "error"`; `--live` then exits non-zero. `static-*` catalog ids are valid only in `--offline`. Pieza idempotency reuses `publisher:<page_id>` from Publicaciones `Clave de idempotencia` prefixes (Piezas have no dedicated key property today).
 
 ---
 

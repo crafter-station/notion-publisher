@@ -3,7 +3,9 @@ import { test } from 'node:test';
 import { STATIC_CANALES, STATIC_CUENTAS } from '../catalog/channels';
 import { NotionTransport } from '../readers/notion-transport';
 import {
+  inferTargets,
   loadPublisherSnapshot,
+  matchCuentas,
   migrateContentOs,
   piezaKey,
   publicacionKey,
@@ -93,10 +95,10 @@ test('migrate passes through optional Pieza design fields and Image (versión)',
 
 test('migrate is idempotent via Clave de idempotencia keys', async () => {
   const row = { id: 'legacy-1', title: 'Old row', sources: ['Postly'] };
-  const existing = new Set<string>([
-    piezaKey(row),
-    publicacionKey(row, `Postly:${STATIC_CUENTAS.find(c => c.conector === 'Postly')?.id}`),
-  ]);
+  const catalog = { source: 'static' as const, canales: STATIC_CANALES, cuentas: STATIC_CUENTAS };
+  const target = inferTargets(row, catalog).targets[0];
+  const cuenta = matchCuentas(catalog, target)[0];
+  const existing = new Set<string>([piezaKey(row), publicacionKey(row, `${target.hint}:${cuenta.id}`)]);
   const transport: NotionTransport = {
     async getPage(id) {
       return { id };

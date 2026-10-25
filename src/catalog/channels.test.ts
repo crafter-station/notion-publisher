@@ -49,6 +49,28 @@ test('loadChannelAccountCatalog falls back to static when Notion is empty or fai
   assert.equal(fromErr.source, 'static');
 });
 
+test('loadChannelAccountCatalog can refuse the static fallback', async () => {
+  const empty: NotionTransport = {
+    async getPage(id) {
+      return { id };
+    },
+    async queryAll() {
+      return [];
+    },
+    async createPage() {
+      return { id: 'x' };
+    },
+    async updatePage() {},
+  };
+  const catalog = await loadChannelAccountCatalog(
+    empty,
+    { canales: 'canales', cuentas: 'cuentas' },
+    { allowStaticFallback: false }
+  );
+  assert.equal(catalog.source, 'notion');
+  assert.equal(catalog.cuentas.length, 0);
+});
+
 test('loadChannelAccountCatalog reads live dump property names from Notion', async () => {
   const transport: NotionTransport = {
     async getPage(id) {

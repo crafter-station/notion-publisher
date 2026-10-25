@@ -84,9 +84,12 @@ function parseCuenta(page: any): CatalogCuenta {
 
 export async function loadChannelAccountCatalog(
   transport: NotionTransport,
-  ids: { canales: string; cuentas: string }
+  ids: { canales: string; cuentas: string },
+  options: { allowStaticFallback?: boolean } = {}
 ): Promise<ChannelAccountCatalog> {
+  const allowStatic = options.allowStaticFallback !== false;
   if (!ids.canales || !ids.cuentas) {
+    if (!allowStatic) return { source: 'notion', canales: [], cuentas: [] };
     return { source: 'static', canales: STATIC_CANALES, cuentas: STATIC_CUENTAS };
   }
   try {
@@ -95,6 +98,7 @@ export async function loadChannelAccountCatalog(
       transport.queryAll(ids.cuentas),
     ]);
     if (!canales.length && !cuentas.length) {
+      if (!allowStatic) return { source: 'notion', canales: [], cuentas: [] };
       return { source: 'static', canales: STATIC_CANALES, cuentas: STATIC_CUENTAS };
     }
     return {
@@ -103,6 +107,7 @@ export async function loadChannelAccountCatalog(
       cuentas: cuentas.map(parseCuenta),
     };
   } catch (err: any) {
+    if (!allowStatic) throw err;
     console.warn(`[CATALOG] Notion read failed, using static fallback: ${err.message}`);
     return { source: 'static', canales: STATIC_CANALES, cuentas: STATIC_CUENTAS };
   }

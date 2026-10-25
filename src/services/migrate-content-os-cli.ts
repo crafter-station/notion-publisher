@@ -9,6 +9,7 @@ import { STATIC_CANALES, STATIC_CUENTAS } from '../catalog/channels';
 import { contentOsDatabaseIds } from '../config/content-os';
 import { createOfflineNotionTransport } from '../readers/notion-transport';
 import {
+  listSnapshotUnknownColumns,
   loadPublisherSnapshot,
   migrateContentOs,
   type MigrationReport,
@@ -80,8 +81,11 @@ export async function runMigrateContentOsCli(
   const offline = shouldRunOffline(argv, env);
 
   let rows;
+  let unknownColumns: string[] = [];
   try {
-    rows = loadPublisherSnapshot(JSON.parse(fs.readFileSync(abs, 'utf8')));
+    const raw = JSON.parse(fs.readFileSync(abs, 'utf8'));
+    rows = loadPublisherSnapshot(raw);
+    unknownColumns = listSnapshotUnknownColumns(raw);
   } catch (err: any) {
     error(err?.message || String(err));
     return { exitCode: 1, stdout: logs.join('\n'), stderr: errs.join('\n') };
@@ -101,10 +105,17 @@ export async function runMigrateContentOsCli(
     const { loadExistingIdempotencyKeys } = await import('./migrate-content-os');
     const ids = contentOsDatabaseIds();
     const transport = createHttpNotionTransport(token);
-    const catalog = await loadChannelAccountCatalog(transport, {
-      canales: ids.canales,
-      cuentas: ids.cuentas,
-    });
+    let catalog;
+    try {
+      catalog = await loadChannelAccountCatalog(
+        transport,
+        { canales: ids.canales, cuentas: ids.cuentas },
+        { allowStaticFallback: false }
+      );
+    } catch (err: any) {
+      error(err?.message || String(err));
+      return { exitCode: 1, stdout: logs.join('\n'), stderr: errs.join('\n') };
+    }
     const existingKeys = await loadExistingIdempotencyKeys(transport, ids.publicaciones);
     const report = await migrateContentOs({
       rows,
@@ -113,6 +124,8 @@ export async function runMigrateContentOsCli(
       ids,
       dryRun: false,
       existingKeys,
+      offline: false,
+      unknownColumns,
     });
     const payload = {
       snapshot: abs,
@@ -121,7 +134,9 @@ export async function runMigrateContentOsCli(
       report,
     } as const;
     log(JSON.stringify(payload, null, 2));
-    return { exitCode: 0, stdout: logs.join('\n'), stderr: errs.join('\n'), payload };
+    const exitCode = report.status === 'error' ? 1 : 0;
+    if (exitCode === 1) error(report.errors.join('\n') || 'Migration failed.');
+    return { exitCode, stdout: logs.join('\n'), stderr: errs.join('\n'), payload };
   }
 
   const report = await migrateContentOs({
@@ -130,6 +145,8 @@ export async function runMigrateContentOsCli(
     transport: createOfflineNotionTransport(),
     ids: { piezas: 'offline-piezas', publicaciones: 'offline-publicaciones' },
     dryRun,
+    offline: true,
+    unknownColumns,
   });
   const payload = {
     snapshot: abs,
