@@ -26,6 +26,8 @@ import {
   isGithubConfigured,
 } from '../services/github.service';
 import { env } from '../config/env';
+import { createHttpNotionTransport } from '../readers/notion-transport';
+import { executePublishContentOsUseCase } from '../use-cases/publish-content-os.use-case';
 
 function getHeaderValue(req: IncomingMessage, name: string) {
   const value = req.headers[name.toLowerCase()];
@@ -38,6 +40,44 @@ function json(res: ServerResponse, status: number, body: unknown) {
 }
 
 export const webhooksController = {
+  /**
+   * Content OS: Pieza in → ready Publicaciones out.
+   * Dry-run default. Writes Publicado el only on a real publish.
+   */
+  async handlePublish(req: IncomingMessage, res: ServerResponse) {
+    let body = '';
+    req.on('data', chunk => (body += chunk.toString()));
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const piezaId = payload.data?.id || payload.pieza_id || payload.notion_page_id;
+        if (!piezaId) {
+          res.writeHead(400);
+          return res.end(JSON.stringify({ error: 'Missing data.id (Pieza page id)' }));
+        }
+
+        const transport = createHttpNotionTransport(env.NOTION_TOKEN);
+        console.log(`[INFO] Starting Content OS publish (pieza=${piezaId})`);
+        executePublishContentOsUseCase(piezaId, { transport }).catch(err => {
+          console.error('[ERROR] Content OS publish failed', err);
+        });
+
+        res.writeHead(202, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            message: 'Accepted Content OS publish',
+            pieza_id: piezaId,
+            dry_run_default: true,
+          })
+        );
+      } catch (err: any) {
+        console.error('[ERROR] handlePublish:', err.message);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  },
+
   /** Static distributor + Postly platform catalog (no network). */
   async handleCapabilities(_req: IncomingMessage, res: ServerResponse) {
     json(res, 200, getCapabilitiesSnapshot());

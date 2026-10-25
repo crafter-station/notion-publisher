@@ -41,6 +41,9 @@ function startServer(port: number) {
     }
 
     if (req.method === 'POST') {
+      if (path === '/webhooks/publish') {
+        return webhooksController.handlePublish(req, res);
+      }
       if (path === '/webhooks/publish-gumroad') {
         return webhooksController.handlePublishGumroad(req, res);
       }
