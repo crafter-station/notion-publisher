@@ -713,7 +713,7 @@ Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [repo](https://github
 
 ## Contributing
 
-Internal Nucleo Lab / Nebulabs tooling. Prefer tiny diffs; update [`CAPABILITIES.md`](./CAPABILITIES.md) when adding a distributor. Do not invent publish webhooks for stub/discover connectors.
+Internal Nucleo Lab / Nebulabs tooling. Prefer tiny diffs; update [`CAPABILITIES.md`](./CAPABILITIES.md) when adding a distributor. Do not invent publish webhooks for stub/discover connectors. Agent rules: [`AGENTS.md`](./AGENTS.md).
 
 ## License
 

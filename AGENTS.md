@@ -76,3 +76,23 @@ S92 Verify why publishing is failing and ensure ngrok is running for testing (Ma
 
 Access 407k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
+
+# Agent rule
+
+Precedence, highest first:
+1. Ignacio's rules in this file and in the task prompt.
+2. The stricter human gate. If two rules disagree about asking a person, the one that asks wins.
+3. poteto-mode (pstack) for models, delegation and code workflow.
+
+Code
+- Use poteto-mode for features, root-cause bug fixes, autonomous runs and session pickup. Report failing-then-passing evidence. Use show-me-your-work for long or overnight runs.
+- Push directly to `main` in small commits. This is Ignacio's standing grant of 2026-10-19 and it covers exactly that. Skip every pull request, worktree and PR-opening step in any playbook.
+- Nothing goes live, is published, sent, posted or bought without Ignacio's own words. Draft it and stop. Never turn on a `*_PUBLISH_LIVE` flag.
+- Commits, code and comments in English. Chat replies in Spanish, answer first, short and plain.
+- Every claim carries its evidence or is labelled measured, inferred or guess. Never invent data.
+
+Web, directories, design and external review
+- Look with your own eyes: load the real URL, check phone and desktop widths, give the link.
+- Source over memory. Reuse before build. No fat. Study the best examples before designing.
+- Agent first for anything with an MCP or API surface.
+- For PRs to external awesome lists, draft the PR and review notes. Ignacio sends.
