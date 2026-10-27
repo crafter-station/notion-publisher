@@ -4,6 +4,7 @@ import {
   CONTENT_OS_BASE_IDS,
   CONTENT_OS_PARENT_PAGE_ID_DEFAULT,
   CONTENT_OS_PUBLISH_LIVE_ENV,
+  CONTENT_OS_FORMATOS_VIDEO_DATA_SOURCE_ID,
   CONTENT_OS_WORKSPACES_DATA_SOURCE_ID,
   listDeclaredPropertyNames,
   SCHEMA_BASES,
@@ -93,4 +94,18 @@ test('v2 Piezas design fields and expanded Marca stay declared', () => {
   assert.equal(SCHEMA_BASES.publicaciones.properties.imageVersion.type, 'files');
   assert.equal(CONTENT_OS_PARENT_PAGE_ID_DEFAULT, '404da2435b4681eebbe6c73f68060bdd');
   assert.equal(CONTENT_OS_WORKSPACES_DATA_SOURCE_ID, 'e28e7216-8dc3-4a77-a7ef-e81606bf39c8');
+  assert.equal(CONTENT_OS_FORMATOS_VIDEO_DATA_SOURCE_ID, '29bad734-bc75-471b-805a-4da0b2a5df7d');
+  assert.equal(SCHEMA_BASES.canales.properties.estadoDelCanal.name, 'Estado del canal');
+  assert.deepEqual(SCHEMA_BASES.canales.properties.estadoDelCanal.options, [
+    'Activo',
+    'A3 pendiente',
+    'Descartado',
+  ]);
+  assert.equal(SCHEMA_BASES.canales.properties.score.name, 'Score ⭐');
+  assert.equal(SCHEMA_BASES.canales.properties.score.type, 'number');
+  assert.equal(SCHEMA_BASES.publicaciones.properties.resultado.name, 'Resultado');
+  assert.equal(SCHEMA_BASES.publicaciones.properties.resultado.type, 'rich_text');
+  assert.equal(SCHEMA_BASES.piezas.properties.formatoDeVideo.name, '🎞️ Formato de video');
+  assert.ok(SCHEMA_BASES.piezas.properties.formato.options?.includes('video'));
+  assert.ok(SCHEMA_BASES.piezas.properties.formato.options?.includes('reel'));
 });

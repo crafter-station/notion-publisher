@@ -1,5 +1,5 @@
 {
-  "source": "notion-fetch dumps v2 (2026-10-25)",
+  "source": "notion-fetch dumps v3 (2026-10-27)",
   "parent_page_id": "404da2435b4681eebbe6c73f68060bdd",
   "workspaces_data_source": "e28e7216-8dc3-4a77-a7ef-e81606bf39c8",
   "bases": {
@@ -12,6 +12,8 @@
       { "name": "Límites", "type": "text" },
       { "name": "Settings requeridos", "type": "text" },
       { "name": "Verificado el", "type": "date" },
+      { "name": "Estado del canal", "type": "select" },
+      { "name": "Score ⭐", "type": "number" },
       { "name": "🧩 Piezas", "type": "relation" },
       { "name": "🪪 Cuentas", "type": "relation" }
     ],
@@ -52,6 +54,7 @@
       { "name": "Publicaciones (total)", "type": "rollup" },
       { "name": "Publicadas / total", "type": "formula" },
       { "name": "📡 Canales objetivo", "type": "relation" },
+      { "name": "🎞️ Formato de video", "type": "relation" },
       { "name": "🚀 Publicaciones", "type": "relation" },
       { "name": "🥇 Producto", "type": "relation" }
     ],
@@ -70,6 +73,7 @@
       { "name": "Settings", "type": "text" },
       { "name": "Status", "type": "status" },
       { "name": "URL publicada", "type": "url" },
+      { "name": "Resultado", "type": "text" },
       { "name": "🧩 Pieza", "type": "relation" },
       { "name": "🪪 Cuenta", "type": "relation" }
     ]

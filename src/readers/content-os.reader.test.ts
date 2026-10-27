@@ -40,6 +40,7 @@ test('parsePieza / parsePublicacion use dump property names including emojis', (
       ...rt('Clave de idempotencia', 'publisher:pieza-1'),
       ...select('Tipo', 'Social'),
       ...rel('📡 Canales objetivo', 'canal-1'),
+      ...rel('🎞️ Formato de video', 'fmt-1'),
       ...rel('🥇 Producto', 'prod-1'),
       ...rel('🚀 Publicaciones', 'pub-1'),
     },
@@ -48,6 +49,7 @@ test('parsePieza / parsePublicacion use dump property names including emojis', (
   assert.equal(pieza.captionBase, 'hello world');
   assert.equal(pieza.claveDeIdempotencia, 'publisher:pieza-1');
   assert.deepEqual(pieza.canalIds, ['canal-1']);
+  assert.deepEqual(pieza.formatoDeVideoIds, ['fmt-1']);
   assert.deepEqual(pieza.productoIds, ['prod-1']);
 
   const pub = parsePublicacion({
@@ -57,6 +59,7 @@ test('parsePieza / parsePublicacion use dump property names including emojis', (
       ...status('Status', 'Pendiente'),
       ...select('Modo', ''),
       ...rt('Clave de idempotencia', 'publisher:old:ig'),
+      ...rt('Resultado', 'ok'),
       ...rel('🧩 Pieza', 'pieza-1'),
       ...rel('🪪 Cuenta', 'cuenta-1'),
     },
@@ -64,6 +67,7 @@ test('parsePieza / parsePublicacion use dump property names including emojis', (
   assert.equal(pub.titulo, 'Launch · IG');
   assert.equal(pub.modo, '');
   assert.equal(pub.claveDeIdempotencia, 'publisher:old:ig');
+  assert.equal(pub.resultado, 'ok');
   assert.equal(isReadyPublicacion(pub), true);
 });
 
@@ -86,10 +90,14 @@ test('parseCuenta and parseCanal read Estado / Conector / Estado del conector', 
       ...title('Nombre', 'Instagram'),
       ...select('Conector', 'Postly'),
       ...select('Estado del conector', 'dry-run'),
+      ...select('Estado del canal', 'Activo'),
       ...select('Familia', 'Social'),
+      'Score ⭐': { number: 4 },
     },
   });
   assert.equal(canal.estadoDelConector, 'dry-run');
+  assert.equal(canal.estadoDelCanal, 'Activo');
+  assert.equal(canal.score, 4);
   assert.equal(canal.familia, 'Social');
 });
 

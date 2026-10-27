@@ -661,12 +661,14 @@ npm run capabilities:check
 npm test                       # mocked HTTP; includes Postiz dry-run
 npm run schema:verify          # code ⊆ schema + Content OS dump snapshot
 npm run schema:snapshot        # refresh schema/notion-snapshot.json (needs NOTION_TOKEN)
+# Optional Content OS fields (not required to publish): Canales Estado del canal / Score ⭐,
+# Publicaciones Resultado, Piezas 🎞️ Formato de video (plus Formato options video/reel).
 npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json
 npm run notion:schema          # Publisher property dump (read-only)
 npm run publisher:report
 ```
 
-`migrate-content-os` is **dry-run by default** and needs **no env** (no `NOTION_TOKEN`, `GUMROAD_TOKEN`, or `POSTLY_*`). With `--dry-run` and no token — or with `--offline` — it uses the static Canales/Cuentas catalog, never reads or writes Notion, and prints a JSON report (per-layer counts, expected Publicaciones, `would_create`, `skipped_existing`, `excluded`, unmatched channels, unknown columns, and warnings). A real write needs `--live` and `NOTION_TOKEN` only.
+`migrate-content-os` is **dry-run by default** and needs **no env** (no `NOTION_TOKEN`, `GUMROAD_TOKEN`, or `POSTLY_*`). With `--dry-run` and no token — or with `--offline` — it uses the static Canales/Cuentas catalog, never reads or writes Notion, and prints a JSON report (per-layer counts, `source_rows` vs `processed_rows`, expected Publicaciones, `would_create`, `skipped_existing`, `excluded`, unmatched channels, `unknown_columns`, `ignored_columns`, and warnings). A real write needs `--live` and `NOTION_TOKEN` only.
 
 ```bash
 npm run migrate-content-os -- --snapshot=./exports/publisher-snapshot.json
@@ -693,7 +695,7 @@ Accepted snapshot shapes: Notion API `{ id, properties }` pages, **or a flat tab
 | `Channels` | JSON-array string (`["WhatsApp","Facebook"]`), real array, or comma/semicolon list. Matched to a Canal by name (accents/case-insensitive). Unknown names are reported without quotes/brackets, never defaulted to Postly |
 | `Caption` | Caption base when present |
 | `Source Tags` / `sources` | Legacy API-shaped rows |
-| `Status`, `url`, `archived`, `in_trash` | Archived rows are excluded; extra columns are listed as `unknown_columns` |
+| `Status`, `url` / `page_url`, `archived`, `in_trash` | Archived rows are excluded. `page_url` maps to `url`. `Postly Error` maps to Publicaciones `Error`. `Eventbrite Event ID` is listed under `ignored_columns` (no matching schema property). Other extras stay in `unknown_columns` |
 
 Matching is by **Canal identity** (name / family), never by Conector alone — a Products row does not fan out to GitHub, Luma, or Restream. Empty Cuentas (or a row with no resolvable Cuenta) sets `status: "error"`; `--live` then exits non-zero. `static-*` catalog ids are valid only in `--offline`. Pieza skip/idempotency uses Piezas `Clave de idempotencia` (`publisher:<page_id>`), not a Publicación key prefix.
 

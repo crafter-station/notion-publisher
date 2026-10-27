@@ -30,6 +30,7 @@ export type PiezaRecord = {
   statusDeDiseno: string;
   claveDeIdempotencia: string;
   canalIds: string[];
+  formatoDeVideoIds: string[];
   productoIds: string[];
   publicacionIds: string[];
   reader: NotionPropertyReader;
@@ -48,6 +49,7 @@ export type PublicacionRecord = {
   urlPublicada: string;
   claveDeIdempotencia: string;
   idExterno: string;
+  resultado: string;
   imageVersionUrl: string;
   piezaIds: string[];
   cuentaIds: string[];
@@ -70,6 +72,8 @@ export type CanalRecord = {
   nombre: string;
   conector: string;
   estadoDelConector: string;
+  estadoDelCanal: string;
+  score: number | null;
   familia: string;
   settingsRequeridos: string;
 };
@@ -99,6 +103,7 @@ export function parsePieza(page: NotionPage): PiezaRecord {
     statusDeDiseno: r.select(propertyName('piezas', 'statusDeDiseno')),
     claveDeIdempotencia: r.richText(propertyName('piezas', 'claveDeIdempotencia')),
     canalIds: r.relationIds(propertyName('piezas', 'canalesObjetivo')),
+    formatoDeVideoIds: r.relationIds(propertyName('piezas', 'formatoDeVideo')),
     productoIds: r.relationIds(propertyName('piezas', 'producto')),
     publicacionIds: r.relationIds(propertyName('piezas', 'publicaciones')),
     reader: r,
@@ -120,6 +125,7 @@ export function parsePublicacion(page: NotionPage): PublicacionRecord {
     urlPublicada: r.url(propertyName('publicaciones', 'urlPublicada')),
     claveDeIdempotencia: r.richText(propertyName('publicaciones', 'claveDeIdempotencia')),
     idExterno: r.richText(propertyName('publicaciones', 'idExterno')),
+    resultado: r.richText(propertyName('publicaciones', 'resultado')),
     imageVersionUrl: r.fileUrl(propertyName('publicaciones', 'imageVersion')),
     piezaIds: r.relationIds(propertyName('publicaciones', 'pieza')),
     cuentaIds: r.relationIds(propertyName('publicaciones', 'cuenta')),
@@ -148,6 +154,8 @@ export function parseCanal(page: NotionPage): CanalRecord {
     nombre: r.title(propertyName('canales', 'nombre')),
     conector: r.select(propertyName('canales', 'conector')),
     estadoDelConector: r.select(propertyName('canales', 'estadoDelConector')),
+    estadoDelCanal: r.select(propertyName('canales', 'estadoDelCanal')),
+    score: r.number(propertyName('canales', 'score')),
     familia: r.select(propertyName('canales', 'familia')),
     settingsRequeridos: r.richText(propertyName('canales', 'settingsRequeridos')),
   };

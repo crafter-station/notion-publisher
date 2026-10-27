@@ -9,7 +9,7 @@ import { STATIC_CANALES, STATIC_CUENTAS } from '../catalog/channels';
 import { contentOsDatabaseIds } from '../config/content-os';
 import { createOfflineNotionTransport } from '../readers/notion-transport';
 import {
-  listSnapshotUnknownColumns,
+  classifySnapshotColumns,
   loadPublisherSnapshot,
   migrateContentOs,
   type MigrationReport,
@@ -108,10 +108,13 @@ export async function runMigrateContentOsCli(
 
   let rows;
   let unknownColumns: string[] = [];
+  let ignoredColumns: MigrationReport['ignored_columns'] = [];
   try {
     const raw = JSON.parse(fs.readFileSync(abs, 'utf8'));
     rows = loadPublisherSnapshot(raw);
-    unknownColumns = listSnapshotUnknownColumns(raw);
+    const classified = classifySnapshotColumns(raw);
+    unknownColumns = classified.unknown;
+    ignoredColumns = classified.ignored;
   } catch (err: any) {
     error(err?.message || String(err));
     return { exitCode: 1, stdout: logs.join('\n'), stderr: errs.join('\n') };
@@ -158,6 +161,7 @@ export async function runMigrateContentOsCli(
       excludeUrls,
       offline: false,
       unknownColumns,
+      ignoredColumns,
     });
     const payload = {
       snapshot: abs,
@@ -181,6 +185,7 @@ export async function runMigrateContentOsCli(
     excludeUrls,
     offline: true,
     unknownColumns,
+    ignoredColumns,
   });
   const payload = {
     snapshot: abs,

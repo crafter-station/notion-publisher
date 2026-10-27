@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-25",
-  "source": "notion-fetch dumps v2 (Content OS)",
+  "generated_at": "2026-10-27",
+  "source": "notion-fetch dumps v3 (Content OS live schemas)",
   "parent_page_id": "404da2435b4681eebbe6c73f68060bdd",
   "workspaces_data_source": "e28e7216-8dc3-4a77-a7ef-e81606bf39c8",
   "notion_version": "2022-06-28",
@@ -18,6 +18,8 @@
         { "name": "Límites", "type": "rich_text" },
         { "name": "Settings requeridos", "type": "rich_text" },
         { "name": "Verificado el", "type": "date" },
+        { "name": "Estado del canal", "type": "select" },
+        { "name": "Score ⭐", "type": "number" },
         { "name": "🧩 Piezas", "type": "relation" },
         { "name": "🪪 Cuentas", "type": "relation" }
       ]
@@ -68,6 +70,7 @@
         { "name": "Publicaciones (total)", "type": "rollup" },
         { "name": "Publicadas / total", "type": "formula" },
         { "name": "📡 Canales objetivo", "type": "relation" },
+        { "name": "🎞️ Formato de video", "type": "relation" },
         { "name": "🚀 Publicaciones", "type": "relation" },
         { "name": "🥇 Producto", "type": "relation" }
       ]
@@ -90,6 +93,7 @@
         { "name": "Settings", "type": "rich_text" },
         { "name": "Status", "type": "status" },
         { "name": "URL publicada", "type": "url" },
+        { "name": "Resultado", "type": "rich_text" },
         { "name": "Image (versión)", "type": "files" },
         { "name": "🧩 Pieza", "type": "relation" },
         { "name": "🪪 Cuenta", "type": "relation" }

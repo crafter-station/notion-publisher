@@ -53,6 +53,7 @@ test('migrate skips archived rows and reports excluded.archived', async () => {
   });
   assert.equal(report.status, 'ok');
   assert.equal(report.source_rows, 3);
+  assert.equal(report.processed_rows, 1);
   assert.equal(report.excluded.archived, 2);
   assert.equal(report.excluded.by_id, 0);
   assert.equal(report.excluded.by_url, 0);
@@ -90,6 +91,7 @@ test('migrate --exclude-ids and --exclude-urls skip matching rows', async () => 
   assert.equal(report.excluded.total, 2);
   assert.equal(report.piezas.would_create, 2);
   assert.equal(report.source_rows, 4);
+  assert.equal(report.processed_rows, 2);
 });
 
 test('loadExistingPiezaKeys reads Clave de idempotencia from Piezas', async () => {

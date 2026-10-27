@@ -272,6 +272,13 @@ export const CANALES_SCHEMA: SchemaBase = {
     ['limites', 'Límites', 'rich_text'],
     ['settingsRequeridos', 'Settings requeridos', 'rich_text'],
     ['verificadoEl', 'Verificado el', 'date'],
+    [
+      'estadoDelCanal',
+      'Estado del canal',
+      'select',
+      { options: ['Activo', 'A3 pendiente', 'Descartado'] },
+    ],
+    ['score', 'Score ⭐', 'number'],
     ['piezas', '🧩 Piezas', 'relation'],
     ['cuentas', '🪪 Cuentas', 'relation'],
   ]),
@@ -391,7 +398,7 @@ export const PIEZAS_SCHEMA: SchemaBase = {
       'formato',
       'Formato',
       'select',
-      { options: ['post', 'carrusel', 'story', 'miniatura', 'cover de evento'] },
+      { options: ['post', 'carrusel', 'story', 'miniatura', 'cover de evento', 'video', 'reel'] },
     ],
     [
       'ratio',
@@ -415,6 +422,7 @@ export const PIEZAS_SCHEMA: SchemaBase = {
     ['publicacionesTotal', 'Publicaciones (total)', 'rollup', { readOnly: true }],
     ['publicadasTotal', 'Publicadas / total', 'formula', { readOnly: true }],
     ['canalesObjetivo', '📡 Canales objetivo', 'relation'],
+    ['formatoDeVideo', '🎞️ Formato de video', 'relation'],
     ['publicaciones', '🚀 Publicaciones', 'relation'],
     ['producto', '🥇 Producto', 'relation'],
   ]),
@@ -446,6 +454,7 @@ export const PUBLICACIONES_SCHEMA: SchemaBase = {
       { options: ['Pendiente', 'Dry-run OK', 'En cola', 'Fallido', 'Publicado'] },
     ],
     ['urlPublicada', 'URL publicada', 'url'],
+    ['resultado', 'Resultado', 'rich_text'],
     ['imageVersion', 'Image (versión)', 'files'],
     ['pieza', '🧩 Pieza', 'relation'],
     ['cuenta', '🪪 Cuenta', 'relation'],
@@ -475,6 +484,9 @@ export const CONTENT_OS_PARENT_PAGE_ID_DEFAULT = '404da2435b4681eebbe6c73f68060b
 export const CONTENT_OS_PARENT_PAGE_ENV = 'NOTION_CONTENT_OS_PARENT_PAGE_ID';
 /** Workspaces collection the Content OS page sits under. Not a database id. */
 export const CONTENT_OS_WORKSPACES_DATA_SOURCE_ID = 'e28e7216-8dc3-4a77-a7ef-e81606bf39c8';
+/** Related video-format catalog. Piezas may link it; not a publish base. */
+export const CONTENT_OS_FORMATOS_VIDEO_DATABASE_ID = '70667ccdc2f84d8c975c7bd2c7291786';
+export const CONTENT_OS_FORMATOS_VIDEO_DATA_SOURCE_ID = '29bad734-bc75-471b-805a-4da0b2a5df7d';
 
 export const PIEZA_OPTIONAL_DESIGN_KEYS = [
   'modulo',

@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import { STATIC_CANALES, STATIC_CUENTAS } from '../catalog/channels';
 import { NotionTransport } from '../readers/notion-transport';
 import {
+  classifySnapshotColumns,
   inferTargets,
   isNumericTitle,
   listSnapshotUnknownColumns,
@@ -88,6 +89,7 @@ test('Products-layer rows create one Gumroad Publicacion, not every Nativo canal
 
   assert.equal(report.status, 'ok');
   assert.equal(report.source_rows, 7);
+  assert.equal(report.processed_rows, 7);
   assert.equal(report.piezas.would_create, 7);
   assert.equal(report.publicaciones.would_create, 7);
   assert.equal(report.publicaciones.expected, 7);

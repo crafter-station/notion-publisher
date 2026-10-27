@@ -40,10 +40,13 @@ export type LayerCounts = {
   publicaciones_expected: number;
 };
 
+export type IgnoredColumn = { name: string; reason: string };
+
 export type MigrationReport = {
   dry_run: boolean;
   status: 'ok' | 'error';
   source_rows: number;
+  processed_rows: number;
   piezas: { would_create: number; skipped_existing: number; created: number };
   publicaciones: {
     would_create: number;
@@ -55,6 +58,7 @@ export type MigrationReport = {
   missing_cuentas: string[];
   unmatched_channels: string[];
   unknown_columns: string[];
+  ignored_columns: IgnoredColumn[];
   warnings: string[];
   errors: string[];
   excluded: { archived: number; by_id: number; by_url: number; total: number };
@@ -78,6 +82,8 @@ export const FLAT_SNAPSHOT_KEYS = [
   'status',
   'url',
   'urls',
+  'page_url',
+  'page url',
   'archived',
   'in_trash',
   'in trash',
@@ -122,17 +128,24 @@ function emptyLayerCounts(): LayerCounts {
   return { rows: 0, piezas_would_create: 0, publicaciones_would_create: 0, publicaciones_expected: 0 };
 }
 
+function finalizeReport(report: MigrationReport): MigrationReport {
+  report.processed_rows = Math.max(0, report.source_rows - report.excluded.total);
+  return report;
+}
+
 function emptyReport(dryRun: boolean, sourceRows: number): MigrationReport {
   return {
     dry_run: dryRun,
     status: 'ok',
     source_rows: sourceRows,
+    processed_rows: 0,
     piezas: { would_create: 0, skipped_existing: 0, created: 0 },
     publicaciones: { would_create: 0, skipped_existing: 0, created: 0, expected: 0 },
     layers: {},
     missing_cuentas: [],
     unmatched_channels: [],
     unknown_columns: [],
+    ignored_columns: [],
     warnings: [],
     errors: [],
     excluded: { archived: 0, by_id: 0, by_url: 0, total: 0 },
@@ -207,19 +220,83 @@ function knownFlatKeySet(): Set<string> {
   return known;
 }
 
-export function listSnapshotUnknownColumns(raw: unknown): string[] {
+/**
+ * Explicit snapshot columns that are either aliases of a schema property
+ * or leftover Publisher exports that must not appear as unknown.
+ */
+export const SNAPSHOT_COLUMN_HANDLERS: Record<string, { mapsTo?: string; ignoreReason?: string }> = {
+  page_url: { mapsTo: 'url' },
+  'page url': { mapsTo: 'url' },
+  'Postly Error': { mapsTo: 'Error' },
+  'Eventbrite Event ID': {
+    ignoreReason:
+      'legacy Publisher column; no matching schema property (Eventbrite Organization ID / Venue ID / URL are declared; migrate does not persist Eventbrite event ids)',
+  },
+};
+
+function handlerForColumn(name: string): { mapsTo?: string; ignoreReason?: string } | undefined {
+  if (SNAPSHOT_COLUMN_HANDLERS[name]) return SNAPSHOT_COLUMN_HANDLERS[name];
+  const lower = name.trim().toLowerCase();
+  for (const [key, handler] of Object.entries(SNAPSHOT_COLUMN_HANDLERS)) {
+    if (key.toLowerCase() === lower) return handler;
+  }
+  return undefined;
+}
+
+function isKnownColumnName(name: string, known: Set<string>): boolean {
+  return known.has(name.trim().toLowerCase());
+}
+
+export function classifySnapshotColumns(raw: unknown): {
+  unknown: string[];
+  ignored: IgnoredColumn[];
+  mapped: Array<{ name: string; mapsTo: string }>;
+} {
   const rows = extractRawRows(raw);
   const known = knownFlatKeySet();
   const unknown = new Set<string>();
+  const ignored = new Map<string, string>();
+  const mapped = new Map<string, string>();
+
   for (const row of rows) {
     if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
     if (row.properties && typeof row.properties === 'object') continue;
     for (const key of Object.keys(row)) {
-      const norm = key.trim().toLowerCase();
-      if (!known.has(norm)) unknown.add(key.trim());
+      const trimmed = key.trim();
+      if (isKnownColumnName(trimmed, known)) continue;
+      const handler = handlerForColumn(trimmed);
+      if (handler?.mapsTo) {
+        if (isKnownColumnName(handler.mapsTo, known)) {
+          mapped.set(trimmed, handler.mapsTo);
+          continue;
+        }
+        ignored.set(
+          trimmed,
+          `alias of ${handler.mapsTo}, but that property is not in the schema`
+        );
+        continue;
+      }
+      if (handler?.ignoreReason) {
+        ignored.set(trimmed, handler.ignoreReason);
+        continue;
+      }
+      unknown.add(trimmed);
     }
   }
-  return [...unknown].sort((a, b) => a.localeCompare(b));
+
+  return {
+    unknown: [...unknown].sort((a, b) => a.localeCompare(b)),
+    ignored: [...ignored.entries()]
+      .map(([name, reason]) => ({ name, reason }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    mapped: [...mapped.entries()]
+      .map(([name, mapsTo]) => ({ name, mapsTo }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  };
+}
+
+export function listSnapshotUnknownColumns(raw: unknown): string[] {
+  return classifySnapshotColumns(raw).unknown;
 }
 
 function extractRawRows(raw: unknown): any[] {
@@ -249,7 +326,7 @@ function normalizeRow(row: any): LegacyPublisherRow {
       channels: row.channels ? parseChannelList(row.channels) : undefined,
       layer: row.layer,
       status: row.status,
-      url: row.url,
+      url: row.url || row.page_url,
       archived: row.archived === true || row.in_trash === true,
       inTrash: row.in_trash === true || row.inTrash === true,
     };
@@ -273,7 +350,7 @@ function normalizeRow(row: any): LegacyPublisherRow {
     channels: channels.length ? channels : undefined,
     layer: layer || undefined,
     status: firstText(flat.status) || undefined,
-    url: firstText(flat.url, flat.urls) || undefined,
+    url: firstText(flat.url, flat.urls, flat.page_url, flat['page url']) || undefined,
     archived: truthyFlag(flat.archived),
     inTrash: truthyFlag(flat.in_trash) || truthyFlag(flat['in trash']),
   };
@@ -543,9 +620,11 @@ export async function migrateContentOs(options: {
   excludeUrls?: string[];
   offline?: boolean;
   unknownColumns?: string[];
+  ignoredColumns?: IgnoredColumn[];
 }): Promise<MigrationReport> {
   const report = emptyReport(options.dryRun, options.rows.length);
   report.unknown_columns = [...(options.unknownColumns || [])];
+  report.ignored_columns = [...(options.ignoredColumns || [])];
 
   const existingPubs = new Set(options.existingKeys || []);
   const existingPiezas = new Set(options.existingPiezaKeys || []);
@@ -560,7 +639,7 @@ export async function migrateContentOs(options: {
     report.errors.push(
       'Cuentas catalog is empty (or has no Activa rows). Refusing to create Piezas without a Cuenta to attach Publicaciones.'
     );
-    return report;
+    return finalizeReport(report);
   }
 
   if (options.offline === false && catalogHasStaticIds(options.catalog)) {
@@ -568,7 +647,7 @@ export async function migrateContentOs(options: {
     report.errors.push(
       'static-* Canal/Cuenta ids are only valid in --offline mode. A live run needs real Notion Cuentas.'
     );
-    return report;
+    return finalizeReport(report);
   }
 
   for (const row of options.rows) {
@@ -686,5 +765,5 @@ export async function migrateContentOs(options: {
     }
   }
 
-  return report;
+  return finalizeReport(report);
 }
