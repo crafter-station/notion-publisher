@@ -53,13 +53,38 @@ export function readNumber(props: NotionProps, name: string): number | null {
   return typeof n === 'number' ? n : null;
 }
 
+export type NotionFileRef = {
+  url: string;
+  name: string;
+};
+
+function fileRefFromNotion(file: any): NotionFileRef | null {
+  const name = String(file?.name || '').trim();
+  if (file?.type === 'external') {
+    const url = String(file.external?.url || '').trim();
+    return url ? { url, name: name || url } : null;
+  }
+  if (file?.type === 'file') {
+    const url = String(file.file?.url || '').trim();
+    return url ? { url, name: name || url } : null;
+  }
+  return null;
+}
+
 export function readFileUrl(props: NotionProps, name: string): string {
+  return readFiles(props, name)[0]?.url || '';
+}
+
+/** Every file on a Notion files property, in the stored array order. */
+export function readFiles(props: NotionProps, name: string): NotionFileRef[] {
   const files = props?.[name]?.files;
-  if (!files?.length) return '';
-  const f = files[0];
-  if (f?.type === 'external') return String(f.external?.url || '').trim();
-  if (f?.type === 'file') return String(f.file?.url || '').trim();
-  return '';
+  if (!Array.isArray(files) || files.length === 0) return [];
+  const out: NotionFileRef[] = [];
+  for (const file of files) {
+    const ref = fileRefFromNotion(file);
+    if (ref) out.push(ref);
+  }
+  return out;
 }
 
 export function readRelationIds(props: NotionProps, name: string): string[] {
@@ -80,6 +105,7 @@ export type NotionPropertyReader = {
   checkbox(name: string): boolean;
   number(name: string): number | null;
   fileUrl(name: string): string;
+  files(name: string): NotionFileRef[];
   relationIds(name: string): string[];
   raw(): NotionProps;
 };
@@ -97,6 +123,7 @@ export function createPropertyReader(props: NotionProps = {}): NotionPropertyRea
     checkbox: name => readCheckbox(props, name),
     number: name => readNumber(props, name),
     fileUrl: name => readFileUrl(props, name),
+    files: name => readFiles(props, name),
     relationIds: name => readRelationIds(props, name),
     raw: () => props,
   };

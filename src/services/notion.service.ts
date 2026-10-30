@@ -2,6 +2,7 @@ import { env } from '../config/env';
 import { PUBLISHER_PROPERTY_NAMES as PN } from '../config/schema';
 import { createPropertyReader } from '../readers/props';
 import { markdownToGumroadHtml } from './markdown.service';
+import { collectMediaFromProps, DroppedMedia, MediaSlide } from './postly-carousel';
 
 const notionToken = env.NOTION_TOKEN;
 // ponytail: stay on 2022-06-28 — DB query/properties work; 2025-09-03 data_sources needs separate query path
@@ -201,7 +202,10 @@ export interface PostlyContent {
   first_comment: string;
   global_text: string;
   media_url?: string;
-  media_type: 'video/mp4' | 'image/gif' | 'image/jpeg' | 'image/png';
+  media_type: 'video/mp4' | 'video/quicktime' | 'image/gif' | 'image/jpeg' | 'image/png' | 'application/pdf';
+  media: MediaSlide[];
+  document?: MediaSlide;
+  unknown: DroppedMedia[];
   is_complete: boolean;
   missing: string[];
 }
@@ -259,28 +263,14 @@ export function extractPostlyContent(props: any): PostlyContent {
 
   if (!global_text) missing.push('All caption fields empty (Caption/POV Text + per-platform)');
 
-  // Media priority: Video → GIF → Image → Screenshot
-  const videoUrl = r.fileUrl(PN.video) || undefined;
-  const gifUrl = r.fileUrl(PN.gif) || undefined;
-  const imageUrl = r.fileUrl(PN.image) || undefined;
-  const screenshotUrl = r.fileUrl(PN.screenshot) || undefined;
+  const { slides, document, unknown } = collectMediaFromProps(props || {});
+  const first = slides[0];
+  const media_url = first?.url;
+  const media_type: PostlyContent['media_type'] = first
+    ? (first.type as PostlyContent['media_type'])
+    : 'image/jpeg';
 
-  let media_url: string | undefined;
-  let media_type: PostlyContent['media_type'] = 'image/jpeg';
-
-  if (videoUrl) {
-    media_url = videoUrl;
-    media_type = 'video/mp4';
-  } else if (gifUrl) {
-    media_url = gifUrl;
-    media_type = 'image/gif';
-  } else if (imageUrl) {
-    media_url = imageUrl;
-    media_type = /\.png(\?|$)/i.test(imageUrl) ? 'image/png' : 'image/jpeg';
-  } else if (screenshotUrl) {
-    media_url = screenshotUrl;
-    media_type = /\.png(\?|$)/i.test(screenshotUrl) ? 'image/png' : 'image/jpeg';
-  } else {
+  if (!first && !document) {
     missing.push('Video / GIF / Image / Screenshot (no media file attached)');
   }
 
@@ -301,6 +291,9 @@ export function extractPostlyContent(props: any): PostlyContent {
     global_text,
     media_url,
     media_type,
+    media: slides,
+    document,
+    unknown,
     is_complete: missing.length === 0,
     missing,
   };

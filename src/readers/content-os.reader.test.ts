@@ -119,6 +119,18 @@ function file(name: string, url: string) {
   return { [name]: { files: [{ type: 'external', external: { url } }] } };
 }
 
+function files(name: string, urls: string[]) {
+  return {
+    [name]: {
+      files: urls.map((url, i) => ({
+        type: 'external',
+        name: `${String(i + 1).padStart(2, '0')}.jpg`,
+        external: { url },
+      })),
+    },
+  };
+}
+
 test('parsePieza reads optional v2 design fields without requiring them', () => {
   const empty = parsePieza({ id: 'p', properties: title('Nombre', 'P') });
   assert.equal(empty.modulo, '');
@@ -170,6 +182,29 @@ test('mergedPublishProperties uses Image (versión) over Pieza Image', () => {
   assert.equal(
     mergedPublishProperties(pieza, override).Image.files[0].external.url,
     'https://cdn.example/version.png'
+  );
+});
+
+test('mergedPublishProperties keeps every Image file in Notion order', () => {
+  const pieza = parsePieza({
+    id: 'p',
+    properties: {
+      ...title('Nombre', 'P'),
+      ...files('Image', [
+        'https://cdn.example/02.jpg',
+        'https://cdn.example/01.jpg',
+        'https://cdn.example/03.jpg',
+      ]),
+    },
+  });
+  assert.equal(pieza.imageFiles.length, 3);
+  const merged = mergedPublishProperties(
+    pieza,
+    parsePublicacion({ id: 'u', properties: title('Título', 'T') })
+  );
+  assert.deepEqual(
+    merged.Image.files.map((f: { external: { url: string } }) => f.external.url),
+    ['https://cdn.example/02.jpg', 'https://cdn.example/01.jpg', 'https://cdn.example/03.jpg']
   );
 });
 

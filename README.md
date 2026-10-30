@@ -225,7 +225,7 @@ Product writebacks on the same DB: `Gumroad Publish Status`, `Gumroad Product ID
 
 ### Social — shared media + optional channel overrides
 
-One `Caption` / `Video` / `Image` / `GIF` set for Social — All / Postly / Postiz / Typefully. Fill a channel override only when copy must differ; empty override → fall back to `Caption`.
+One `Caption` / `Video` / `Image` / `GIF` set for Social — All / Postly / Postiz / Typefully. Attach several files on `Image` to send one carousel to every Postly network. Fill a channel override only when copy must differ; empty override → fall back to `Caption`.
 
 | Property | Type | Role |
 |---|---|---|
@@ -248,10 +248,10 @@ Live Postly property names stay case-sensitive as listed under Postly below. Stu
 | Kind | Typical property | Used by |
 |---|---|---|
 | Video | `Video` | Postly, Postiz, Skool, Luma cover/reel |
-| Image | `Image` / `Screenshot` / covers | All layers |
+| Image | `Image` / `Screenshot` / covers | All layers. Several `Image` files = Postly carousel |
 | GIF | `GIF` | Postly / Postiz |
 | Audio | `Audio` | ONCE (music / podcast) |
-| Document / JSON | `Template` / `File` | Gumroad, GitHub Releases |
+| Document / JSON | `Template` / `File` | Gumroad, GitHub Releases, LinkedIn document via Postly |
 
 Per-source product/event/music fields stay under each distributor section below.
 
@@ -448,7 +448,11 @@ Uses the **shared Social model** above. Live parser keys today:
 | `YouTube Title` | Rich text | YouTube title |
 | `YouTube Caption` | Rich text | YouTube description |
 | `Universal First Comment` | Rich text | First-comment when supported |
-| `Video` / `GIF` / `Screenshot` | Files & media | Media (priority: Video → GIF → Screenshot) |
+| `Image` | Files & media | Carousel slides (all files). Order = Notion array, then `01-` filename prefix |
+| `Video` / `GIF` / `Screenshot` | Files & media | Used when `Image` has fewer than 2 files (priority: Video → GIF → Image → Screenshot) |
+| `File` | Files & media | LinkedIn PDF (`content_type: document`) |
+
+The same ordered slide set is planned for every network. Dry-run returns `accepted` / `trimmed` / `rejected` with a reason (X and Bluesky max 4, Pinterest 2–5, Instagram up to 20 JPEG only, Facebook up to 10). Nothing is dropped silently.
 
 **Optional future overrides (catalog-ready, not required today):** `X Post`, `Bluesky Post`, `Telegram Post`, `WhatsApp Post`.
 

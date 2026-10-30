@@ -64,7 +64,9 @@ Autopilot query filters: `Source Tags`∋Gumroad **or** `Layer`=Products + compl
 |-----------------|------|-------|
 | `Caption` → `POV Text` → platform captions | `global_text` | prefer Caption |
 | Platform caption fields | overrides | Instagram Caption / TikTok / YouTube / `Twitter Post` (not `X Post`) |
-| `Video` → `GIF` → `Image` → `Screenshot` | `media_url` | |
+| `Image` files (all) | `media[]` | carousel order = Notion array, then `01-` filename prefix |
+| `Video` → `GIF` → `Image` → `Screenshot` | `media_url` | first slide; Video wins only when Image has &lt; 2 files |
+| `File` PDF | `document` | LinkedIn `content_type: document` |
 | `Brand`, `Select`, `url` | queue gates | lowercase `url` = source link, not publish URL |
 | `Postly Publish Status` | pipeline phase | was `Instagram Status` |
 | `Postly URL` | first published URL | was `Instagram URL` (IG preferred, else any) |
