@@ -15,5 +15,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run schema:verify
+      - run: npx tsc --noEmit
+      - run: npm test
       - name: No Nucleo-Lab repo links
         run: node --require ./scripts/register-test-env.cjs --require ts-node/register/transpile-only --test src/schema/repo-links.test.ts
