@@ -289,27 +289,22 @@ function buildPlatformPosts(
   return out;
 }
 
+/** Post ID field: one `<network>: <id>` line per result. Plan text lives in Postly Plan. */
 export function formatPostlyPublishLog(
-  plan: PostlyCarouselPlan,
-  results: Array<{ platform_name: string; status: string; external_id?: string; error?: string }> = []
+  results: Array<{ platform_name: string; status: string; external_id?: string; error?: string }>
 ): string {
-  const resultByName = new Map(results.map(r => [r.platform_name, r]));
-  const lines: string[] = [];
-  const planLog = formatNetworkPlanLog(plan);
-  if (planLog) lines.push(planLog);
-  for (const network of Object.values(plan.networks)) {
-    const result = resultByName.get(network.identifier);
-    if (!result) continue;
-    const id = result.external_id || (result.error ? `ERR: ${String(result.error).slice(0, 100)}` : result.status);
-    lines.push(`${network.identifier}: ${id}`);
-  }
-  return lines.join('\n');
+  return results
+    .map(result => {
+      const id = result.external_id || (result.error ? `ERR: ${String(result.error).slice(0, 100)}` : result.status);
+      return `${result.platform_name}: ${id}`;
+    })
+    .join('\n');
 }
 
 export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
   const postly = new PostlyService();
   const { notion_page_id, workspace_id, target_platforms, content } = params;
-  let persistLog = '';
+  let persistPlan = '';
 
   try {
     console.log(`[POSTLY-USE-CASE] Starting pipeline for Notion page: ${notion_page_id}`);
@@ -319,11 +314,11 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     // PHASE 2 first so the per-network plan is on Notion before Postly is called.
     const pinterestCoverKeyFrame = await resolveVideoCoverKeyFrameSeconds(content);
     const payload = buildPostlyPublishPayload(content, target_platforms, { pinterestCoverKeyFrame });
-    persistLog = formatPostlyPublishLog(payload.plan);
+    persistPlan = formatNetworkPlanLog(payload.plan);
 
     await updatePostlyMetadata(notion_page_id, {
       postly_status: 'In progress',
-      post_id: persistLog,
+      postly_plan: persistPlan,
     });
 
     console.log(`[POSTLY-USE-CASE] Phase 2: posting (${payload.platform_posts.length} per-platform overrides)`);
@@ -419,12 +414,13 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     const igResult = publishedResults.find(r => r.platform_name === 'instagram');
     const firstUrl = igResult?.url || publishedResults[0]?.url;
 
-    persistLog = formatPostlyPublishLog(payload.plan, finalResults);
+    persistPlan = formatNetworkPlanLog(payload.plan);
 
     await updatePostlyMetadata(notion_page_id, {
       postly_status: postlyStatus,
       postly_url: firstUrl,
-      post_id: persistLog,
+      post_id: formatPostlyPublishLog(finalResults),
+      postly_plan: persistPlan,
       final_status: finalStatus,
     });
 
@@ -436,7 +432,7 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     await updatePostlyMetadata(notion_page_id, {
       postly_status: 'Failed',
       final_status: 'Error',
-      ...(persistLog ? { post_id: persistLog } : {}),
+      ...(persistPlan ? { postly_plan: persistPlan } : {}),
     });
     throw error;
   }

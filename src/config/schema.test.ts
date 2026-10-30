@@ -39,6 +39,8 @@ test('Publisher schema still declares extract* property names', () => {
     'Eventbrite Title',
     'Postiz Targets',
     'Typefully Account',
+    'Post ID',
+    'Postly Plan',
   ];
   const names = new Set(listDeclaredPropertyNames('publisher'));
   for (const name of required) assert.ok(names.has(name), `missing ${name}`);

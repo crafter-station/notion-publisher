@@ -398,11 +398,22 @@ export async function queryNextGumroadAutopilotCandidates(databaseId: string, pa
   return result.results || [];
 }
 
+export const NOTION_RICH_TEXT_LIMIT = 2000;
+
+/** Cut on a line boundary under Notion's 2000-char rich_text cap. */
+export function truncateNotionRichText(value: string, max = NOTION_RICH_TEXT_LIMIT): string {
+  if (value.length <= max) return value;
+  const sliced = value.slice(0, max);
+  const lastNl = sliced.lastIndexOf('\n');
+  return lastNl > 0 ? sliced.slice(0, lastNl) : sliced;
+}
+
 /**
  * Writes Postly publishing status back to Publisher Notion page.
  * - `Postly Publish Status` (status): pipeline phase (Not started / In progress / Published / Failed)
  * - `Postly URL` (url): first published URL (IG preferred, else any platform)
- * - `Post ID` (rich_text): multi-line `<platform>: <id>`
+ * - `Post ID` (rich_text): multi-line `<network>: <id>` only. Never truncated.
+ * - `Postly Plan` (rich_text): per-network plan, queue notes, missing-field notes. Truncated at 2000.
  * - `Status` (status): aggregate — Published (EN) on full success, Error otherwise
  *
  * Each field is sent independently; a single property error doesn't abort the whole patch
@@ -414,6 +425,7 @@ export async function updatePostlyMetadata(
     postly_status?: PostlyPublishStatus;
     postly_url?: string;
     post_id?: string;
+    postly_plan?: string;
     final_status?: FinalStatus;
     /** @deprecated use postly_status */
     instagram_status?: PostlyPublishStatus;
@@ -438,7 +450,12 @@ export async function updatePostlyMetadata(
   }
   if (data.post_id !== undefined) {
     properties['Post ID'] = {
-      rich_text: [{ text: { content: data.post_id.slice(0, 2000) } }],
+      rich_text: [{ text: { content: data.post_id } }],
+    };
+  }
+  if (data.postly_plan !== undefined) {
+    properties['Postly Plan'] = {
+      rich_text: [{ text: { content: truncateNotionRichText(data.postly_plan) } }],
     };
   }
   if (data.final_status) {

@@ -126,6 +126,7 @@ export const PUBLISHER_SCHEMA: SchemaBase = {
     ['postlyPublishStatus', 'Postly Publish Status', 'status'],
     ['postlyUrl', 'Postly URL', 'url'],
     ['postId', 'Post ID', 'rich_text'],
+    ['postlyPlan', 'Postly Plan', 'rich_text'],
     ['lumaTitle', 'Luma Title', 'rich_text'],
     ['lumaName', 'Luma Name', 'rich_text'],
     ['lumaStart', 'Luma Start', 'date'],
