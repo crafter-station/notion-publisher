@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { extractPostlyContent } from '../services/notion.service';
 import { PostlyConnector } from '../connectors/legacy.connectors';
+import { formatNetworkPlanLog } from '../services/postly-carousel';
 import { buildPostlyPublishPayload, formatPostlyPublishLog } from './publish-postly.use-case';
 
 const originalFetch = globalThis.fetch;
@@ -127,7 +128,7 @@ test('lone video stays on IG FB Pinterest LinkedIn and sets share_as_reel', () =
   assert.equal(payload.plan.networks.linkedin.status, 'accepted');
 });
 
-test('publish log keeps rejected networks on the Post ID field', () => {
+test('Post ID log is network:id lines; plan stays on Postly Plan', () => {
   const content = extractPostlyContent({
     Caption: { rich_text: [{ plain_text: 'png only' }] },
     ...files('Image', [{ url: 'https://cdn.example/a.png', name: 'a.png' }]),
@@ -141,12 +142,16 @@ test('publish log keeps rejected networks on the Post ID field', () => {
     payload.target_platforms.map(p => p.identifier).includes('instagram'),
     false
   );
-  const log = formatPostlyPublishLog(payload.plan, [
+  const ids = formatPostlyPublishLog([
     { platform_name: 'facebook', status: 'published', external_id: 'fb-post' },
+    { platform_name: 'instagram', status: 'failed', error: 'jpeg only' },
   ]);
-  assert.match(log, /instagram: rejected:instagram_jpeg_only kept=0/);
-  assert.match(log, /facebook: accepted:accepted kept=1/);
-  assert.match(log, /facebook: fb-post/);
+  assert.equal(ids, 'facebook: fb-post\ninstagram: ERR: jpeg only');
+  assert.equal(ids.includes('rejected:'), false);
+  assert.equal(ids.includes('kept='), false);
+  const plan = formatNetworkPlanLog(payload.plan);
+  assert.match(plan, /instagram: rejected:instagram_jpeg_only kept=0/);
+  assert.match(plan, /facebook: accepted:accepted kept=1/);
 });
 
 test('lone MOV is planned as video/quicktime Reel on Instagram', () => {

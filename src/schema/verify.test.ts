@@ -22,6 +22,12 @@ test('scanner picks Notion property reads and ignores headers', () => {
   ]);
 });
 
+test('schema declares Postly Plan so scanned writes stay legal', () => {
+  const declared = new Set(listDeclaredPropertyNames('publisher'));
+  assert.ok(declared.has('Postly Plan'));
+  assert.ok(declared.has('Post ID'));
+});
+
 test('verify fails when code reads an undeclared property', () => {
   const rootDir = process.cwd();
   const declared = new Set(listDeclaredPropertyNames());

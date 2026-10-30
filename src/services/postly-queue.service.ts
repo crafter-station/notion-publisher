@@ -48,7 +48,7 @@ export async function processNextPostlyQueueItem() {
     await updatePostlyMetadata(page.id, {
       postly_status: 'In progress',
       final_status: 'In progress',
-      post_id: `Auto queue started at ${new Date().toISOString()}`,
+      postly_plan: `Auto queue started at ${new Date().toISOString()}`,
     });
 
     await executePublishPostlyUseCase({

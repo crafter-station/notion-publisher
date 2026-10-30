@@ -377,7 +377,7 @@ export const webhooksController = {
           updatePostlyMetadata(notion_page_id, {
             postly_status: 'Failed',
             final_status: 'Error',
-            post_id: `Missing: ${content.missing.join('; ')}`,
+            postly_plan: `Missing: ${content.missing.join('; ')}`,
           }).catch((err: any) => {
             console.error('[ERROR] Could not update Notion on incomplete content', err);
           });
