@@ -121,13 +121,23 @@ Ngrok checklist: see README Luma section (button → `/webhooks/publish-luma`).
 
 Env: `GITHUB_TOKEN`, `GITHUB_PUBLISH_LIVE` · webhook `POST /webhooks/publish-github` · product owner **TheVeller** only.
 
-Dry-run is the default (`resolveLiveGate` + `GITHUB_PUBLISH_LIVE=true`). No Release is created until both are live.
+Dry-run is the default (`resolveLiveGate` + `GITHUB_PUBLISH_LIVE=true`). No Release is created until both are live. If a live call reaches the use-case without `draft:false`, the Release stays a GitHub draft (`options.draft ?? true`).
 
 Catalog: `GET /capabilities/github` · `npm run github:import-repos -- --owner=TheVeller`. Releases refuse non-TheVeller owners ([#5](https://github.com/crafter-station/notion-publisher/issues/5)). Ngrok checklist: README GitHub section.
 
 ### Webhook auth
 
 Every `POST /webhooks/*` requires `Authorization: Bearer $WEBHOOK_TOKEN` (at least 32 characters, constant-time compare). The HTTP server exits on boot if the token is missing or short. `GET /capabilities*` is unchanged.
+
+### Live flags (`*_PUBLISH_LIVE`)
+
+Today the per-connector `*_PUBLISH_LIVE` flags do **not** activate a live provider call on their own.
+
+Alias webhooks call `resolveConnectorLiveGate(env.*_PUBLISH_LIVE)` without `cuentaEstado`, `publicacionModo`, or `canalEstadoDelConector`. `resolveLiveGate` in [`src/connectors/live-gate.ts`](./src/connectors/live-gate.ts) (the checks around lines 68–76) then always returns dry-run (`global_flag_off`, or `cuenta_not_activa:empty` if `CONTENT_OS_PUBLISH_LIVE=true`).
+
+This is intentionally safe. Passing those Content OS values from Notion into the alias-webhook gate is future work — not implemented.
+
+`POST /webhooks/unpublish-gumroad` uses the same gate as `POST /webhooks/publish-gumroad` (`GUMROAD_PUBLISH_LIVE` + `resolveLiveGate`). Dry-run never calls `gumroad.unpublish()`.
 
 ### Skool (discover)
 

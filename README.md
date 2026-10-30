@@ -76,6 +76,8 @@ They sit under the Content OS page (`404da2435b4681eebbe6c73f68060bdd`). That pa
 **Typefully / Postiz / Composio Eventbrite:** live clients, **dry-run default**. Typefully never sends `publish_at`.
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
+**`*_PUBLISH_LIVE` does not activate live on its own.** Alias webhooks call `resolveConnectorLiveGate` without `cuentaEstado`, `publicacionModo`, or `canalEstadoDelConector`, so [`src/connectors/live-gate.ts`](./src/connectors/live-gate.ts) (the checks around lines 68–76) always returns dry-run. That is intentionally safe. Passing those Content OS values from Notion is future work — not implemented.
+
 ---
 
 ## Status matrix
@@ -335,7 +337,7 @@ Dry-run is the default (`resolveLiveGate` + `GUMROAD_PUBLISH_LIVE`, off unless s
 
 **Draft safety:** missing/invalid `Template` → Gumroad **draft** only; Notion `Unpublished`.
 
-**Unpublish:** `POST /webhooks/unpublish-gumroad`. **Autopilot:** `GUMROAD_AUTOPILOT_ENABLED=true`.
+**Unpublish:** `POST /webhooks/unpublish-gumroad` uses the same gate as publish (`resolveLiveGate` + `GUMROAD_PUBLISH_LIVE`, off unless set). Dry-run never calls `gumroad.unpublish()`. **Autopilot:** `GUMROAD_AUTOPILOT_ENABLED=true`.
 
 ---
 
@@ -343,7 +345,7 @@ Dry-run is the default (`resolveLiveGate` + `GUMROAD_PUBLISH_LIVE`, off unless s
 
 Ship the same product as a **GitHub Release** (assets + notes) under **`TheVeller/` only**. Env: `GITHUB_TOKEN`.
 
-Dry-run is the default (`resolveLiveGate` + `GITHUB_PUBLISH_LIVE`, off unless set). The webhook does not create a Release (`draft:false` included) until both are live.
+Dry-run is the default (`resolveLiveGate` + `GITHUB_PUBLISH_LIVE`, off unless set). The webhook does not create a Release until both are live. If a live call reaches the use-case without `draft:false`, the Release stays a GitHub draft (`options.draft ?? true`).
 
 **Channels:** GitHub Releases (downloadable assets). Catalog metadata import for TheVeller + orgs.
 
@@ -588,7 +590,7 @@ Every `POST /webhooks/*` requires `Authorization: Bearer $WEBHOOK_TOKEN` (`WEBHO
 |---|---|---|
 | `POST` | `/webhooks/publish` | Content OS: Pieza → ready Publicaciones (dry-run default) |
 | `POST` | `/webhooks/publish-gumroad` | Gumroad dry-run (default); live needs `GUMROAD_PUBLISH_LIVE` + `resolveLiveGate` |
-| `POST` | `/webhooks/unpublish-gumroad` | Unpublish product |
+| `POST` | `/webhooks/unpublish-gumroad` | Gumroad unpublish dry-run (default); live needs `GUMROAD_PUBLISH_LIVE` + `resolveLiveGate` |
 | `POST` | `/webhooks/publish-postly` | Postly dry-run (default); live needs `POSTLY_PUBLISH_LIVE` + `resolveLiveGate` |
 | `POST` | `/webhooks/publish-luma` | Luma dry-run (default); live needs `LUMA_PUBLISH_LIVE` + `resolveLiveGate` |
 | `POST` | `/webhooks/publish-github` | GitHub dry-run (default); live needs `GITHUB_PUBLISH_LIVE` + `resolveLiveGate` |
