@@ -13,24 +13,25 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     id: 'luma',
     kind: 'other',
     status: 'live',
-    envKeys: ['LUMA_API_KEY'],
+    envKeys: ['LUMA_API_KEY', 'LUMA_PUBLISH_LIVE'],
     notes:
-      'Events layer (Luma / lu.ma). POST /webhooks/publish-luma creates events + optional cover via /v1/images/create-upload-url. Update/tickets out of v1.',
+      'Events layer (Luma / lu.ma). POST /webhooks/publish-luma is dry-run unless resolveLiveGate is live and LUMA_PUBLISH_LIVE=true. Creates events + optional cover via /v1/images/create-upload-url. Update/tickets out of v1.',
   },
   {
     id: 'gumroad',
     kind: 'marketplace',
     status: 'live',
-    envKeys: ['GUMROAD_TOKEN'],
-    notes: 'Products layer. Digital storefront: draft/create/upload/publish/unpublish + autopilot.',
+    envKeys: ['GUMROAD_TOKEN', 'GUMROAD_PUBLISH_LIVE'],
+    notes:
+      'Products layer. POST /webhooks/publish-gumroad and POST /webhooks/unpublish-gumroad are dry-run unless resolveLiveGate is live and GUMROAD_PUBLISH_LIVE=true. Digital storefront: draft/create/upload/publish/unpublish + autopilot.',
   },
   {
     id: 'github',
     kind: 'marketplace',
     status: 'live',
-    envKeys: ['GITHUB_TOKEN'],
+    envKeys: ['GITHUB_TOKEN', 'GITHUB_PUBLISH_LIVE'],
     notes:
-      'Products layer. Catalog + POST /webhooks/publish-github Releases under TheVeller only (asset from Template/File).',
+      'Products layer. Catalog + POST /webhooks/publish-github. Dry-run unless resolveLiveGate is live and GITHUB_PUBLISH_LIVE=true. Releases under TheVeller only (asset from Template/File).',
   },
   {
     id: 'myskool',
@@ -44,9 +45,9 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     id: 'postly',
     kind: 'social',
     status: 'live',
-    envKeys: ['POSTLY_API_KEY', 'POSTLY_WORKSPACE_ID', 'POSTLY_TARGET_PLATFORMS'],
+    envKeys: ['POSTLY_API_KEY', 'POSTLY_WORKSPACE_ID', 'POSTLY_TARGET_PLATFORMS', 'POSTLY_PUBLISH_LIVE'],
     notes:
-      'Social layer. Broad multi-channel cloud. Reddit is docs_only here — publish via Composio. Optional POSTLY_AUDIENCE_GROUP unused by default.',
+      'Social layer. POST /webhooks/publish-postly and the Postly queue are dry-run unless resolveLiveGate is live and POSTLY_PUBLISH_LIVE=true. POSTLY_QUEUE_ENABLED is off by default. Reddit is docs_only here — publish via Composio. Optional POSTLY_AUDIENCE_GROUP unused by default.',
   },
   {
     id: 'composio',
@@ -54,7 +55,7 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'live',
     envKeys: ['COMPOSIO_API_KEY'],
     notes:
-      'Source Tag Composio. Reddit (REDDIT_CREATE_REDDIT_POST) and Eventbrite (EVENTBRITE_CREATE_EVENT) via POST /webhooks/publish-composio. Dry-run default. Live needs COMPOSIO_PUBLISH_LIVE=true. Multi-account: COMPOSIO_USER_ID + COMPOSIO_CONNECTED_ACCOUNT_ID / COMPOSIO_EVENTBRITE_CONNECTED_ACCOUNT_ID.',
+      'Source Tag Composio. Reddit (REDDIT_CREATE_REDDIT_POST) and Eventbrite (EVENTBRITE_CREATE_EVENT) via POST /webhooks/publish-composio. Dry-run default. Live needs COMPOSIO_PUBLISH_LIVE=true and resolveLiveGate. Multi-account: COMPOSIO_USER_ID + COMPOSIO_CONNECTED_ACCOUNT_ID / COMPOSIO_EVENTBRITE_CONNECTED_ACCOUNT_ID.',
   },
   {
     id: 'typefully',

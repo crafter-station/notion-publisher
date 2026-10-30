@@ -11,9 +11,14 @@ import {
 } from '../services/notion.service';
 
 export type PublishGithubOptions = {
-  /** Prefer true for first smoke. */
+  /** Prefer true for first smoke. Omitted draft stays a GitHub draft Release. */
   draft?: boolean;
 };
+
+/** Releases stay draft unless the caller sets draft:false. */
+export function resolveGithubReleaseDraft(draft?: boolean): boolean {
+  return draft ?? true;
+}
 
 const PRODUCT_TOPICS = ['gpt-chain', 'gumroad', 'prompt-chain'];
 
@@ -134,7 +139,7 @@ export async function executePublishGithubUseCase(
       tag: content.tag,
       name: `${content.title} ${content.tag}`,
       body: releaseBody,
-      draft: options.draft ?? false,
+      draft: resolveGithubReleaseDraft(options.draft),
     });
 
     try {

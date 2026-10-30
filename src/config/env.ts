@@ -20,10 +20,18 @@ export const env = {
   SKOOL_API_KEY: process.env.SKOOL_API_KEY || '',
   /** Optional default Skool group id for discover posts sample. */
   SKOOL_GROUP_ID: process.env.SKOOL_GROUP_ID || '',
+  /** Must be "true" AND resolveLiveGate().live to call Postly. Default off. */
+  POSTLY_PUBLISH_LIVE: process.env.POSTLY_PUBLISH_LIVE || '',
+  /** Must be "true" AND resolveLiveGate().live to call Luma. Default off. */
+  LUMA_PUBLISH_LIVE: process.env.LUMA_PUBLISH_LIVE || '',
   /** Optional Luma calendar API key — not required to boot. Enables publish-luma. */
   LUMA_API_KEY: process.env.LUMA_API_KEY || '',
   /** Optional GitHub PAT — catalog + TheVeller Releases. Not required to boot. */
   GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
+  /** Must be "true" AND resolveLiveGate().live to create a Release. Default off. */
+  GITHUB_PUBLISH_LIVE: process.env.GITHUB_PUBLISH_LIVE || '',
+  /** Must be "true" AND resolveLiveGate().live to publish or unpublish a Gumroad product. Default off. */
+  GUMROAD_PUBLISH_LIVE: process.env.GUMROAD_PUBLISH_LIVE || '',
   /** Optional Composio — Reddit live; Eventbrite pending connect. Not required to boot. */
   COMPOSIO_API_KEY: process.env.COMPOSIO_API_KEY || '',
   /** Composio user that owns connected Reddit (dashboard / capabilities). */
@@ -77,6 +85,11 @@ export const env = {
   GUMROAD_AUTOPILOT_TIMEZONE: process.env.GUMROAD_AUTOPILOT_TIMEZONE || 'America/Lima',
   GUMROAD_AUTOPILOT_PUBLISH_LIVE: process.env.GUMROAD_AUTOPILOT_PUBLISH_LIVE === 'true',
   PORT: Number(process.env.PORT) || 3000,
+  /**
+   * Required to boot the HTTP server. Must be at least 32 characters.
+   * Authorization: Bearer $WEBHOOK_TOKEN on every /webhooks/* request.
+   */
+  WEBHOOK_TOKEN: process.env.WEBHOOK_TOKEN || '',
   /**
    * Content OS ids default in src/config/schema.ts. Env overrides only.
    * CONTENT_OS_PUBLISH_LIVE must be the string "true" to open the live gate.

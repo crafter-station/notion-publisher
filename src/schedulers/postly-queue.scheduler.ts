@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import { resolveConnectorLiveGate } from '../connectors/live-gate';
 import { processNextPostlyQueueItem } from '../services/postly-queue.service';
 
 let isRunning = false;
@@ -7,6 +8,14 @@ let timer: NodeJS.Timeout | undefined;
 export function startPostlyQueueScheduler() {
   if (!env.POSTLY_QUEUE_ENABLED) {
     console.log('[POSTLY-QUEUE] Scheduler disabled. Set POSTLY_QUEUE_ENABLED=true to enable automatic publishing.');
+    return;
+  }
+
+  const gate = resolveConnectorLiveGate(env.POSTLY_PUBLISH_LIVE);
+  if (gate.dryRun) {
+    console.log(
+      `[POSTLY-QUEUE] Scheduler not started (live gate closed, no Postly call). reason=${gate.reason}`
+    );
     return;
   }
 

@@ -19,7 +19,7 @@ export async function executePublishProductUseCase(
   options: { publishLive?: boolean } = {}
 ) {
   const gumroad = new GumroadService();
-  const publishLive = options.publishLive !== false;
+  const publishLive = options.publishLive === true;
 
   let productId: string | undefined;
 

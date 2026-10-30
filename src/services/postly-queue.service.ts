@@ -1,10 +1,17 @@
 import { env } from '../config/env';
+import { resolveConnectorLiveGate } from '../connectors/live-gate';
 import { executePublishPostlyUseCase } from '../use-cases/publish-postly.use-case';
 import { extractPostlyContent, queryNextPostlyQueueCandidates, updatePostlyMetadata } from './notion.service';
 import { PostlyService } from './postly.service';
 import { resolveDefaultPostlyTargetPlatforms } from './postly-targets.service';
 
 export async function processNextPostlyQueueItem() {
+  const gate = resolveConnectorLiveGate(env.POSTLY_PUBLISH_LIVE);
+  if (gate.dryRun) {
+    console.log(`[POSTLY-QUEUE] Dry-run (no Postly call). reason=${gate.reason}`);
+    return { status: 'dry-run', called_publish: false, reason: gate.reason };
+  }
+
   const databaseId = env.POSTLY_QUEUE_DATABASE_ID;
   if (!databaseId) {
     throw new Error('POSTLY_QUEUE_DATABASE_ID or NOTION_DATABASE_ID must be configured for the Postly queue scheduler.');
