@@ -2,7 +2,8 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { executePublishProductUseCase } from '../use-cases/publish-product.use-case';
 import { executeUnpublishProductUseCase } from '../use-cases/unpublish-product.use-case';
 import { executePublishExistingProductUseCase } from '../use-cases/publish-existing.use-case';
-import { executePublishPostlyUseCase } from '../use-cases/publish-postly.use-case';
+import { buildPostlyPublishPayload, executePublishPostlyUseCase } from '../use-cases/publish-postly.use-case';
+import { extractPostlyContent, getNotionPage, updatePostlyMetadata } from '../services/notion.service';
 import { executePublishLumaUseCase } from '../use-cases/publish-luma.use-case';
 import { executePublishGithubUseCase } from '../use-cases/publish-github.use-case';
 import { executePublishComposioUseCase } from '../use-cases/publish-composio.use-case';
@@ -353,11 +354,17 @@ export const webhooksController = {
 
         const gate = resolveConnectorLiveGate(env.POSTLY_PUBLISH_LIVE);
         if (gate.dryRun) {
+          const props = payload.data?.properties || {};
+          const content = extractPostlyContent(props);
+          const payloadPreview = buildPostlyPublishPayload(content, resolveDefaultPostlyTargetPlatforms());
           console.log(`[INFO] Postly dry-run (notionPageId: ${notion_page_id}, reason=${gate.reason})`);
-          return connectorDryRun(res, 'Postly', notion_page_id, gate.reason);
+          return connectorDryRun(res, 'Postly', notion_page_id, gate.reason, {
+            carousel: payloadPreview.plan,
+            media: payloadPreview.media,
+            platform_posts: payloadPreview.platform_posts.map(p => p.identifier),
+          });
         }
 
-        const { extractPostlyContent, getNotionPage, updatePostlyMetadata } = require('../services/notion.service');
         const pageData = await getNotionPage(notion_page_id).catch((err: any) => {
           console.warn(`[WARN] Could not fetch full Notion page for ${notion_page_id}; using webhook payload properties.`, err);
           return payload.data;

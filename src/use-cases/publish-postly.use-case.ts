@@ -1,5 +1,11 @@
-import { PostlyService, PostlyTargetPlatform } from '../services/postly.service';
+import { PostlyPlatformPost, PostlyService, PostlyTargetPlatform } from '../services/postly.service';
 import { updatePostlyMetadata, PostlyContent, FinalStatus, PostlyPublishStatus } from '../services/notion.service';
+import {
+  carouselNetworkIds,
+  planPostlyCarousel,
+  PostlyCarouselPlan,
+  slidesToPostlyMedia,
+} from '../services/postly-carousel';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
@@ -145,10 +151,40 @@ function parseMp4DurationSeconds(buffer: Buffer) {
  * the target platform and carry caption text in `text_override`; putting text
  * inside `settings` makes the API parser fall back to PlatformIdentifier.none.
  */
-async function buildPlatformPosts(content: PostlyContent, targetPlatforms: PostlyTargetPlatform[]) {
+export type PostlyPublishPayload = {
+  text: string;
+  media: Array<{ url: string; type: string }>;
+  target_platforms: PostlyTargetPlatform[];
+  platform_posts: PostlyPlatformPost[];
+  plan: PostlyCarouselPlan;
+};
+
+export function buildPostlyPublishPayload(
+  content: PostlyContent,
+  targetPlatforms: PostlyTargetPlatform[],
+  options: { pinterestCoverKeyFrame?: number } = {}
+): PostlyPublishPayload {
+  const identifiers = carouselNetworkIds(targetPlatforms.map(p => p.identifier));
+  const plan = planPostlyCarousel(content.media || [], content.document, identifiers);
+  const accepted = targetPlatforms.filter(p => plan.networks[p.identifier]?.status !== 'rejected');
+  const platform_posts = buildPlatformPosts(content, accepted, plan, options.pinterestCoverKeyFrame);
+  return {
+    text: content.global_text,
+    media: slidesToPostlyMedia(plan.slides),
+    target_platforms: accepted,
+    platform_posts,
+    plan,
+  };
+}
+
+function buildPlatformPosts(
+  content: PostlyContent,
+  targetPlatforms: PostlyTargetPlatform[],
+  plan: PostlyCarouselPlan,
+  pinterestCoverKeyFrame?: number
+) {
   const targetIdentifiers = new Set(targetPlatforms.map(p => p.identifier));
-  const out: Array<{ identifier: string; text_override?: string; settings?: Record<string, any> }> = [];
-  const pinterestCoverKeyFrame = await resolveVideoCoverKeyFrameSeconds(content);
+  const out: PostlyPlatformPost[] = [];
   const firstCommentSettings = content.first_comment
     ? {
         auto_generate_first_comment: false,
@@ -174,22 +210,26 @@ async function buildPlatformPosts(content: PostlyContent, targetPlatforms: Postl
     });
   };
 
+  const instagramCount = plan.networks.instagram?.media.length ?? 0;
+  const facebookCount = plan.networks.facebook?.media.length ?? 0;
+  const linkedinContentType = plan.networks.linkedin?.content_type || 'regular';
+
   push('instagram', content.caption_instagram, {
     share_to_feed: true,
     share_as_story: false,
-    share_as_reel: content.media_type === 'video/mp4',
+    share_as_reel: instagramCount === 1 && content.media_type === 'video/mp4',
     add_first_comment: !!content.first_comment,
     ...firstCommentSettings,
   });
   push('facebook', content.caption_facebook, {
     share_to_feed: true,
-    share_as_carousel: false,
+    share_as_carousel: facebookCount > 1,
     share_as_story: false,
-    share_as_reel: content.media_type === 'video/mp4',
+    share_as_reel: facebookCount === 1 && content.media_type === 'video/mp4',
     ...firstCommentSettings,
   });
   push('linkedin', content.caption_linkedin, {
-    content_type: 'regular',
+    content_type: linkedinContentType,
     feed_distribution: 'mainFeed',
     visibility: 'public',
     lifecycle_state: 'published',
@@ -236,6 +276,13 @@ async function buildPlatformPosts(content: PostlyContent, targetPlatforms: Postl
   push('telegram', socialFallback, {});
   push('x', socialFallback, {});
 
+  for (const post of out) {
+    const network = plan.networks[post.identifier];
+    if (network && network.status !== 'rejected' && network.media.length > 0) {
+      post.media_override = slidesToPostlyMedia(network.media);
+    }
+  }
+
   return out;
 }
 
@@ -246,31 +293,36 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
   try {
     console.log(`[POSTLY-USE-CASE] Starting pipeline for Notion page: ${notion_page_id}`);
     console.log(`[POSTLY-USE-CASE] Target platforms (${target_platforms.length}): ${target_platforms.map(p => `${p.identifier}:${p.id}`).join(', ')}`);
-    console.log(`[POSTLY-USE-CASE] Media: ${content.media_type} ${content.media_url}`);
+    console.log(`[POSTLY-USE-CASE] Media: ${content.media_type} ${content.media_url} slides=${(content.media || []).length}`);
 
     // PHASE 1 — Mark in-progress on Notion
     await updatePostlyMetadata(notion_page_id, { postly_status: 'In progress' });
 
     // PHASE 2 — Build payload and send
-    const platform_posts = await buildPlatformPosts(content, target_platforms);
-    console.log(`[POSTLY-USE-CASE] Phase 2: posting (${platform_posts.length} per-platform overrides)`);
-    logPublishDiagnostics(content, target_platforms, platform_posts);
+    const pinterestCoverKeyFrame = await resolveVideoCoverKeyFrameSeconds(content);
+    const payload = buildPostlyPublishPayload(content, target_platforms, { pinterestCoverKeyFrame });
+    console.log(`[POSTLY-USE-CASE] Phase 2: posting (${payload.platform_posts.length} per-platform overrides)`);
+    logPublishDiagnostics(content, payload.target_platforms, payload.platform_posts);
+    logCarouselPlan(payload.plan);
+
+    if (payload.target_platforms.length === 0) {
+      throw new Error('No Postly target accepted the media set');
+    }
 
     await postly.createPost({
       workspace: workspace_id,
-      target_platforms,
-      text: content.global_text,
-      media: content.media_url
-        ? [{ url: content.media_url, type: content.media_type }]
-        : [],
-      platform_posts,
+      target_platforms: payload.target_platforms,
+      text: payload.text,
+      media: payload.media,
+      platform_posts: payload.platform_posts,
     });
 
     console.log(`[POSTLY-USE-CASE] Post accepted. Waiting 3s to fetch its internal ID...`);
     await delay(3000);
 
+    const matchUrl = payload.media[0]?.url || content.media_url;
     const recentPosts = await postly.listPosts(workspace_id);
-    const createdPost = findMatchingPost(recentPosts, content.global_text, content.media_url);
+    const createdPost = findMatchingPost(recentPosts, content.global_text, matchUrl);
 
     if (!createdPost || !createdPost._id) {
       throw new Error("Could not find the newly created post's ID in Postly via list matching.");
@@ -314,7 +366,7 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     if (!isResolved) {
       console.log(`[POSTLY-USE-CASE] Phase 5: fallback match`);
       const allPosts = await postly.listPosts(workspace_id);
-      const match = findMatchingPost(allPosts, content.global_text, content.media_url);
+      const match = findMatchingPost(allPosts, content.global_text, matchUrl);
       if (match) {
         logStoredPostDiagnostics('fallback/list', match, target_platforms);
         finalResults = normalizePostlyResults(match, target_platforms);
@@ -438,6 +490,8 @@ function logPublishDiagnostics(
     media: {
       type: content.media_type,
       has_url: !!content.media_url,
+      slide_count: (content.media || []).length,
+      has_document: !!content.document,
       url_host: content.media_url ? safeHost(content.media_url) : undefined,
     },
   };
@@ -447,6 +501,18 @@ function logPublishDiagnostics(
     const settingKeys = Object.keys(p.settings || {}).sort().join('|');
     return `${p.identifier}{text=${!!p.text_override};settings=${settingKeys}}`;
   }).join(', ')}`);
+}
+
+function logCarouselPlan(plan: PostlyCarouselPlan) {
+  const networks = Object.values(plan.networks).map(network => ({
+    identifier: network.identifier,
+    status: network.status,
+    reason: network.reason,
+    kept: network.media.length,
+    dropped: network.dropped.length,
+    content_type: network.content_type,
+  }));
+  console.log(`[POSTLY-USE-CASE] Carousel plan: slides=${plan.slides.length} document=${!!plan.document} networks=${JSON.stringify(networks)}`);
 }
 
 function logStoredPostDiagnostics(stage: string, post: any, requestedTargets: PostlyTargetPlatform[]) {

@@ -4,7 +4,7 @@
  */
 
 import { propertyName, publicacionReadyStatuses } from '../config/content-os';
-import { createPropertyReader, NotionPropertyReader } from './props';
+import { createPropertyReader, NotionFileRef, NotionPropertyReader } from './props';
 import type { NotionPage, NotionTransport } from './notion-transport';
 
 export type PiezaRecord = {
@@ -17,9 +17,11 @@ export type PiezaRecord = {
   idiomaBase: string;
   fecha: string;
   imageUrl: string;
+  imageFiles: NotionFileRef[];
   gifUrl: string;
   videoUrl: string;
   fileUrl: string;
+  fileFiles: NotionFileRef[];
   modulo: string;
   formato: string;
   ratio: string;
@@ -51,6 +53,7 @@ export type PublicacionRecord = {
   idExterno: string;
   resultado: string;
   imageVersionUrl: string;
+  imageVersionFiles: NotionFileRef[];
   piezaIds: string[];
   cuentaIds: string[];
   reader: NotionPropertyReader;
@@ -90,9 +93,11 @@ export function parsePieza(page: NotionPage): PiezaRecord {
     idiomaBase: r.select(propertyName('piezas', 'idiomaBase')),
     fecha: r.dateStart(propertyName('piezas', 'fechaDePublicacion')),
     imageUrl: r.fileUrl(propertyName('piezas', 'image')),
+    imageFiles: r.files(propertyName('piezas', 'image')),
     gifUrl: r.fileUrl(propertyName('piezas', 'gif')),
     videoUrl: r.fileUrl(propertyName('piezas', 'video')),
     fileUrl: r.fileUrl(propertyName('piezas', 'file')),
+    fileFiles: r.files(propertyName('piezas', 'file')),
     modulo: r.select(propertyName('piezas', 'modulo')),
     formato: r.select(propertyName('piezas', 'formato')),
     ratio: r.select(propertyName('piezas', 'ratio')),
@@ -127,6 +132,7 @@ export function parsePublicacion(page: NotionPage): PublicacionRecord {
     idExterno: r.richText(propertyName('publicaciones', 'idExterno')),
     resultado: r.richText(propertyName('publicaciones', 'resultado')),
     imageVersionUrl: r.fileUrl(propertyName('publicaciones', 'imageVersion')),
+    imageVersionFiles: r.files(propertyName('publicaciones', 'imageVersion')),
     piezaIds: r.relationIds(propertyName('publicaciones', 'pieza')),
     cuentaIds: r.relationIds(propertyName('publicaciones', 'cuenta')),
     reader: r,
@@ -219,23 +225,33 @@ export function mergedPublishProperties(
   pub: PublicacionRecord
 ): Record<string, any> {
   const caption = pub.captionOverride || pieza.captionBase;
-  const imageUrl = pub.imageVersionUrl || pieza.imageUrl;
+  const imageFiles = pub.imageVersionFiles.length ? pub.imageVersionFiles : pieza.imageFiles;
   return {
     Name: { title: [{ plain_text: pub.titulo || pieza.nombre }] },
     Caption: { rich_text: [{ plain_text: caption }] },
     'POV Text': { rich_text: [{ plain_text: caption }] },
-    Image: imageUrl
-      ? { files: [{ type: 'external', external: { url: imageUrl } }] }
-      : { files: [] },
+    Image: { files: toExternalFiles(imageFiles) },
     GIF: pieza.gifUrl ? { files: [{ type: 'external', external: { url: pieza.gifUrl } }] } : { files: [] },
     Video: pieza.videoUrl
       ? { files: [{ type: 'external', external: { url: pieza.videoUrl } }] }
       : { files: [] },
-    File: pieza.fileUrl ? { files: [{ type: 'external', external: { url: pieza.fileUrl } }] } : { files: [] },
+    File: { files: toExternalFiles(pieza.fileFiles.length ? pieza.fileFiles : fileRefs(pieza.fileUrl)) },
     Schedule: pub.programarPara ? { date: { start: pub.programarPara } } : {},
     Settings: { rich_text: [{ plain_text: pub.settings }] },
     ...parseSettingsObject(pub.settings),
   };
+}
+
+function fileRefs(url: string): NotionFileRef[] {
+  return url ? [{ url, name: url }] : [];
+}
+
+function toExternalFiles(files: NotionFileRef[]) {
+  return files.map(file => ({
+    type: 'external',
+    name: file.name,
+    external: { url: file.url },
+  }));
 }
 
 function parseSettingsObject(raw: string): Record<string, any> {

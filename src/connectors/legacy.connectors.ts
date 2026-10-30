@@ -11,6 +11,8 @@ import {
   extractPostlyContent,
   parseNotionPage,
 } from '../services/notion.service';
+import { carouselNetworkIds, planPostlyCarousel, slidesToPostlyMedia } from '../services/postly-carousel';
+import { resolveDefaultPostlyTargetPlatforms } from '../services/postly-targets.service';
 import { Connector, ConnectorCapabilities, ConnectorValidation } from './types';
 import { ConnectorResult } from './dry-run';
 
@@ -29,7 +31,16 @@ export class PostlyConnector implements Connector<LegacyPageInput> {
   async publish(input: LegacyPageInput, options: { dryRun: boolean }) {
     const content = extractPostlyContent(input.properties || {});
     if (!content.is_complete) throw new Error(`Incomplete Postly: ${content.missing.join('; ')}`);
-    if (options.dryRun) return dry({ kind: 'postly', content });
+    if (options.dryRun) {
+      const identifiers = carouselNetworkIds(resolveDefaultPostlyTargetPlatforms().map(p => p.identifier));
+      const plan = planPostlyCarousel(content.media, content.document, identifiers);
+      return dry({
+        kind: 'postly',
+        content,
+        carousel: plan,
+        media: slidesToPostlyMedia(plan.slides),
+      });
+    }
     throw new Error('Postly live publish goes through POST /webhooks/publish-postly (alias)');
   }
   capabilities(): ConnectorCapabilities {
