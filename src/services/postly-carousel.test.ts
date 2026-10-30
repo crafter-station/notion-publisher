@@ -344,7 +344,7 @@ test('TikTok photo accepts JPEG/WebP up to 35, rejects PNG/GIF, video goes alone
   assert.equal(videoPlan.media[0].type, 'video/mp4');
 });
 
-test('Telegram albums cap at 10 and GIF goes alone', () => {
+test('Telegram albums cap at 10; photos plus GIF keep the album and drop the GIF', () => {
   const album = collectMediaFromProps({
     ...files(
       'Image',
@@ -359,14 +359,27 @@ test('Telegram albums cap at 10 and GIF goes alone', () => {
   const withGif = collectMediaFromProps({
     ...files('Image', [
       jpeg(1),
+      jpeg(2),
       { url: 'https://cdn.example/loop.gif', name: 'loop.gif' },
     ]),
   }).slides;
-  const gifAlone = planNetworkMedia(withGif, undefined, 'telegram');
-  assert.equal(gifAlone.status, 'trimmed');
+  const albumKeepsPhotos = planNetworkMedia(withGif, undefined, 'telegram');
+  assert.equal(albumKeepsPhotos.status, 'trimmed');
+  assert.deepEqual(
+    albumKeepsPhotos.media.map(m => m.type),
+    ['image/jpeg', 'image/jpeg']
+  );
+  assert.equal(albumKeepsPhotos.dropped.length, 1);
+  assert.equal(albumKeepsPhotos.dropped[0].type, 'image/gif');
+  assert.equal(albumKeepsPhotos.dropped[0].reason, 'gif_not_in_album');
+
+  const gifOnly = collectMediaFromProps({
+    ...files('Image', [{ url: 'https://cdn.example/loop.gif', name: 'loop.gif' }]),
+  }).slides;
+  const gifAlone = planNetworkMedia(gifOnly, undefined, 'telegram');
+  assert.equal(gifAlone.status, 'accepted');
   assert.equal(gifAlone.media.length, 1);
   assert.equal(gifAlone.media[0].type, 'image/gif');
-  assert.equal(gifAlone.dropped.some(d => d.reason === 'gif_alone'), true);
 });
 
 test('WhatsApp and GBP keep one JPEG/PNG and reject GIF', () => {
@@ -383,6 +396,52 @@ test('WhatsApp and GBP keep one JPEG/PNG and reject GIF', () => {
     assert.equal(rejected.status, 'rejected', identifier);
     assert.equal(rejected.reason, 'no_allowed_media', identifier);
   }
+});
+
+test('Facebook and Bluesky send a video alone when photos are also present', () => {
+  const slides = collectMediaFromProps({
+    ...files('Image', [
+      jpeg(1),
+      jpeg(2),
+      { url: 'https://cdn.example/clip.mp4', name: 'clip.mp4' },
+    ]),
+  }).slides;
+  assert.equal(slides.length, 3);
+  for (const identifier of ['facebook', 'bluesky']) {
+    const plan = planNetworkMedia(slides, undefined, identifier);
+    assert.equal(plan.status, 'trimmed', identifier);
+    assert.equal(plan.media.length, 1, identifier);
+    assert.equal(plan.media[0].type, 'video/mp4', identifier);
+    assert.equal(
+      plan.dropped.filter(d => d.reason === 'video_alone').length,
+      2,
+      identifier
+    );
+  }
+});
+
+test('unknown_extension drops flip accepted networks to trimmed', () => {
+  const collected = collectMediaFromProps({
+    ...files('Image', [
+      { url: 'https://cdn.example/file', name: 'file' },
+      jpeg(1),
+    ]),
+  });
+  assert.equal(collected.unknown.length, 1);
+  const plan = planPostlyCarousel(collected.slides, undefined, ['facebook', 'instagram'], collected.unknown);
+  assert.equal(plan.networks.facebook.status, 'trimmed');
+  assert.equal(plan.networks.facebook.reason, UNKNOWN_EXTENSION_REASON);
+  assert.equal(plan.networks.facebook.media.length, 1);
+  assert.equal(plan.networks.facebook.dropped[0].reason, UNKNOWN_EXTENSION_REASON);
+  assert.equal(plan.networks.instagram.status, 'trimmed');
+  assert.equal(
+    plan.networks.instagram.dropped.some(d => d.reason === UNKNOWN_EXTENSION_REASON),
+    true
+  );
+  assert.equal(
+    Object.values(plan.networks).some(network => network.status === 'accepted'),
+    false
+  );
 });
 
 test('networks without a rule use a conservative cap reported as no_rule', () => {

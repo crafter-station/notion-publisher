@@ -82,6 +82,7 @@ export const NETWORK_MEDIA_RULES: readonly NetworkMediaRule[] = [
       'video/mp4',
       'video/quicktime',
     ],
+    videoAlone: true,
   },
   {
     identifier: 'x',
@@ -90,7 +91,13 @@ export const NETWORK_MEDIA_RULES: readonly NetworkMediaRule[] = [
     allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime'],
     exclusiveGifOrVideo: true,
   },
-  { identifier: 'bluesky', min: 1, max: 4, allowedTypes: ['image/*', 'video/mp4', 'video/quicktime'] },
+  {
+    identifier: 'bluesky',
+    min: 1,
+    max: 4,
+    allowedTypes: ['image/*', 'video/mp4', 'video/quicktime'],
+    videoAlone: true,
+  },
   {
     identifier: 'pinterest',
     min: 1,
@@ -388,11 +395,7 @@ export function planPostlyCarousel(
 ): PostlyCarouselPlan {
   const networks: Record<string, NetworkMediaPlan> = {};
   for (const identifier of identifiers) {
-    const planned = planNetworkMedia(slides, document, identifier);
-    if (unknown.length) {
-      planned.dropped = [...unknown, ...planned.dropped];
-    }
-    networks[identifier] = planned;
+    networks[identifier] = applyUnknownDrops(planNetworkMedia(slides, document, identifier), unknown);
   }
   return { slides, document, unknown, networks };
 }
@@ -519,9 +522,22 @@ function applyExclusiveGifOrVideo(
 function applyExclusiveGif(slides: MediaSlide[], dropped: DroppedMedia[]): MediaSlide[] {
   const gifs = slides.filter(slide => slide.type === 'image/gif');
   if (!gifs.length) return slides;
+
+  const album = slides.filter(slide => slide.type !== 'image/gif');
+  if (album.length) {
+    for (const slide of gifs) {
+      dropped.push({
+        url: slide.url,
+        type: slide.type,
+        index: slide.index,
+        reason: 'gif_not_in_album',
+      });
+    }
+    return album;
+  }
+
   const kept = gifs.slice(0, 1);
-  for (const slide of slides) {
-    if (slide === kept[0]) continue;
+  for (const slide of gifs.slice(1)) {
     dropped.push({
       url: slide.url,
       type: slide.type,
@@ -530,6 +546,16 @@ function applyExclusiveGif(slides: MediaSlide[], dropped: DroppedMedia[]): Media
     });
   }
   return kept;
+}
+
+function applyUnknownDrops(plan: NetworkMediaPlan, unknown: DroppedMedia[]): NetworkMediaPlan {
+  if (!unknown.length) return plan;
+  plan.dropped = [...unknown, ...plan.dropped];
+  if (plan.status === 'accepted') {
+    plan.status = 'trimmed';
+    plan.reason = UNKNOWN_EXTENSION_REASON;
+  }
+  return plan;
 }
 
 function applyVideoAlone(slides: MediaSlide[], dropped: DroppedMedia[]): MediaSlide[] {
