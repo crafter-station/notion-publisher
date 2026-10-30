@@ -51,6 +51,16 @@ Self-check: `npm run capabilities:check`
 
 ### Postly (live · dry-run default)
 
+One Notion `Image` files property is a **carousel**. Slide order is the files array, then a numeric filename prefix (`01-hook.jpg`) when present. The same ordered set goes to every network. Dry-run returns `accepted` / `trimmed` / `rejected` per network instead of dropping slides silently.
+
+| Network | Carousel rule |
+|---|---|
+| Instagram | Up to 20, **JPEG only** |
+| Facebook | Up to 10 |
+| X / Bluesky | Max 4 |
+| Pinterest | 2 to 5 |
+| LinkedIn | `File` PDF as `content_type: document`; otherwise images as `regular` |
+
 | Family | Identifiers |
 |---|---|
 | social | `instagram`, `facebook`, `linkedin`, `x`, `threads`, `tiktok`, `youtube`, `pinterest`, `bluesky`, `googleMyBusiness` |

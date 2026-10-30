@@ -47,7 +47,7 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'live',
     envKeys: ['POSTLY_API_KEY', 'POSTLY_WORKSPACE_ID', 'POSTLY_TARGET_PLATFORMS', 'POSTLY_PUBLISH_LIVE'],
     notes:
-      'Social layer. POST /webhooks/publish-postly and the Postly queue are dry-run unless resolveLiveGate is live and POSTLY_PUBLISH_LIVE=true. POSTLY_QUEUE_ENABLED is off by default. Reddit is docs_only here — publish via Composio. Optional POSTLY_AUDIENCE_GROUP unused by default.',
+      'Social layer. One Notion Image files set is a carousel (stable slide order) sent to every Postly network. Dry-run reports accepted/trimmed/rejected per network (X/Bluesky max 4, Pinterest 2–5, Instagram 20 JPEG-only, Facebook 10, LinkedIn File PDF as document). POST /webhooks/publish-postly and the Postly queue stay dry-run unless resolveLiveGate is live and POSTLY_PUBLISH_LIVE=true. POSTLY_QUEUE_ENABLED is off by default. Reddit is docs_only here — publish via Composio. Optional POSTLY_AUDIENCE_GROUP unused by default.',
   },
   {
     id: 'composio',
