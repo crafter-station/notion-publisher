@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { extractPostlyContent } from '../services/notion.service';
 import { PostlyConnector } from '../connectors/legacy.connectors';
-import { buildPostlyPublishPayload } from './publish-postly.use-case';
+import { buildPostlyPublishPayload, formatPostlyPublishLog } from './publish-postly.use-case';
 
 const originalFetch = globalThis.fetch;
 
@@ -65,7 +65,8 @@ test('dry-run payload plans the carousel and never calls fetch', async () => {
     { url: 'https://cdn.example/deck.pdf', type: 'application/pdf' },
   ]);
   const facebook = payload.platform_posts.find(p => p.identifier === 'facebook');
-  assert.equal(facebook?.settings?.share_as_carousel, true);
+  assert.equal(facebook?.settings?.share_as_carousel, false);
+  assert.equal(facebook?.settings?.share_as_reel, false);
   assert.equal(fetchCalls, 0);
 });
 
@@ -89,9 +90,74 @@ test('PostlyConnector dry-run returns trimmed/rejected reasons and does not fetc
 
   assert.equal(result.dry_run, true);
   assert.equal(result.called_publish, false);
-  const carousel = (result.payload as { carousel: { networks: Record<string, { status: string; reason: string }> } })
-    .carousel;
-  assert.equal(carousel.networks.pinterest.status, 'rejected');
-  assert.equal(carousel.networks.pinterest.reason, 'below_min:2');
+  const carousel = (
+    result.payload as {
+      carousel: { networks: Record<string, { status: string; reason: string; media: unknown[] }> };
+    }
+  ).carousel;
+  assert.equal(carousel.networks.pinterest.status, 'accepted');
+  assert.equal(carousel.networks.pinterest.media.length, 1);
   assert.equal(fetchCalls, 0);
+});
+
+test('lone video stays on IG FB Pinterest LinkedIn and sets share_as_reel', () => {
+  const content = extractPostlyContent({
+    Caption: { rich_text: [{ plain_text: 'one video' }] },
+    'Instagram Caption': { rich_text: [{ plain_text: 'ig' }] },
+    'Facebook Post': { rich_text: [{ plain_text: 'fb' }] },
+    ...files('Video', [{ url: 'https://cdn.example/clip.mp4', name: 'clip.mp4' }]),
+  });
+  const payload = buildPostlyPublishPayload(content, [
+    { identifier: 'instagram', id: 'ig-1' },
+    { identifier: 'facebook', id: 'fb-1' },
+    { identifier: 'pinterest', id: 'pin-1' },
+    { identifier: 'linkedin', id: 'li-1' },
+  ]);
+
+  assert.deepEqual(
+    payload.target_platforms.map(p => p.identifier),
+    ['instagram', 'facebook', 'pinterest', 'linkedin']
+  );
+  const instagram = payload.platform_posts.find(p => p.identifier === 'instagram');
+  const facebook = payload.platform_posts.find(p => p.identifier === 'facebook');
+  assert.equal(instagram?.settings?.share_as_reel, true);
+  assert.equal(facebook?.settings?.share_as_reel, true);
+  assert.equal(facebook?.settings?.share_as_carousel, false);
+  assert.equal(payload.plan.networks.pinterest.status, 'accepted');
+  assert.equal(payload.plan.networks.linkedin.status, 'accepted');
+});
+
+test('publish log keeps rejected networks on the Post ID field', () => {
+  const content = extractPostlyContent({
+    Caption: { rich_text: [{ plain_text: 'png only' }] },
+    ...files('Image', [{ url: 'https://cdn.example/a.png', name: 'a.png' }]),
+  });
+  const payload = buildPostlyPublishPayload(content, [
+    { identifier: 'instagram', id: 'ig-1' },
+    { identifier: 'facebook', id: 'fb-1' },
+  ]);
+  assert.equal(payload.plan.networks.instagram.status, 'rejected');
+  assert.equal(
+    payload.target_platforms.map(p => p.identifier).includes('instagram'),
+    false
+  );
+  const log = formatPostlyPublishLog(payload.plan, [
+    { platform_name: 'facebook', status: 'published', external_id: 'fb-post' },
+  ]);
+  assert.match(log, /instagram: rejected:instagram_jpeg_only kept=0/);
+  assert.match(log, /facebook: accepted:accepted kept=1/);
+  assert.match(log, /facebook: fb-post/);
+});
+
+test('lone MOV is planned as video/quicktime Reel on Instagram', () => {
+  const content = extractPostlyContent({
+    Caption: { rich_text: [{ plain_text: 'mov' }] },
+    'Instagram Caption': { rich_text: [{ plain_text: 'ig' }] },
+    ...files('Video', [{ url: 'https://cdn.example/clip.mov', name: 'clip.mov' }]),
+  });
+  assert.equal(content.media_type, 'video/quicktime');
+  const payload = buildPostlyPublishPayload(content, [{ identifier: 'instagram', id: 'ig-1' }]);
+  assert.equal(payload.target_platforms.length, 1);
+  assert.equal(payload.platform_posts[0].settings?.share_as_reel, true);
+  assert.equal(payload.plan.networks.instagram.media[0].type, 'video/quicktime');
 });

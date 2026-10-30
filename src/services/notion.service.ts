@@ -2,7 +2,7 @@ import { env } from '../config/env';
 import { PUBLISHER_PROPERTY_NAMES as PN } from '../config/schema';
 import { createPropertyReader } from '../readers/props';
 import { markdownToGumroadHtml } from './markdown.service';
-import { collectMediaFromProps, MediaSlide } from './postly-carousel';
+import { collectMediaFromProps, DroppedMedia, MediaSlide } from './postly-carousel';
 
 const notionToken = env.NOTION_TOKEN;
 // ponytail: stay on 2022-06-28 — DB query/properties work; 2025-09-03 data_sources needs separate query path
@@ -202,9 +202,10 @@ export interface PostlyContent {
   first_comment: string;
   global_text: string;
   media_url?: string;
-  media_type: 'video/mp4' | 'image/gif' | 'image/jpeg' | 'image/png' | 'application/pdf';
+  media_type: 'video/mp4' | 'video/quicktime' | 'image/gif' | 'image/jpeg' | 'image/png' | 'application/pdf';
   media: MediaSlide[];
   document?: MediaSlide;
+  unknown: DroppedMedia[];
   is_complete: boolean;
   missing: string[];
 }
@@ -262,7 +263,7 @@ export function extractPostlyContent(props: any): PostlyContent {
 
   if (!global_text) missing.push('All caption fields empty (Caption/POV Text + per-platform)');
 
-  const { slides, document } = collectMediaFromProps(props || {});
+  const { slides, document, unknown } = collectMediaFromProps(props || {});
   const first = slides[0];
   const media_url = first?.url;
   const media_type: PostlyContent['media_type'] = first
@@ -292,6 +293,7 @@ export function extractPostlyContent(props: any): PostlyContent {
     media_type,
     media: slides,
     document,
+    unknown,
     is_complete: missing.length === 0,
     missing,
   };

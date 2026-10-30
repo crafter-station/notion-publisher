@@ -3,9 +3,13 @@ import { test } from 'node:test';
 import { extractPostlyContent } from './notion.service';
 import {
   collectMediaFromProps,
+  CONSERVATIVE_NO_RULE_MAX,
+  fileBasename,
+  inferMediaType,
   orderMediaSlides,
   planNetworkMedia,
   planPostlyCarousel,
+  UNKNOWN_EXTENSION_REASON,
 } from './postly-carousel';
 
 function files(name: string, items: Array<{ url: string; name?: string }>) {
@@ -103,16 +107,19 @@ test('X and Bluesky trim to 4 and keep slide order', () => {
   assert.equal(bsky.media.length, 4);
 });
 
-test('Pinterest rejects 1 slide and trims above 5', () => {
+test('Pinterest accepts 1 image as a pin and trims above 5', () => {
   const one = collectMediaFromProps({ ...files('Image', [jpeg(1)]) }).slides;
+  const two = collectMediaFromProps({ ...files('Image', [jpeg(1), jpeg(2)]) }).slides;
   const six = collectMediaFromProps({
     ...files('Image', [jpeg(1), jpeg(2), jpeg(3), jpeg(4), jpeg(5), jpeg(6)]),
   }).slides;
-  const rejected = planNetworkMedia(one, undefined, 'pinterest');
+  const pin = planNetworkMedia(one, undefined, 'pinterest');
+  const carousel = planNetworkMedia(two, undefined, 'pinterest');
   const trimmed = planNetworkMedia(six, undefined, 'pinterest');
-  assert.equal(rejected.status, 'rejected');
-  assert.equal(rejected.reason, 'below_min:2');
-  assert.equal(rejected.media.length, 0);
+  assert.equal(pin.status, 'accepted');
+  assert.equal(pin.media.length, 1);
+  assert.equal(carousel.status, 'accepted');
+  assert.equal(carousel.media.length, 2);
   assert.equal(trimmed.status, 'trimmed');
   assert.equal(trimmed.reason, 'trimmed_to_max:5');
   assert.equal(trimmed.media.length, 5);
@@ -223,4 +230,175 @@ test('extractPostlyContent reads every Image file into media[]', () => {
   );
   assert.equal(content.media_url, 'https://cdn.example/01-slide.jpg');
   assert.equal(content.document, undefined);
+});
+
+test('URL file names sort by decoded path basename, ignoring query', () => {
+  const collected = collectMediaFromProps({
+    ...files('Image', [
+      { url: 'https://cdn.example/path/02-b.jpg?sig=zz', name: 'https://cdn.example/path/02-b.jpg?sig=zz' },
+      { url: 'https://cdn.example/path/01-a.jpg?sig=aa', name: 'https://cdn.example/path/01-a.jpg?sig=aa' },
+    ]),
+  });
+  assert.equal(fileBasename('https://cdn.example/path/02-b.jpg?sig=zz', 'https://cdn.example/path/02-b.jpg?sig=zz'), '02-b.jpg');
+  assert.deepEqual(
+    collected.slides.map(s => fileBasename(s.name, s.url)),
+    ['01-a.jpg', '02-b.jpg']
+  );
+});
+
+test('.mov is video/quicktime and unknown extensions are rejected', () => {
+  assert.equal(inferMediaType('clip.mov', 'https://cdn.example/clip.mov'), 'video/quicktime');
+  assert.equal(inferMediaType('file', 'https://cdn.example/file'), null);
+  const collected = collectMediaFromProps({
+    ...files('Image', [
+      { url: 'https://cdn.example/file', name: 'file' },
+      { url: 'https://cdn.example/ok.jpg', name: 'ok.jpg' },
+    ]),
+  });
+  assert.equal(collected.slides.length, 1);
+  assert.equal(collected.slides[0].type, 'image/jpeg');
+  assert.equal(collected.unknown.length, 1);
+  assert.equal(collected.unknown[0].reason, UNKNOWN_EXTENSION_REASON);
+});
+
+test('2+ images ignore video and GIF; 1 image + 1 video keeps the video', () => {
+  const carouselWins = collectMediaFromProps({
+    ...files('Image', [jpeg(1), jpeg(2)]),
+    ...files('Video', [{ url: 'https://cdn.example/clip.mp4', name: 'clip.mp4' }]),
+    ...files('GIF', [{ url: 'https://cdn.example/loop.gif', name: 'loop.gif' }]),
+  });
+  assert.deepEqual(
+    carouselWins.slides.map(s => s.source),
+    ['image', 'image']
+  );
+
+  const videoWins = collectMediaFromProps({
+    ...files('Image', [jpeg(1)]),
+    ...files('Video', [{ url: 'https://cdn.example/clip.mp4', name: 'clip.mp4' }]),
+  });
+  assert.equal(videoWins.slides.length, 1);
+  assert.equal(videoWins.slides[0].type, 'video/mp4');
+  assert.equal(videoWins.slides[0].source, 'video');
+});
+
+test('lone video is accepted on Instagram, Facebook, Pinterest and LinkedIn', () => {
+  const slides = collectMediaFromProps({
+    ...files('Video', [{ url: 'https://cdn.example/clip.mp4', name: 'clip.mp4' }]),
+  }).slides;
+  for (const identifier of ['instagram', 'facebook', 'pinterest', 'linkedin']) {
+    const plan = planNetworkMedia(slides, undefined, identifier);
+    assert.equal(plan.status, 'accepted', identifier);
+    assert.equal(plan.media.length, 1, identifier);
+    assert.equal(plan.media[0].type, 'video/mp4', identifier);
+  }
+});
+
+test('Threads keeps JPEG/PNG carousel and drops GIF', () => {
+  const slides = collectMediaFromProps({
+    ...files('Image', [
+      { url: 'https://cdn.example/01.jpg', name: '01.jpg' },
+      { url: 'https://cdn.example/02.png', name: '02.png' },
+      { url: 'https://cdn.example/03.gif', name: '03.gif' },
+    ]),
+  }).slides;
+  const threads = planNetworkMedia(slides, undefined, 'threads');
+  assert.equal(threads.status, 'trimmed');
+  assert.deepEqual(
+    threads.media.map(m => m.type),
+    ['image/jpeg', 'image/png']
+  );
+  assert.equal(threads.dropped[0].reason, 'format_not_allowed');
+});
+
+test('TikTok photo accepts JPEG/WebP up to 35, rejects PNG/GIF, video goes alone', () => {
+  const photos = collectMediaFromProps({
+    ...files('Image', [
+      { url: 'https://cdn.example/01.jpg', name: '01.jpg' },
+      { url: 'https://cdn.example/02.webp', name: '02.webp' },
+      { url: 'https://cdn.example/03.png', name: '03.png' },
+    ]),
+  }).slides;
+  const photoPlan = planNetworkMedia(photos, undefined, 'tiktok');
+  assert.equal(photoPlan.status, 'trimmed');
+  assert.deepEqual(
+    photoPlan.media.map(m => m.type),
+    ['image/jpeg', 'image/webp']
+  );
+
+  const many = collectMediaFromProps({
+    ...files(
+      'Image',
+      Array.from({ length: 36 }, (_, i) => jpeg(i + 1))
+    ),
+  }).slides;
+  const trimmed = planNetworkMedia(many, undefined, 'tiktok');
+  assert.equal(trimmed.status, 'trimmed');
+  assert.equal(trimmed.reason, 'trimmed_to_max:35');
+  assert.equal(trimmed.media.length, 35);
+
+  const video = collectMediaFromProps({
+    ...files('Video', [{ url: 'https://cdn.example/clip.mp4', name: 'clip.mp4' }]),
+  }).slides;
+  const videoPlan = planNetworkMedia(video, undefined, 'tiktok');
+  assert.equal(videoPlan.status, 'accepted');
+  assert.equal(videoPlan.media[0].type, 'video/mp4');
+});
+
+test('Telegram albums cap at 10 and GIF goes alone', () => {
+  const album = collectMediaFromProps({
+    ...files(
+      'Image',
+      Array.from({ length: 12 }, (_, i) => jpeg(i + 1))
+    ),
+  }).slides;
+  const trimmed = planNetworkMedia(album, undefined, 'telegram');
+  assert.equal(trimmed.status, 'trimmed');
+  assert.equal(trimmed.reason, 'trimmed_to_max:10');
+  assert.equal(trimmed.media.length, 10);
+
+  const withGif = collectMediaFromProps({
+    ...files('Image', [
+      jpeg(1),
+      { url: 'https://cdn.example/loop.gif', name: 'loop.gif' },
+    ]),
+  }).slides;
+  const gifAlone = planNetworkMedia(withGif, undefined, 'telegram');
+  assert.equal(gifAlone.status, 'trimmed');
+  assert.equal(gifAlone.media.length, 1);
+  assert.equal(gifAlone.media[0].type, 'image/gif');
+  assert.equal(gifAlone.dropped.some(d => d.reason === 'gif_alone'), true);
+});
+
+test('WhatsApp and GBP keep one JPEG/PNG and reject GIF', () => {
+  const two = collectMediaFromProps({ ...files('Image', [jpeg(1), jpeg(2)]) }).slides;
+  const gif = collectMediaFromProps({
+    ...files('Image', [{ url: 'https://cdn.example/loop.gif', name: 'loop.gif' }]),
+  }).slides;
+  for (const identifier of ['whatsapp', 'googleMyBusiness']) {
+    const trimmed = planNetworkMedia(two, undefined, identifier);
+    assert.equal(trimmed.status, 'trimmed', identifier);
+    assert.equal(trimmed.reason, 'trimmed_to_max:1', identifier);
+    assert.equal(trimmed.media.length, 1, identifier);
+    const rejected = planNetworkMedia(gif, undefined, identifier);
+    assert.equal(rejected.status, 'rejected', identifier);
+    assert.equal(rejected.reason, 'no_allowed_media', identifier);
+  }
+});
+
+test('networks without a rule use a conservative cap reported as no_rule', () => {
+  const slides = collectMediaFromProps({
+    ...files(
+      'Image',
+      Array.from({ length: 25 }, (_, i) => jpeg(i + 1))
+    ),
+  }).slides;
+  assert.equal(slides.length, 25);
+  const youtube = planNetworkMedia(slides, undefined, 'youtube');
+  assert.equal(youtube.status, 'trimmed');
+  assert.equal(youtube.reason, 'no_rule');
+  assert.equal(youtube.media.length, CONSERVATIVE_NO_RULE_MAX);
+  assert.equal(youtube.dropped.every(d => d.reason === 'no_rule'), true);
+  const wordpress = planNetworkMedia(slides, undefined, 'wordpress');
+  assert.equal(wordpress.reason, 'no_rule');
+  assert.equal(wordpress.media.length, CONSERVATIVE_NO_RULE_MAX);
 });

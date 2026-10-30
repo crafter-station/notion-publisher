@@ -2,6 +2,8 @@ import { PostlyPlatformPost, PostlyService, PostlyTargetPlatform } from '../serv
 import { updatePostlyMetadata, PostlyContent, FinalStatus, PostlyPublishStatus } from '../services/notion.service';
 import {
   carouselNetworkIds,
+  formatNetworkPlanLog,
+  isVideoType,
   planPostlyCarousel,
   PostlyCarouselPlan,
   slidesToPostlyMedia,
@@ -22,7 +24,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const execFileAsync = promisify(execFile);
 
 async function resolveVideoCoverKeyFrameSeconds(content: PostlyContent) {
-  if (content.media_type !== 'video/mp4' || !content.media_url) return undefined;
+  if (!isVideoType(content.media_type) || !content.media_url) return undefined;
 
   const parsedDuration = await resolveMp4DurationSeconds(content.media_url);
   if (parsedDuration) {
@@ -165,7 +167,7 @@ export function buildPostlyPublishPayload(
   options: { pinterestCoverKeyFrame?: number } = {}
 ): PostlyPublishPayload {
   const identifiers = carouselNetworkIds(targetPlatforms.map(p => p.identifier));
-  const plan = planPostlyCarousel(content.media || [], content.document, identifiers);
+  const plan = planPostlyCarousel(content.media || [], content.document, identifiers, content.unknown || []);
   const accepted = targetPlatforms.filter(p => plan.networks[p.identifier]?.status !== 'rejected');
   const platform_posts = buildPlatformPosts(content, accepted, plan, options.pinterestCoverKeyFrame);
   return {
@@ -217,15 +219,16 @@ function buildPlatformPosts(
   push('instagram', content.caption_instagram, {
     share_to_feed: true,
     share_as_story: false,
-    share_as_reel: instagramCount === 1 && content.media_type === 'video/mp4',
+    share_as_reel: instagramCount === 1 && isVideoType(plan.networks.instagram?.media[0]?.type),
     add_first_comment: !!content.first_comment,
     ...firstCommentSettings,
   });
   push('facebook', content.caption_facebook, {
     share_to_feed: true,
-    share_as_carousel: facebookCount > 1,
+    // Postly Linked Carousel needs a carousel[] with picture_url. Multi-photo is a regular feed post.
+    share_as_carousel: false,
     share_as_story: false,
-    share_as_reel: facebookCount === 1 && content.media_type === 'video/mp4',
+    share_as_reel: facebookCount === 1 && isVideoType(plan.networks.facebook?.media[0]?.type),
     ...firstCommentSettings,
   });
   push('linkedin', content.caption_linkedin, {
@@ -286,21 +289,43 @@ function buildPlatformPosts(
   return out;
 }
 
+export function formatPostlyPublishLog(
+  plan: PostlyCarouselPlan,
+  results: Array<{ platform_name: string; status: string; external_id?: string; error?: string }> = []
+): string {
+  const resultByName = new Map(results.map(r => [r.platform_name, r]));
+  const lines: string[] = [];
+  const planLog = formatNetworkPlanLog(plan);
+  if (planLog) lines.push(planLog);
+  for (const network of Object.values(plan.networks)) {
+    const result = resultByName.get(network.identifier);
+    if (!result) continue;
+    const id = result.external_id || (result.error ? `ERR: ${String(result.error).slice(0, 100)}` : result.status);
+    lines.push(`${network.identifier}: ${id}`);
+  }
+  return lines.join('\n');
+}
+
 export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
   const postly = new PostlyService();
   const { notion_page_id, workspace_id, target_platforms, content } = params;
+  let persistLog = '';
 
   try {
     console.log(`[POSTLY-USE-CASE] Starting pipeline for Notion page: ${notion_page_id}`);
     console.log(`[POSTLY-USE-CASE] Target platforms (${target_platforms.length}): ${target_platforms.map(p => `${p.identifier}:${p.id}`).join(', ')}`);
     console.log(`[POSTLY-USE-CASE] Media: ${content.media_type} ${content.media_url} slides=${(content.media || []).length}`);
 
-    // PHASE 1 — Mark in-progress on Notion
-    await updatePostlyMetadata(notion_page_id, { postly_status: 'In progress' });
-
-    // PHASE 2 — Build payload and send
+    // PHASE 2 first so the per-network plan is on Notion before Postly is called.
     const pinterestCoverKeyFrame = await resolveVideoCoverKeyFrameSeconds(content);
     const payload = buildPostlyPublishPayload(content, target_platforms, { pinterestCoverKeyFrame });
+    persistLog = formatPostlyPublishLog(payload.plan);
+
+    await updatePostlyMetadata(notion_page_id, {
+      postly_status: 'In progress',
+      post_id: persistLog,
+    });
+
     console.log(`[POSTLY-USE-CASE] Phase 2: posting (${payload.platform_posts.length} per-platform overrides)`);
     logPublishDiagnostics(content, payload.target_platforms, payload.platform_posts);
     logCarouselPlan(payload.plan);
@@ -394,18 +419,12 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     const igResult = publishedResults.find(r => r.platform_name === 'instagram');
     const firstUrl = igResult?.url || publishedResults[0]?.url;
 
-    // Multi-line "<platform>: <post_id|error>" string for Post ID column
-    const postIdLog = finalResults
-      .map(r => {
-        const id = r.external_id || (r.error ? `ERR: ${String(r.error).slice(0, 100)}` : r.status);
-        return `${r.platform_name}: ${id}`;
-      })
-      .join('\n');
+    persistLog = formatPostlyPublishLog(payload.plan, finalResults);
 
     await updatePostlyMetadata(notion_page_id, {
       postly_status: postlyStatus,
       postly_url: firstUrl,
-      post_id: postIdLog,
+      post_id: persistLog,
       final_status: finalStatus,
     });
 
@@ -417,6 +436,7 @@ export async function executePublishPostlyUseCase(params: PublishPostlyParams) {
     await updatePostlyMetadata(notion_page_id, {
       postly_status: 'Failed',
       final_status: 'Error',
+      ...(persistLog ? { post_id: persistLog } : {}),
     });
     throw error;
   }

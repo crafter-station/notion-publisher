@@ -33,7 +33,7 @@ export class PostlyConnector implements Connector<LegacyPageInput> {
     if (!content.is_complete) throw new Error(`Incomplete Postly: ${content.missing.join('; ')}`);
     if (options.dryRun) {
       const identifiers = carouselNetworkIds(resolveDefaultPostlyTargetPlatforms().map(p => p.identifier));
-      const plan = planPostlyCarousel(content.media, content.document, identifiers);
+      const plan = planPostlyCarousel(content.media, content.document, identifiers, content.unknown);
       return dry({
         kind: 'postly',
         content,
