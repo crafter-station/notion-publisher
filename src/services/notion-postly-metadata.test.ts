@@ -24,7 +24,7 @@ test('truncateNotionRichText cuts on a line, not mid-plan', () => {
   assert.equal(truncated.includes(tail), false);
 });
 
-test('updatePostlyMetadata writes IDs in full and truncates only Postly Plan', async () => {
+test('updatePostlyMetadata truncates a long plan on a line boundary', async () => {
   const patches: Array<Record<string, unknown>> = [];
   globalThis.fetch = (async (_url, init) => {
     patches.push(JSON.parse(String(init?.body || '{}')));
@@ -32,8 +32,9 @@ test('updatePostlyMetadata writes IDs in full and truncates only Postly Plan', a
   }) as typeof fetch;
 
   const longPlan = `${'instagram: accepted:accepted kept=1\n'.repeat(120)}facebook: trimmed:filtered_incompatible kept=4`;
-  const ids = Array.from({ length: 30 }, (_, i) => `network-${i}: id-${'x'.repeat(20)}${i}`).join('\n');
+  const ids = Array.from({ length: 8 }, (_, i) => `network-${i}: id-${i}`).join('\n');
   assert.ok(longPlan.length > NOTION_RICH_TEXT_LIMIT);
+  assert.ok(ids.length <= NOTION_RICH_TEXT_LIMIT);
 
   const result = await updatePostlyMetadata('page-1', {
     postly_status: 'Published',
@@ -48,7 +49,48 @@ test('updatePostlyMetadata writes IDs in full and truncates only Postly Plan', a
   const plan = properties['Postly Plan'].rich_text?.[0].text.content || '';
   assert.ok(plan.length <= NOTION_RICH_TEXT_LIMIT);
   assert.notEqual(plan, longPlan);
-  assert.equal(properties['Post ID'].rich_text?.[0].text.content.includes('id-'), true);
+});
+
+test('updatePostlyMetadata truncates a >2000-char Post ID on a line boundary', async () => {
+  const patches: Array<Record<string, unknown>> = [];
+  globalThis.fetch = (async (_url, init) => {
+    patches.push(JSON.parse(String(init?.body || '{}')));
+    return new Response('{}', { status: 200 });
+  }) as typeof fetch;
+
+  const ids = Array.from({ length: 20 }, (_, i) => {
+    const name = `network-${String(i).padStart(2, '0')}`;
+    return `${name}: ERR: ${'e'.repeat(100)}`;
+  }).join('\n');
+  assert.ok(ids.length > NOTION_RICH_TEXT_LIMIT);
+
+  const result = await updatePostlyMetadata('page-long-ids', {
+    postly_status: 'Failed',
+    postly_url: 'https://example.com/post',
+    post_id: ids,
+    postly_plan: 'instagram: rejected:no_media kept=0',
+    final_status: 'Error',
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(patches.length, 1);
+  const properties = patches[0].properties as Record<
+    string,
+    { rich_text?: Array<{ text: { content: string } }>; status?: unknown; url?: unknown }
+  >;
+  const postedIds = properties['Post ID'].rich_text?.[0].text.content || '';
+  assert.ok(postedIds.length <= NOTION_RICH_TEXT_LIMIT);
+  assert.notEqual(postedIds, ids);
+  assert.equal(postedIds.includes('\n'), true);
+  assert.equal(postedIds.endsWith('\n'), false);
+  const originalLines = ids.split('\n');
+  const postedLines = postedIds.split('\n');
+  assert.ok(postedLines.length < originalLines.length);
+  assert.deepEqual(postedLines, originalLines.slice(0, postedLines.length));
+  assert.ok(properties['Postly Publish Status']);
+  assert.ok(properties['Postly URL']);
+  assert.ok(properties['Postly Plan']);
+  assert.ok(properties['Status']);
 });
 
 test('queue and missing notes go to Postly Plan, not Post ID', async () => {

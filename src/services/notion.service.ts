@@ -412,11 +412,11 @@ export function truncateNotionRichText(value: string, max = NOTION_RICH_TEXT_LIM
  * Writes Postly publishing status back to Publisher Notion page.
  * - `Postly Publish Status` (status): pipeline phase (Not started / In progress / Published / Failed)
  * - `Postly URL` (url): first published URL (IG preferred, else any platform)
- * - `Post ID` (rich_text): multi-line `<network>: <id>` only. Never truncated.
- * - `Postly Plan` (rich_text): per-network plan, queue notes, missing-field notes. Truncated at 2000.
+ * - `Post ID` (rich_text): multi-line `<network>: <id>` only. Truncated at 2000 on a line boundary.
+ * - `Postly Plan` (rich_text): per-network plan, queue notes, missing-field notes. Truncated at 2000 on a line boundary.
  * - `Status` (status): aggregate — Published (EN) on full success, Error otherwise
  *
- * Each field is sent independently; a single property error doesn't abort the whole patch
+ * One PATCH sends every supplied field. A single over-limit rich_text value rejects the whole write
  * (we log warnings but never throw).
  */
 export async function updatePostlyMetadata(
@@ -450,7 +450,7 @@ export async function updatePostlyMetadata(
   }
   if (data.post_id !== undefined) {
     properties['Post ID'] = {
-      rich_text: [{ text: { content: data.post_id } }],
+      rich_text: [{ text: { content: truncateNotionRichText(data.post_id) } }],
     };
   }
   if (data.postly_plan !== undefined) {
