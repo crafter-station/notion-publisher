@@ -30,7 +30,7 @@ export const env = {
   GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
   /** Must be "true" AND resolveLiveGate().live to create a Release. Default off. */
   GITHUB_PUBLISH_LIVE: process.env.GITHUB_PUBLISH_LIVE || '',
-  /** Must be "true" AND resolveLiveGate().live to publish a Gumroad product. Default off. */
+  /** Must be "true" AND resolveLiveGate().live to publish or unpublish a Gumroad product. Default off. */
   GUMROAD_PUBLISH_LIVE: process.env.GUMROAD_PUBLISH_LIVE || '',
   /** Optional Composio — Reddit live; Eventbrite pending connect. Not required to boot. */
   COMPOSIO_API_KEY: process.env.COMPOSIO_API_KEY || '',

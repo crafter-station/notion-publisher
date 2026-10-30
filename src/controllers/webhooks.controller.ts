@@ -901,13 +901,19 @@ export const webhooksController = {
           return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
         }
 
+        const gate = resolveConnectorLiveGate(env.GUMROAD_PUBLISH_LIVE);
+        if (gate.dryRun) {
+          console.log(`[INFO] Gumroad unpublish dry-run (notionPageId: ${notionPageId}, reason=${gate.reason})`);
+          return connectorDryRun(res, 'Gumroad', notionPageId, gate.reason);
+        }
+
         console.log(`[INFO] Starting background job for executeUnpublishProductUseCase (notionPageId: ${notionPageId})`);
         executeUnpublishProductUseCase(notionPageId, payload.data).catch(err => {
           console.error('[ERROR] Background job failed', err);
         });
 
         res.writeHead(202, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: 'Accepted unpublish task', notionPageId }));
+        res.end(JSON.stringify({ message: 'Accepted unpublish task', notionPageId, dry_run: false }));
       } catch (err: any) {
         res.writeHead(500);
         res.end(JSON.stringify({ error: err.message }));

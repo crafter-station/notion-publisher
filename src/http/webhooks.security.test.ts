@@ -26,6 +26,7 @@ const GATED_DRY_RUN = [
   '/webhooks/publish-luma',
   '/webhooks/publish-github',
   '/webhooks/publish-gumroad',
+  '/webhooks/unpublish-gumroad',
 ] as const;
 
 const originalFetch = globalThis.fetch;

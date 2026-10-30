@@ -23,7 +23,7 @@ export const DISTRIBUTORS: DistributorCapability[] = [
     status: 'live',
     envKeys: ['GUMROAD_TOKEN', 'GUMROAD_PUBLISH_LIVE'],
     notes:
-      'Products layer. POST /webhooks/publish-gumroad is dry-run unless resolveLiveGate is live and GUMROAD_PUBLISH_LIVE=true. Digital storefront: draft/create/upload/publish/unpublish + autopilot.',
+      'Products layer. POST /webhooks/publish-gumroad and POST /webhooks/unpublish-gumroad are dry-run unless resolveLiveGate is live and GUMROAD_PUBLISH_LIVE=true. Digital storefront: draft/create/upload/publish/unpublish + autopilot.',
   },
   {
     id: 'github',
