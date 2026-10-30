@@ -8,6 +8,7 @@
  */
 
 import { contentOsPublishLiveEnabled } from '../config/content-os';
+import { livePublishAllowed } from './dry-run';
 
 export type LiveGateInput = {
   cuentaEstado?: string;
@@ -35,6 +36,26 @@ export function normalizeModo(raw?: string | null): 'dry-run' | 'draft' | 'live'
   if (v === 'live') return 'live';
   if (v === 'draft') return 'draft';
   return 'dry-run';
+}
+
+/**
+ * Alias-webhook gate: resolveLiveGate() plus a per-connector *_PUBLISH_LIVE
+ * flag (off by default). Missing Content OS fields keep the result dry-run.
+ */
+export function resolveConnectorLiveGate(
+  connectorPublishLive: string | undefined,
+  input: LiveGateInput = {}
+): LiveGateDecision {
+  const gate = resolveLiveGate(input);
+  if (!livePublishAllowed(connectorPublishLive)) {
+    return {
+      ...gate,
+      live: false,
+      dryRun: true,
+      reason: gate.live ? 'connector_flag_off' : gate.reason,
+    };
+  }
+  return gate;
 }
 
 export function resolveLiveGate(input: LiveGateInput = {}): LiveGateDecision {

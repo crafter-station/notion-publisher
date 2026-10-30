@@ -26,6 +26,7 @@ import {
   isGithubConfigured,
 } from '../services/github.service';
 import { env } from '../config/env';
+import { resolveConnectorLiveGate } from '../connectors/live-gate';
 import { createHttpNotionTransport } from '../readers/notion-transport';
 import { executePublishContentOsUseCase } from '../use-cases/publish-content-os.use-case';
 
@@ -37,6 +38,23 @@ function getHeaderValue(req: IncomingMessage, name: string) {
 function json(res: ServerResponse, status: number, body: unknown) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(body));
+}
+
+function connectorDryRun(
+  res: ServerResponse,
+  connector: string,
+  notion_page_id: string,
+  reason: string,
+  extra: Record<string, unknown> = {}
+) {
+  json(res, 202, {
+    message: `Accepted ${connector} dry-run (live gate closed, provider not called)`,
+    notion_page_id,
+    dry_run: true,
+    called_publish: false,
+    reason,
+    ...extra,
+  });
 }
 
 export const webhooksController = {
@@ -333,6 +351,12 @@ export const webhooksController = {
           return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
         }
 
+        const gate = resolveConnectorLiveGate(env.POSTLY_PUBLISH_LIVE);
+        if (gate.dryRun) {
+          console.log(`[INFO] Postly dry-run (notionPageId: ${notion_page_id}, reason=${gate.reason})`);
+          return connectorDryRun(res, 'Postly', notion_page_id, gate.reason);
+        }
+
         const { extractPostlyContent, getNotionPage, updatePostlyMetadata } = require('../services/notion.service');
         const pageData = await getNotionPage(notion_page_id).catch((err: any) => {
           console.warn(`[WARN] Could not fetch full Notion page for ${notion_page_id}; using webhook payload properties.`, err);
@@ -419,14 +443,19 @@ export const webhooksController = {
           return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
         }
 
-        // In a true enterprise setup, this might be sent to a BullMQ/SQS queue
+        const gate = resolveConnectorLiveGate(env.GUMROAD_PUBLISH_LIVE);
+        if (gate.dryRun) {
+          console.log(`[INFO] Gumroad dry-run (notionPageId: ${notionPageId}, reason=${gate.reason})`);
+          return connectorDryRun(res, 'Gumroad', notionPageId, gate.reason);
+        }
+
         console.log(`[INFO] Starting background job for executePublishProductUseCase (notionPageId: ${notionPageId})`);
-        executePublishProductUseCase(notionPageId, payload.data).catch(err => {
+        executePublishProductUseCase(notionPageId, payload.data, { publishLive: true }).catch(err => {
           console.error('[ERROR] Background job failed', err);
         });
 
         res.writeHead(202, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message: 'Accepted creation task', notionPageId }));
+        res.end(JSON.stringify({ message: 'Accepted creation task', notionPageId, dry_run: false }));
       } catch (err: any) {
         res.writeHead(500);
         res.end(JSON.stringify({ error: err.message }));
@@ -467,6 +496,19 @@ export const webhooksController = {
     req.on('data', chunk => (body += chunk.toString()));
     req.on('end', async () => {
       try {
+        const payload = JSON.parse(body || '{}');
+        const notion_page_id = payload.data?.id;
+        if (!notion_page_id) {
+          res.writeHead(400);
+          return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
+        }
+
+        const gate = resolveConnectorLiveGate(env.LUMA_PUBLISH_LIVE);
+        if (gate.dryRun) {
+          console.log(`[INFO] Luma dry-run (notionPageId: ${notion_page_id}, reason=${gate.reason})`);
+          return connectorDryRun(res, 'Luma', notion_page_id, gate.reason);
+        }
+
         if (!isLumaConfigured()) {
           res.writeHead(503);
           return res.end(
@@ -475,13 +517,6 @@ export const webhooksController = {
               docs: 'https://docs.luma.com/reference/getting-started-with-your-api',
             })
           );
-        }
-
-        const payload = JSON.parse(body || '{}');
-        const notion_page_id = payload.data?.id;
-        if (!notion_page_id) {
-          res.writeHead(400);
-          return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
         }
 
         const {
@@ -542,16 +577,22 @@ export const webhooksController = {
     req.on('data', chunk => (body += chunk.toString()));
     req.on('end', async () => {
       try {
-        if (!isGithubConfigured()) {
-          res.writeHead(503);
-          return res.end(JSON.stringify({ error: 'GITHUB_TOKEN not configured' }));
-        }
-
         const payload = JSON.parse(body || '{}');
         const notion_page_id = payload.data?.id;
         if (!notion_page_id) {
           res.writeHead(400);
           return res.end(JSON.stringify({ error: 'Missing data.id in Notion webhook payload' }));
+        }
+
+        const gate = resolveConnectorLiveGate(env.GITHUB_PUBLISH_LIVE);
+        if (gate.dryRun) {
+          console.log(`[INFO] GitHub dry-run (notionPageId: ${notion_page_id}, reason=${gate.reason})`);
+          return connectorDryRun(res, 'GitHub', notion_page_id, gate.reason);
+        }
+
+        if (!isGithubConfigured()) {
+          res.writeHead(503);
+          return res.end(JSON.stringify({ error: 'GITHUB_TOKEN not configured' }));
         }
 
         const {
@@ -701,7 +742,8 @@ export const webhooksController = {
         }
 
         const wantsLive = reqUrl.searchParams.get('live') === 'true';
-        const dryRun = !wantsLive || env.COMPOSIO_PUBLISH_LIVE !== 'true';
+        const gate = resolveConnectorLiveGate(env.COMPOSIO_PUBLISH_LIVE);
+        const dryRun = !wantsLive || gate.dryRun;
 
         console.log(
           `[INFO] Starting Composio job (notionPageId: ${notion_page_id}, reddit=${wantReddit}, eventbrite=${wantEventbrite}, dryRun=${dryRun})`

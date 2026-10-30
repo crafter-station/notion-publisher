@@ -1,96 +1,17 @@
-import http from 'http';
 import { env } from './config/env';
-import { webhooksController } from './controllers/webhooks.controller';
+import { requireWebhookToken, startPublisherHttpServer } from './http/create-server';
 import { startGumroadAutopilotScheduler } from './schedulers/gumroad-autopilot.scheduler';
 import { startPostlyQueueScheduler } from './schedulers/postly-queue.scheduler';
 
-let currentPort = env.PORT;
-
-// Simple Node.js HTTP server. Ready to deploy to Render / Heroku / AWS.
-function startServer(port: number) {
-  // Create a fresh server instance for each attempt
-  const server = http.createServer(async (req, res) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} accessed.`);
-    const path = req.url?.split('?')[0];
-
-    if (req.method === 'GET') {
-      if (path === '/capabilities') {
-        return webhooksController.handleCapabilities(req, res);
-      }
-      if (path === '/capabilities/postly') {
-        return webhooksController.handleCapabilitiesPostly(req, res);
-      }
-      if (path === '/capabilities/skool') {
-        return webhooksController.handleCapabilitiesSkool(req, res);
-      }
-      if (path === '/capabilities/github') {
-        return webhooksController.handleCapabilitiesGithub(req, res);
-      }
-      if (path === '/capabilities/composio') {
-        return webhooksController.handleCapabilitiesComposio(req, res);
-      }
-      if (path === '/capabilities/postiz') {
-        return webhooksController.handleCapabilitiesPostiz(req, res);
-      }
-      if (path === '/capabilities/typefully') {
-        return webhooksController.handleCapabilitiesTypefully(req, res);
-      }
-      if (path === '/capabilities/restream') {
-        return webhooksController.handleCapabilitiesRestream(req, res);
-      }
-    }
-
-    if (req.method === 'POST') {
-      if (path === '/webhooks/publish') {
-        return webhooksController.handlePublish(req, res);
-      }
-      if (path === '/webhooks/publish-gumroad') {
-        return webhooksController.handlePublishGumroad(req, res);
-      }
-      if (path === '/webhooks/unpublish-gumroad') {
-        return webhooksController.handleUnpublishGumroad(req, res);
-      }
-      if (path === '/webhooks/publish-postly') {
-        return webhooksController.handlePublishPostly(req, res);
-      }
-      if (path === '/webhooks/publish-luma') {
-        return webhooksController.handlePublishLuma(req, res);
-      }
-      if (path === '/webhooks/publish-github') {
-        return webhooksController.handlePublishGithub(req, res);
-      }
-      if (path === '/webhooks/publish-composio') {
-        return webhooksController.handlePublishComposio(req, res);
-      }
-      if (path === '/webhooks/publish-postiz') {
-        return webhooksController.handlePublishPostiz(req, res);
-      }
-      if (path === '/webhooks/publish-typefully') {
-        return webhooksController.handlePublishTypefully(req, res);
-      }
-      if (path === '/webhooks/publish-restream') {
-        return webhooksController.handlePublishRestream(req, res);
-      }
-    }
-
-    res.writeHead(404);
-    res.end('Not Found');
-  });
-
-  server.on('error', (err: any) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`Port ${port} is in use, trying ${port + 1}...`);
-      startServer(port + 1);
-    } else {
-      console.error('Server error:', err);
-    }
-  });
-
-  server.listen(port, () => {
-    console.log(`Gumroad Webhook Orchestrator listening on port ${port}`);
-  });
+try {
+  requireWebhookToken(env.WEBHOOK_TOKEN);
+} catch (err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(`\n❌ [FATAL ERROR] ${message}`);
+  console.error('Set WEBHOOK_TOKEN to a secret of at least 32 characters.\n');
+  process.exit(1);
 }
 
-startServer(currentPort);
+startPublisherHttpServer(env.PORT, env.WEBHOOK_TOKEN);
 startGumroadAutopilotScheduler();
 startPostlyQueueScheduler();

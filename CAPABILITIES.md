@@ -5,9 +5,9 @@
 | Layer | Surfaces |
 |---|---|
 | **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
-| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live**), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**live** · dry-run), Restream (**live** · dry-run only) |
-| **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live**), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
-| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live**), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**live** · dry-run), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run) |
+| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live** · dry-run), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**live** · dry-run), Restream (**live** · dry-run only) |
+| **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live** · dry-run), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · dry-run · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
+| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live** · dry-run), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**live** · dry-run), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
 
 **CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#notion-db-setup--one-database-views-by-source)**.
@@ -25,11 +25,11 @@ Self-check: `npm run capabilities:check`
 | | ID | Layer | Status | Site |
 |---|---|---|---|---|
 | <img src="docs/assets/logos/notion.png" width="18" alt=""> | `notion` *(CMS)* | CMS | **live** | [notion.so](https://www.notion.so/) |
-| <img src="docs/assets/logos/luma.png" width="18" alt=""> | `luma` | Events | **live** | [luma.com](https://luma.com/) |
-| <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | `gumroad` | Products | **live** | [gumroad.com](https://gumroad.com/) |
-| <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | **live** | [github.com](https://github.com/) |
+| <img src="docs/assets/logos/luma.png" width="18" alt=""> | `luma` | Events | **live** · dry-run | [luma.com](https://luma.com/) |
+| <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | `gumroad` | Products | **live** · dry-run | [gumroad.com](https://gumroad.com/) |
+| <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | **live** · dry-run | [github.com](https://github.com/) |
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | `myskool` | Products | **discover** | [myskool.xyz](https://myskool.xyz/) |
-| <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live** | [postly.ai](https://postly.ai/) |
+| <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live** · dry-run | [postly.ai](https://postly.ai/) |
 | <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | **live** · Reddit + Eventbrite | [composio.dev](https://composio.dev/) |
 | <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | **live** · dry-run | [typefully.com](https://typefully.com/) |
 | <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | **live** · dry-run | [postiz.com](https://postiz.com/) |
@@ -49,7 +49,7 @@ Self-check: `npm run capabilities:check`
 | `GET` | `/capabilities/typefully` |
 | `GET` | `/capabilities/restream` |
 
-### Postly (live)
+### Postly (live · dry-run default)
 
 | Family | Identifiers |
 |---|---|
@@ -61,7 +61,7 @@ Self-check: `npm run capabilities:check`
 
 ### Composio (live · Reddit + Eventbrite · dry-run default)
 
-Source Tag **`Composio`**. `POST /webhooks/publish-composio` (`?kind=self|link`, dry-run default; `?live=true` + `COMPOSIO_PUBLISH_LIVE=true` to execute). Discover: `GET /capabilities/composio`.
+Source Tag **`Composio`**. `POST /webhooks/publish-composio` (`?kind=self|link`, dry-run default; `?live=true` + `COMPOSIO_PUBLISH_LIVE=true` + `resolveLiveGate` to execute). Discover: `GET /capabilities/composio`.
 
 - Reddit: `REDDIT_CREATE_REDDIT_POST`
 - Eventbrite: `EVENTBRITE_CREATE_EVENT` (create only; no publish-event / tickets)
@@ -105,9 +105,11 @@ Create/schedule only: `POST https://api.restream.io/v2/user/events/new` (`stream
 
 Always dry-run — never calls Restream, never go-live. StreamYard excluded. Looping is a paid feature and is rejected. Env: `RESTREAM_ACCESS_TOKEN` (optional for dry-run), `RESTREAM_CLIENT_ID`, `RESTREAM_CLIENT_SECRET`, `RESTREAM_REFRESH_TOKEN`.
 
-### Luma (live)
+### Luma (live · dry-run default)
 
-Env: `LUMA_API_KEY` · webhook `POST /webhooks/publish-luma` · client `src/services/luma.service.ts`.
+Env: `LUMA_API_KEY`, `LUMA_PUBLISH_LIVE` · webhook `POST /webhooks/publish-luma` · client `src/services/luma.service.ts`.
+
+Dry-run is the default (`resolveLiveGate` + `LUMA_PUBLISH_LIVE=true`). No Luma call until both are live.
 
 Creates event from `Luma Title` / `Luma Start` (+ optional End / Location / Description / **Cover** via CDN upload). Writeback: `Luma Publish Status`, `Luma Event URL`. Update / tickets = out of v1.
 
@@ -115,11 +117,17 @@ Import mirror: `npm run luma:import-tnc`.
 
 Ngrok checklist: see README Luma section (button → `/webhooks/publish-luma`).
 
-### GitHub (live)
+### GitHub (live · dry-run default)
 
-Env: `GITHUB_TOKEN` · webhook `POST /webhooks/publish-github` · product owner **TheVeller** only.
+Env: `GITHUB_TOKEN`, `GITHUB_PUBLISH_LIVE` · webhook `POST /webhooks/publish-github` · product owner **TheVeller** only.
+
+Dry-run is the default (`resolveLiveGate` + `GITHUB_PUBLISH_LIVE=true`). No Release is created until both are live.
 
 Catalog: `GET /capabilities/github` · `npm run github:import-repos -- --owner=TheVeller`. Releases refuse non-TheVeller owners ([#5](https://github.com/crafter-station/notion-publisher/issues/5)). Ngrok checklist: README GitHub section.
+
+### Webhook auth
+
+Every `POST /webhooks/*` requires `Authorization: Bearer $WEBHOOK_TOKEN` (at least 32 characters, constant-time compare). The HTTP server exits on boot if the token is missing or short. `GET /capabilities*` is unchanged.
 
 ### Skool (discover)
 

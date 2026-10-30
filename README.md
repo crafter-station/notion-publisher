@@ -255,9 +255,11 @@ Per-source product/event/music fields stay under each distributor section below.
 
 ---
 
-## <img src="docs/assets/logos/luma.png" width="22" alt=""> Luma (live, events)
+## <img src="docs/assets/logos/luma.png" width="22" alt=""> Luma (live · dry-run default, events)
 
 Workshops, launches, calendar. Env: `LUMA_API_KEY` · webhook `POST /webhooks/publish-luma`.
+
+Dry-run is the default (`resolveLiveGate` + `LUMA_PUBLISH_LIVE`, off unless set). The webhook does not call Luma until both are live.
 
 **Channels:** Luma event page (single surface).
 
@@ -289,7 +291,7 @@ npm run luma:import-tnc   # mirrors five Aug-29 The Next Craft events → Publis
 1. `unset NOTION_DATABASE_ID …` if shell has stale IDs; `set -a && source .env && set +a`
 2. `npm run build && npm run dev` (note listening port)
 3. `ngrok http <port>`
-4. Notion → Publisher button **Publish in Luma** → automation → `POST https://<ngrok>/webhooks/publish-luma` (body must include `data.id` = page id)
+4. Notion → Publisher button **Publish in Luma** → automation → `POST https://<ngrok>/webhooks/publish-luma` with `Authorization: Bearer $WEBHOOK_TOKEN` (body must include `data.id` = page id)
 5. Fill `Luma Title` + `Luma Start` (+ optional cover) → click button → confirm `Luma Publish Status=Published` + `Luma Event URL`
 
 ---
@@ -329,15 +331,19 @@ Digital storefront for GPT-Chain JSON (and similar) files.
 
 **Daily flow:** fill title / landing / cover / thumbnail + paste JSON into `Template` → Notion automation → `POST /webhooks/publish-gumroad` → status + URLs sync back.
 
+Dry-run is the default (`resolveLiveGate` + `GUMROAD_PUBLISH_LIVE`, off unless set). The webhook does not call Gumroad until both are live.
+
 **Draft safety:** missing/invalid `Template` → Gumroad **draft** only; Notion `Unpublished`.
 
 **Unpublish:** `POST /webhooks/unpublish-gumroad`. **Autopilot:** `GUMROAD_AUTOPILOT_ENABLED=true`.
 
 ---
 
-### <img src="docs/assets/logos/github.png" width="22" alt=""> GitHub (live, products)
+### <img src="docs/assets/logos/github.png" width="22" alt=""> GitHub (live · dry-run default, products)
 
 Ship the same product as a **GitHub Release** (assets + notes) under **`TheVeller/` only**. Env: `GITHUB_TOKEN`.
+
+Dry-run is the default (`resolveLiveGate` + `GITHUB_PUBLISH_LIVE`, off unless set). The webhook does not create a Release (`draft:false` included) until both are live.
 
 **Channels:** GitHub Releases (downloadable assets). Catalog metadata import for TheVeller + orgs.
 
@@ -374,7 +380,7 @@ Idempotent on `GitHub Repo` == `owner/repo`. Status → `Mapped`.
 
 1. `npm run build && npm run dev`
 2. `ngrok http <port>`
-3. Notion button → `POST https://<ngrok>/webhooks/publish-github` (optional `?draft=true`)
+3. Notion button → `POST https://<ngrok>/webhooks/publish-github` with `Authorization: Bearer $WEBHOOK_TOKEN` (optional `?draft=true`)
 4. Confirm `GitHub Publish Status=Published` + `GitHub Release URL`
 
 Discover: `GET /capabilities/github?owner=TheVeller`
@@ -446,7 +452,11 @@ Uses the **shared Social model** above. Live parser keys today:
 
 **Outputs:** `Status` (aggregate; errors → `Error`), `Postly Publish Status` (pipeline), `Postly URL` (first published URL), `Post ID` (multi-platform log). Legacy names `Instagram Status` / `Instagram URL` / option `Postly Error` were renamed in Publisher.
 
-**Targeting:** `?target=0` / `?target=0,2`. **Polling:** backoff `[30s, 10s, 20s, 30s, 40s, 50s, 60s]`. **Queue:** `POSTLY_QUEUE_ENABLED=true`.
+**Targeting:** `?target=0` / `?target=0,2`. **Polling:** backoff `[30s, 10s, 20s, 30s, 40s, 50s, 60s]`.
+
+Dry-run is the default (`resolveLiveGate` + `POSTLY_PUBLISH_LIVE`, off unless set). The webhook and the Postly queue do not call Postly until both are live.
+
+**Queue:** `POSTLY_QUEUE_ENABLED` is off by default. Set `POSTLY_QUEUE_ENABLED=true` only as an extra switch. The scheduler still stays idle unless the live gate and `POSTLY_PUBLISH_LIVE` are open.
 
 ---
 
@@ -572,14 +582,16 @@ Env: `RESTREAM_ACCESS_TOKEN` (optional for dry-run), plus OAuth extras `RESTREAM
 
 ## HTTP surface
 
+Every `POST /webhooks/*` requires `Authorization: Bearer $WEBHOOK_TOKEN` (`WEBHOOK_TOKEN` ≥ 32 characters; the server refuses to start without it). A missing or bad token returns `401`.
+
 | Method | Path | Role |
 |---|---|---|
 | `POST` | `/webhooks/publish` | Content OS: Pieza → ready Publicaciones (dry-run default) |
-| `POST` | `/webhooks/publish-gumroad` | Create / publish product |
+| `POST` | `/webhooks/publish-gumroad` | Gumroad dry-run (default); live needs `GUMROAD_PUBLISH_LIVE` + `resolveLiveGate` |
 | `POST` | `/webhooks/unpublish-gumroad` | Unpublish product |
-| `POST` | `/webhooks/publish-postly` | Social publish (`?target=` optional) |
-| `POST` | `/webhooks/publish-luma` | Create Luma event from Notion |
-| `POST` | `/webhooks/publish-github` | Create TheVeller Release (+ asset; `?draft=true`) |
+| `POST` | `/webhooks/publish-postly` | Postly dry-run (default); live needs `POSTLY_PUBLISH_LIVE` + `resolveLiveGate` |
+| `POST` | `/webhooks/publish-luma` | Luma dry-run (default); live needs `LUMA_PUBLISH_LIVE` + `resolveLiveGate` |
+| `POST` | `/webhooks/publish-github` | GitHub dry-run (default); live needs `GITHUB_PUBLISH_LIVE` + `resolveLiveGate` |
 | `POST` | `/webhooks/publish-postiz` | Postiz dry-run (default) or create (`?live=true` + `POSTIZ_PUBLISH_LIVE`) |
 | `POST` | `/webhooks/publish-typefully` | Typefully dry-run draft (default); never `publish_at` |
 | `POST` | `/webhooks/publish-restream` | Restream create/schedule dry-run only |
@@ -605,6 +617,7 @@ npm run capabilities:check
 
 ```bash
 ngrok http 3000
+#   Authorization: Bearer $WEBHOOK_TOKEN on every /webhooks/* path
 #   https://<ngrok>/webhooks/publish          # Content OS Pieza
 #   https://<ngrok>/webhooks/publish-gumroad
 #   https://<ngrok>/webhooks/unpublish-gumroad
@@ -624,10 +637,16 @@ GUMROAD_TOKEN=
 POSTLY_API_KEY=
 POSTLY_WORKSPACE_ID=
 POSTLY_TARGET_PLATFORMS=instagram:id,facebook:id
+WEBHOOK_TOKEN=
 
-# Optional · live
+# Optional · live (all off by default)
 # LUMA_API_KEY=
+# LUMA_PUBLISH_LIVE=false
 # GITHUB_TOKEN=          # TheVeller Releases + catalog
+# GITHUB_PUBLISH_LIVE=false
+# GUMROAD_PUBLISH_LIVE=false
+# POSTLY_PUBLISH_LIVE=false
+# POSTLY_QUEUE_ENABLED=false
 
 # Optional · discover
 # SKOOL_API_KEY=sk_live_xxxxxxxxxxxx

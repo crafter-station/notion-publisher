@@ -9,3 +9,4 @@ process.env.POSTLY_WORKSPACE_ID = process.env.POSTLY_WORKSPACE_ID || 'test-works
 process.env.POSTLY_TARGET_PLATFORMS = process.env.POSTLY_TARGET_PLATFORMS || 'x:1';
 process.env.NOTION_PUBLISHER_TEST = '1';
 process.env.COMPOSIO_API_KEY = process.env.COMPOSIO_API_KEY || 'test-composio-key';
+process.env.WEBHOOK_TOKEN = process.env.WEBHOOK_TOKEN || 'test-webhook-token-32-chars-min!!';
