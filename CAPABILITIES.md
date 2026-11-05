@@ -4,37 +4,43 @@
 
 | Layer | Surfaces |
 |---|---|
-| **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — source of truth) |
-| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live** · dry-run), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**live** · dry-run), Restream (**live** · dry-run only) |
-| **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live** · dry-run), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live** · dry-run · TheVeller Releases), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover**) |
-| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live** · dry-run), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio (**live** · Reddit), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**live** · dry-run), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live** · dry-run) |
+| **CMS** | <img src="docs/assets/logos/notion.png" width="16" alt=""> Notion (**live** — SSOT) |
+| **Events** | <img src="docs/assets/logos/luma.png" width="16" alt=""> Luma (**live · dry-run** gate), <img src="docs/assets/logos/eventbrite.png" width="16" alt=""> Eventbrite via Composio (**live · dry-run**), Restream (**live · dry-run only** — never go-live) |
+| **Products** | <img src="docs/assets/logos/gumroad.png" width="16" alt=""> Gumroad (**live · dry-run** gate), <img src="docs/assets/logos/github.png" width="16" alt=""> GitHub (**live · dry-run** gate · TheVeller Releases, draft by default), <img src="docs/assets/logos/skool.png" width="16" alt=""> Skool/MySkool (**discover** · write [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked) |
+| **Social** | <img src="docs/assets/logos/postly.png" width="16" alt=""> Postly (**live · dry-run** gate), <img src="docs/assets/logos/composio.png" width="16" alt=""> Composio Reddit (**live · dry-run** gate), <img src="docs/assets/logos/typefully.png" width="16" alt=""> Typefully (**live · dry-run** · code on main; keys pending), <img src="docs/assets/logos/postiz.png" width="16" alt=""> Postiz (**live · dry-run** · code on main; keys pending) |
 | **Music / Podcast** | <img src="docs/assets/logos/once.png" width="16" alt=""> ONCE.app (**stub**) |
+| **Not a publisher** | TikHub (read-only / scraper) |
 
 **CMS contract (SSOT):** one Notion DB `Publisher`, views filtered by `Source Tags`, shared `Caption`/`Video`/`Image` + optional channel overrides → **[README.md](./README.md#notion-db-setup--one-database-views-by-source)**.
 
 | Status | Meaning |
 |---|---|
-| **live** | Publish path wired today (or CMS in production use) |
-| **discover** | API readable; no publish webhook yet |
+| **live · dry-run** | Client + webhook exist; `WEBHOOK_TOKEN` required. Gated sources also need `resolveLiveGate` + `*_PUBLISH_LIVE`. Typefully / Postiz: own flag + keys pending. Restream: never go-live |
+| **live** | CMS in production use (Notion SSOT only) |
+| **discover** | API readable **or** Content OS 📡 Canales catalog; no publish webhook in this repo |
 | **stub** | Mapped only |
 
 Self-check: `npm run capabilities:check`
 
 ## Distributors
 
+Same truth as [README Status matrix](./README.md#status-matrix). After [#21](https://github.com/crafter-station/notion-publisher/pull/21) every `POST /webhooks/*` needs `WEBHOOK_TOKEN` (≥32). Luma / Gumroad / GitHub / Postly / Composio also use `resolveLiveGate`. Typefully / Postiz use their own `*_PUBLISH_LIVE` (keys pending). Restream never go-live. Content OS 📡 Canales destinos with no connector: [README · Canales en discover](./README.md#content-os--canales-en-discover).
+
 | | ID | Layer | Status | Site |
 |---|---|---|---|---|
-| <img src="docs/assets/logos/notion.png" width="18" alt=""> | `notion` *(CMS)* | CMS | **live** | [notion.so](https://www.notion.so/) |
-| <img src="docs/assets/logos/luma.png" width="18" alt=""> | `luma` | Events | **live** · dry-run | [luma.com](https://luma.com/) |
-| <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | `gumroad` | Products | **live** · dry-run | [gumroad.com](https://gumroad.com/) |
-| <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | **live** · dry-run | [github.com](https://github.com/) |
-| <img src="docs/assets/logos/skool.png" width="18" alt=""> | `myskool` | Products | **discover** | [myskool.xyz](https://myskool.xyz/) |
-| <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live** · dry-run | [postly.ai](https://postly.ai/) |
-| <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` | Social + Events | **live** · Reddit + Eventbrite | [composio.dev](https://composio.dev/) |
-| <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | **live** · dry-run | [typefully.com](https://typefully.com/) |
-| <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | **live** · dry-run | [postiz.com](https://postiz.com/) |
+| <img src="docs/assets/logos/notion.png" width="18" alt=""> | `notion` *(CMS)* | CMS | **live** (SSOT) | [notion.so](https://www.notion.so/) |
+| <img src="docs/assets/logos/luma.png" width="18" alt=""> | `luma` | Events | **live · dry-run** (gate) | [luma.com](https://luma.com/) |
+| <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite via `composio` | Events | **live · dry-run** | [eventbrite.com](https://eventbrite.com/) |
+| | `restream` | Events | **live · dry-run only** (never go-live) | [restream.io](https://restream.io/) |
+| <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | `gumroad` | Products | **live · dry-run** (gate) | [gumroad.com](https://gumroad.com/) |
+| <img src="docs/assets/logos/github.png" width="18" alt=""> | `github` | Products | **live · dry-run** (gate); Releases draft by default | [github.com](https://github.com/) |
+| <img src="docs/assets/logos/skool.png" width="18" alt=""> | `myskool` | Products | **discover** (write [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked) | [myskool.xyz](https://myskool.xyz/) |
+| <img src="docs/assets/logos/postly.png" width="18" alt=""> | `postly` | Social | **live · dry-run** (gate) | [postly.ai](https://postly.ai/) |
+| <img src="docs/assets/logos/composio.png" width="18" alt=""> | `composio` Reddit | Social | **live · dry-run** (gate) | [composio.dev](https://composio.dev/) |
+| <img src="docs/assets/logos/typefully.png" width="18" alt=""> | `typefully` | Social | **live · dry-run** (code on main; keys pending) | [typefully.com](https://typefully.com/) |
+| <img src="docs/assets/logos/postiz.png" width="18" alt=""> | `postiz` | Social | **live · dry-run** (code on main; keys pending) | [postiz.com](https://postiz.com/) |
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | `once` | Music | stub | [beta.once.app](https://beta.once.app/) |
-| | `restream` | Events | **live** · dry-run only | [restream.io](https://restream.io/) |
+| | TikHub | — | read-only / scraper; **do not publish** | — |
 
 ## Discovery endpoints
 
@@ -48,6 +54,8 @@ Self-check: `npm run capabilities:check`
 | `GET` | `/capabilities/postiz` |
 | `GET` | `/capabilities/typefully` |
 | `GET` | `/capabilities/restream` |
+
+Content OS 📡 Canales destinos that are **discover** in Notion and have **no** connector here: [README · Canales en discover](./README.md#content-os--canales-en-discover). Docs only — no `/webhooks/*` stubs.
 
 ### Postly (live · dry-run default)
 
@@ -74,7 +82,7 @@ One Notion `Image` files property is a **carousel**. Slide order is the files ar
 | email | `email` (+ providers) |
 | docs_only | `reddit` (**do not publish via Postly** — use Composio + `Channels`∋`Reddit`) |
 
-### Composio (live · Reddit + Eventbrite · dry-run default)
+### Composio (live · Reddit + Eventbrite · dry-run gate)
 
 Source Tag **`Composio`**. `POST /webhooks/publish-composio` (`?kind=self|link`, dry-run default; `?live=true` + `COMPOSIO_PUBLISH_LIVE=true` + `resolveLiveGate` to execute). Discover: `GET /capabilities/composio`.
 
@@ -90,21 +98,23 @@ Env: `COMPOSIO_API_KEY`, `COMPOSIO_USER_ID`, `COMPOSIO_CONNECTED_ACCOUNT_ID`, `C
 | `Composio User ID` / `Composio Connected Account ID` | optional multi-account overrides |
 | `Eventbrite Title` / `Start` / `End` / `Organization ID` / `Currency` / `Online` | Eventbrite create |
 
-### Typefully (live · dry-run default)
+### Typefully (live · dry-run — code on main; keys pending)
 
 Public API v2 drafts: `Authorization: Bearer $TYPEFULLY_API_KEY` → `POST /v2/social-sets/{social_set_id}/drafts`. Client: `src/services/typefully.service.ts`. Webhook: `POST /webhooks/publish-typefully`. Discover: `GET /capabilities/typefully`.
 
-Dry-run is the default. **Never sends `publish_at`** (draft or `plan_at` only). Live needs `TYPEFULLY_PUBLISH_LIVE=true`. Platforms: X, LinkedIn, Threads, Mastodon, Bluesky.
+Dry-run is the default. **Never sends `publish_at`** (draft or `plan_at` only). Live needs `TYPEFULLY_PUBLISH_LIVE=true` and `?live=true` plus host keys (`TYPEFULLY_API_KEY`, `TYPEFULLY_SOCIAL_SET_ID`). The alias webhook still requires `WEBHOOK_TOKEN`. Platforms: X, LinkedIn, Threads, Mastodon, Bluesky.
 
-Env: `TYPEFULLY_API_KEY`, `TYPEFULLY_SOCIAL_SET_ID`.
+[#6](https://github.com/crafter-station/notion-publisher/issues/6) stays open for keys / go-live — the client is already on main.
 
-### Postiz (live · dry-run default — prefer self-hosted)
+### Postiz (live · dry-run — code on main; keys pending — prefer self-hosted)
 
 Public API: `Authorization: $POSTIZ_API_KEY` → `POST {POSTIZ_API_BASE}/posts`. Client: `src/services/postiz.service.ts`. Webhook: `POST /webhooks/publish-postiz`. Discover: `GET /capabilities/postiz`.
 
-Dry-run is the default (exact payload, **no** create). Live needs `POSTIZ_PUBLISH_LIVE=true` and `?live=true`. Immediate `type=now` is never sent. Prefer self-hosted `POSTIZ_API_BASE` — no paid cloud plan assumed.
+Dry-run is the default (exact payload, **no** create). Live needs `POSTIZ_PUBLISH_LIVE=true` and `?live=true` plus host keys. The alias webhook still requires `WEBHOOK_TOKEN`. Immediate `type=now` is never sent. Prefer self-hosted `POSTIZ_API_BASE` — no paid cloud plan assumed.
 
 Wired write channels: **Discord, Slack, Mastodon, Skool, Twitch, Kick, Warpcast, Nostr, Lemmy, Listmonk**. Skool here is Postiz's provider (not MySkool write).
+
+[#7](https://github.com/crafter-station/notion-publisher/issues/7) stays open for keys / go-live — the client is already on main.
 
 Env: `POSTIZ_API_KEY`, optional `POSTIZ_API_BASE`, `POSTIZ_INTEGRATIONS`, `POSTIZ_DISCORD_CHANNEL`, `POSTIZ_SLACK_CHANNEL`, `POSTIZ_SKOOL_GROUP`, `POSTIZ_SKOOL_LABEL`, `POSTIZ_LISTMONK_LIST`.
 
@@ -168,11 +178,13 @@ Discover via `GET /capabilities/skool`; write blocked on MySkool `POST /v1/posts
 - Restream client: `src/services/restream.service.ts`
 - Logos: `docs/assets/logos/` (incl. channel favicons)
 - Channel SSOT grid: [README.md](./README.md#channel-grid-all-destinations)
+- Content OS 📡 Canales discover catalog: [README.md](./README.md#content-os--canales-en-discover) (~40 destinos by Familia; no webhooks)
 
 ## Roadmap
 
 SSOT: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [repo](https://github.com/crafter-station/notion-publisher) · [issues](https://github.com/crafter-station/notion-publisher/issues)
 
-- **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit live
-- **Next:** Phase A leftovers (#3)
-- **Later:** Skool write (#4, blocked); ONCE
+- **Completed:** milestone Shipped (#12–#14) · Luma (#9) · GitHub TheVeller (#5) · Composio Reddit · webhook auth + live gate ([#21](https://github.com/crafter-station/notion-publisher/pull/21))
+- **Next:** [#17](https://github.com/crafter-station/notion-publisher/issues/17)–[#19](https://github.com/crafter-station/notion-publisher/issues/19) planning
+- **Later:** Skool write (#4, blocked); Typefully (#6) / Postiz (#7) keys + `*_PUBLISH_LIVE` (code already live · dry-run); ONCE (#8)
+- **Discover catalog:** [Content OS · Canales en discover](./README.md#content-os--canales-en-discover) — do not invent webhooks for these destinos

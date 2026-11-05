@@ -58,23 +58,34 @@ Source: [`docs/assets/publisher-capability-flow.excalidraw`](./docs/assets/publi
 
 ```text
 Notion CMS  →  notion-publisher (this repo · no UI)
-                    ├─ Events         → Luma (live) · Eventbrite via Composio (dry-run) · Restream (dry-run only)
-                    ├─ Products       → Gumroad (live) · GitHub (live · TheVeller) · Skool/MySkool (discover)
-                    ├─ Social         → Postly (live) · Composio (live · Reddit) · Typefully (live · dry-run) · Postiz (live · dry-run)
+                    ├─ Events         → Luma (live · dry-run gate) · Eventbrite via Composio (live · dry-run) · Restream (live · dry-run only)
+                    ├─ Products       → Gumroad (live · dry-run gate) · GitHub (live · dry-run gate · TheVeller) · Skool/MySkool (discover)
+                    ├─ Social         → Postly (live · dry-run gate) · Composio Reddit (live · dry-run gate) · Typefully (live · dry-run · keys pending) · Postiz (live · dry-run · keys pending)
                     └─ Music/Podcast  → ONCE.app (stub)
 ```
 
-Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social: Postly = broad cloud; **Composio** = Reddit (+ Eventbrite on Events); Typefully = text drafts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**.
+Three layers — do not collapse them:
+
+| Layer | What it is | Where |
+|---|---|---|
+| **1. Sources / Distributors** | Who publishes (`Source Tags`) | [Status matrix](#status-matrix) |
+| **2. Channels** | Destinations; **Delivery** = Source | [Channel grid](#channel-grid-all-destinations) |
+| **3. Content OS 📡 Canales** | Notion catalog: API-mapped destinos, **no connector in this repo** | [Canales en discover](#content-os--canales-en-discover) |
+
+Same **product** can ship to **Gumroad + GitHub + Skool** (Skool also adds community). Social: Postly = broad cloud; **Composio** = Reddit (+ Eventbrite on Events); Typefully = text drafts (X / LinkedIn / Threads / Mastodon / Bluesky); Postiz = widest surface, prefer **self-hosted**. TikHub is **read-only / scraper** — not a publisher.
 
 **Content OS (new):** five Notion databases (📡 Canales, 🪪 Cuentas, 🧩 Piezas, 🚀 Publicaciones, 🥇 My Templates).  
 They sit under the Content OS page (`404da2435b4681eebbe6c73f68060bdd`). That page lives in the Workspaces data source `e28e7216-8dc3-4a77-a7ef-e81606bf39c8` (ancestor collection, not a database id). Schema snapshot: [`schema/notion-snapshot.json`](./schema/notion-snapshot.json) (v2).  
 `POST /webhooks/publish` takes a Pieza and routes each ready Publicacion by Cuenta Connector. **Dry-run default.** Live needs `CONTENT_OS_PUBLISH_LIVE=true` + Cuenta Estado=`Activa` + Publicacion Modo=`live` (empty Modo = dry-run) + Canal Estado del conector=`live`. `Publicado el` is written only on a real publish (feeds the Piezas `Publicaciones (publicadas)` rollup). Optional Piezas design fields (`Módulo`, `Formato`, `Ratio`, `Tamaño px`, `Slides`, `Código de plantilla`, `Template origen Futuraria`, `Status de diseño`) pass through on to-cms / migrate when present. Publicaciones `Image (versión)` overrides the Pieza `Image` when set.
 
-**Live publish today (legacy Publisher aliases):** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit.  
-**Discover:** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).  
+**Sources with a publish client today (all dry-run until the gate + token are on):** Gumroad + Postly + Luma + GitHub (TheVeller) + Composio Reddit / Eventbrite + Typefully + Postiz + Restream (Restream **never** go-live).  
+**Discover (code):** Skool via MySkool read API (needs valid `sk_live_…`; write = [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked).  
+**Discover (Content OS catalog only):** [📡 Canales](#content-os--canales-en-discover) — ~40 destinos with an API, **no** webhook in this repo.  
 **Mapped (stub):** ONCE.  
-**Typefully / Postiz / Composio Eventbrite:** live clients, **dry-run default**. Typefully never sends `publish_at`.
+Typefully never sends `publish_at`. Typefully / Postiz: **code on main**; host still needs keys + `*_PUBLISH_LIVE`.
 Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
+
+Every `POST /webhooks/*` requires `Authorization: Bearer $WEBHOOK_TOKEN` (`WEBHOOK_TOKEN` ≥ 32; server will not boot without it). After [#21](https://github.com/crafter-station/notion-publisher/pull/21) Luma / Gumroad / GitHub / Postly / Composio also go through `resolveLiveGate` → **dry-run** until Ignacio turns the gate + token on the host. Typefully / Postiz stay on their own `*_PUBLISH_LIVE` flags (keys still pending). Restream is dry-run only (never go-live).
 
 **`*_PUBLISH_LIVE` does not activate live on its own.** Alias webhooks call `resolveConnectorLiveGate` without `cuentaEstado`, `publicacionModo`, or `canalEstadoDelConector`, so [`src/connectors/live-gate.ts`](./src/connectors/live-gate.ts) (the checks around lines 68–76) always returns dry-run. That is intentionally safe. Passing those Content OS values from Notion is future work — not implemented.
 
@@ -82,56 +93,65 @@ Favicons: [`docs/assets/logos/`](./docs/assets/logos/).
 
 ## Status matrix
 
+Sources / Distributors (`Source Tags`). After [#21](https://github.com/crafter-station/notion-publisher/pull/21) every `/webhooks/*` needs `WEBHOOK_TOKEN` (≥32). Gated sources (Luma, Gumroad, GitHub, Postly, Composio) also pass `resolveLiveGate` → **dry-run** until Ignacio turns the gate + token on the host. Typefully / Postiz: code on main, own `*_PUBLISH_LIVE`, keys pending. Restream: dry-run only. **Do not** read a Content OS 📡 Canales `discover` row as a live connector.
+
 | | Name | Site | Layer | Status |
 |---|---|---|---|---|
-| <img src="docs/assets/logos/notion.png" width="20" alt=""> | **Notion** | [notion.so](https://www.notion.so/) | CMS | **live** |
-| <img src="docs/assets/logos/luma.png" width="20" alt=""> | **Luma** | [luma.com](https://luma.com/) | Events | **live** |
-| <img src="docs/assets/logos/gumroad.png" width="20" alt=""> | **Gumroad** | [gumroad.com](https://gumroad.com/) | Products | **live** |
-| <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | **live** (TheVeller Releases) |
-| <img src="docs/assets/logos/skool.png" width="20" alt=""> <img src="docs/assets/logos/myskool.png" width="20" alt=""> | **Skool (MySkool)** | [skool.com](https://www.skool.com/) · [myskool.xyz](https://myskool.xyz/) | Products + community | **discover** |
-| <img src="docs/assets/logos/postly.png" width="20" alt=""> | **Postly** | [postly.ai](https://postly.ai/) | Social | **live** |
-| <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio** | [composio.dev](https://composio.dev/) | Social + Events (transport) | live · Reddit + Eventbrite (dry-run) |
-| <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | **live** · dry-run default |
-| <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | **live** · dry-run default |
+| <img src="docs/assets/logos/notion.png" width="20" alt=""> | **Notion** | [notion.so](https://www.notion.so/) | CMS | **live** (SSOT) |
+| <img src="docs/assets/logos/luma.png" width="20" alt=""> | **Luma** | [luma.com](https://luma.com/) | Events | **live · dry-run** (gate) |
+| <img src="docs/assets/logos/eventbrite.png" width="20" alt=""> | **Eventbrite** via Composio | [eventbrite.com](https://eventbrite.com/) | Events | **live · dry-run** |
+| | **Restream** | [restream.io](https://restream.io/) | Events | **live · dry-run only** (never go-live) |
+| <img src="docs/assets/logos/gumroad.png" width="20" alt=""> | **Gumroad** | [gumroad.com](https://gumroad.com/) | Products | **live · dry-run** (gate) |
+| <img src="docs/assets/logos/github.png" width="20" alt=""> | **GitHub** | [github.com](https://github.com/) | Products | **live · dry-run** (gate); Releases draft by default |
+| <img src="docs/assets/logos/skool.png" width="20" alt=""> <img src="docs/assets/logos/myskool.png" width="20" alt=""> | **Skool (MySkool)** | [skool.com](https://www.skool.com/) · [myskool.xyz](https://myskool.xyz/) | Products + community | **discover** (write [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked) |
+| <img src="docs/assets/logos/postly.png" width="20" alt=""> | **Postly** | [postly.ai](https://postly.ai/) | Social | **live · dry-run** (gate) |
+| <img src="docs/assets/logos/composio.png" width="20" alt=""> | **Composio Reddit** | [composio.dev](https://composio.dev/) | Social | **live · dry-run** (gate) |
+| <img src="docs/assets/logos/typefully.png" width="20" alt=""> | **Typefully** | [typefully.com](https://typefully.com/) | Social | **live · dry-run** (code on main; keys pending) |
+| <img src="docs/assets/logos/postiz.png" width="20" alt=""> | **Postiz** | [postiz.com](https://postiz.com/) | Social | **live · dry-run** (code on main; keys pending) |
 | <img src="docs/assets/logos/once.png" width="20" alt=""> | **ONCE.app** | [beta.once.app](https://beta.once.app/) | Music / Podcast | stub |
-| | **Restream** | [restream.io](https://restream.io/) | Events (live multistream) | **live** · dry-run only |
+| | **TikHub** | — | — | read-only / scraper; **do not publish** |
 
 ---
 
 ## Channel grid (all destinations)
 
-One SSOT map of Notion `Channels` (+ distributor storefronts). **Delivery** = who actually ships. Reddit is **not** published via Postly (API `docs_only`); use **Composio**. Eventbrite is a **channel** under Source `Composio`, not its own Source Tag.
+One SSOT map of wired Notion `Channels` (+ distributor storefronts). **Delivery** = who actually ships (layer 2). Reddit is **not** published via Postly (API `docs_only`); use **Composio**. Eventbrite is a **channel** under Source `Composio`, not its own Source Tag. Destinos mapped only in Content OS 📡 Canales (no connector here) live in [Canales en discover](#content-os--canales-en-discover).
 
 | | Channel | Site | Layer | Delivery | Status |
 |---|---|---|---|---|---|
-| <img src="docs/assets/logos/instagram.png" width="18" alt=""> | Instagram | [instagram.com](https://instagram.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/facebook.png" width="18" alt=""> | Facebook | [facebook.com](https://facebook.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/linkedin.png" width="18" alt=""> | LinkedIn | [linkedin.com](https://linkedin.com/) | Social | Postly / Typefully | live / stub |
-| <img src="docs/assets/logos/x.png" width="18" alt=""> | X / Twitter | [x.com](https://x.com/) | Social | Postly / Typefully | live / stub |
-| <img src="docs/assets/logos/threads.png" width="18" alt=""> | Threads | [threads.net](https://threads.net/) | Social | Postly / Typefully | live / stub |
-| <img src="docs/assets/logos/tiktok.png" width="18" alt=""> | TikTok | [tiktok.com](https://tiktok.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/youtube.png" width="18" alt=""> | YouTube | [youtube.com](https://youtube.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/pinterest.png" width="18" alt=""> | Pinterest | [pinterest.com](https://pinterest.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/bluesky.png" width="18" alt=""> | Bluesky | [bsky.app](https://bsky.app/) | Social | Postly / Typefully | live / stub |
-| <img src="docs/assets/logos/google-business.png" width="18" alt=""> | Google Business Profile | [business.google.com](https://business.google.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/telegram.png" width="18" alt=""> | Telegram | [telegram.org](https://telegram.org/) | Social | Postly | live |
-| <img src="docs/assets/logos/whatsapp.png" width="18" alt=""> | WhatsApp | [whatsapp.com](https://whatsapp.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/wordpress.png" width="18" alt=""> | WordPress | [wordpress.com](https://wordpress.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/ghost.png" width="18" alt=""> | Ghost | [ghost.org](https://ghost.org/) | Social | Postly | live |
-| <img src="docs/assets/logos/hashnode.png" width="18" alt=""> | Hashnode | [hashnode.com](https://hashnode.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/devto.png" width="18" alt=""> | Dev.to | [dev.to](https://dev.to/) | Social | Postly | live |
-| <img src="docs/assets/logos/blogger.png" width="18" alt=""> | Blogger | [blogger.com](https://blogger.com/) | Social | Postly | live |
-| <img src="docs/assets/logos/email.png" width="18" alt=""> | Email | — | Social | Postly | live |
-| <img src="docs/assets/logos/reddit.png" width="18" alt=""> | Reddit | [reddit.com](https://reddit.com/) | Social | **Composio** | live |
-| <img src="docs/assets/logos/mastodon.png" width="18" alt=""> | Mastodon | [mastodon.social](https://mastodon.social/) | Social | Typefully / Postiz | stub / live (dry-run) |
+| <img src="docs/assets/logos/instagram.png" width="18" alt=""> | Instagram | [instagram.com](https://instagram.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/facebook.png" width="18" alt=""> | Facebook | [facebook.com](https://facebook.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/linkedin.png" width="18" alt=""> | LinkedIn | [linkedin.com](https://linkedin.com/) | Social | Postly / Typefully | live · dry-run / live · dry-run |
+| <img src="docs/assets/logos/x.png" width="18" alt=""> | X / Twitter | [x.com](https://x.com/) | Social | Postly / Typefully | live · dry-run / live · dry-run |
+| <img src="docs/assets/logos/threads.png" width="18" alt=""> | Threads | [threads.net](https://threads.net/) | Social | Postly / Typefully | live · dry-run / live · dry-run |
+| <img src="docs/assets/logos/tiktok.png" width="18" alt=""> | TikTok | [tiktok.com](https://tiktok.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/youtube.png" width="18" alt=""> | YouTube | [youtube.com](https://youtube.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/pinterest.png" width="18" alt=""> | Pinterest | [pinterest.com](https://pinterest.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/bluesky.png" width="18" alt=""> | Bluesky | [bsky.app](https://bsky.app/) | Social | Postly / Typefully | live · dry-run / live · dry-run |
+| <img src="docs/assets/logos/google-business.png" width="18" alt=""> | Google Business Profile | [business.google.com](https://business.google.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/telegram.png" width="18" alt=""> | Telegram | [telegram.org](https://telegram.org/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/whatsapp.png" width="18" alt=""> | WhatsApp | [whatsapp.com](https://whatsapp.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/wordpress.png" width="18" alt=""> | WordPress | [wordpress.com](https://wordpress.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/ghost.png" width="18" alt=""> | Ghost | [ghost.org](https://ghost.org/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/hashnode.png" width="18" alt=""> | Hashnode | [hashnode.com](https://hashnode.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/devto.png" width="18" alt=""> | Dev.to | [dev.to](https://dev.to/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/blogger.png" width="18" alt=""> | Blogger | [blogger.com](https://blogger.com/) | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/email.png" width="18" alt=""> | Email | — | Social | Postly | live · dry-run |
+| <img src="docs/assets/logos/reddit.png" width="18" alt=""> | Reddit | [reddit.com](https://reddit.com/) | Social | **Composio** | live · dry-run |
+| <img src="docs/assets/logos/mastodon.png" width="18" alt=""> | Mastodon | [mastodon.social](https://mastodon.social/) | Social | Typefully / Postiz | live · dry-run / live · dry-run |
 | <img src="docs/assets/logos/medium.png" width="18" alt=""> | Medium | [medium.com](https://medium.com/) | Social | Postiz | mapped (not in v1 write set) |
-| <img src="docs/assets/logos/discord.png" width="18" alt=""> | Discord | [discord.com](https://discord.com/) | Social | Postiz | live · dry-run default |
-| <img src="docs/assets/logos/slack.png" width="18" alt=""> | Slack | [slack.com](https://slack.com/) | Social | Postiz | live · dry-run default |
-| <img src="docs/assets/logos/twitch.png" width="18" alt=""> | Twitch | [twitch.tv](https://twitch.tv/) | Social | Postiz | live · dry-run default |
-| <img src="docs/assets/logos/luma.png" width="18" alt=""> | Luma Event Page | [luma.com](https://luma.com/) | Events | native (Luma) | live |
-| <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite | [eventbrite.com](https://eventbrite.com/) | Events | **Composio** | live · dry-run default |
-| <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | Gumroad Storefront | [gumroad.com](https://gumroad.com/) | Products | native (Gumroad) | live |
-| <img src="docs/assets/logos/github.png" width="18" alt=""> | GitHub Releases | [github.com](https://github.com/) | Products | native (GitHub · TheVeller) | live |
+| <img src="docs/assets/logos/discord.png" width="18" alt=""> | Discord | [discord.com](https://discord.com/) | Social | Postiz | live · dry-run |
+| <img src="docs/assets/logos/slack.png" width="18" alt=""> | Slack | [slack.com](https://slack.com/) | Social | Postiz | live · dry-run |
+| <img src="docs/assets/logos/twitch.png" width="18" alt=""> | Twitch | [twitch.tv](https://twitch.tv/) | Social | Postiz | live · dry-run |
+| | Kick | [kick.com](https://kick.com/) | Social | Postiz | live · dry-run |
+| | Warpcast | [warpcast.com](https://warpcast.com/) | Social | Postiz | live · dry-run |
+| | Nostr | [nostr.com](https://nostr.com/) | Social | Postiz | live · dry-run |
+| | Lemmy | [join-lemmy.org](https://join-lemmy.org/) | Social | Postiz | live · dry-run |
+| <img src="docs/assets/logos/email.png" width="18" alt=""> | Listmonk | [listmonk.app](https://listmonk.app/) | Email | Postiz | live · dry-run |
+| <img src="docs/assets/logos/luma.png" width="18" alt=""> | Luma Event Page | [luma.com](https://luma.com/) | Events | native (Luma) | live · dry-run |
+| <img src="docs/assets/logos/eventbrite.png" width="18" alt=""> | Eventbrite | [eventbrite.com](https://eventbrite.com/) | Events | **Composio** | live · dry-run |
+| <img src="docs/assets/logos/gumroad.png" width="18" alt=""> | Gumroad Storefront | [gumroad.com](https://gumroad.com/) | Products | native (Gumroad) | live · dry-run |
+| <img src="docs/assets/logos/github.png" width="18" alt=""> | GitHub Releases | [github.com](https://github.com/) | Products | native (GitHub · TheVeller) | live · dry-run |
 | <img src="docs/assets/logos/skool.png" width="18" alt=""> | Skool | [skool.com](https://skool.com/) | Products | MySkool | discover |
 | <img src="docs/assets/logos/spotify.png" width="18" alt=""> | Spotify | [spotify.com](https://spotify.com/) | Music | ONCE | stub |
 | <img src="docs/assets/logos/apple-music.png" width="18" alt=""> | Apple Music | [music.apple.com](https://music.apple.com/) | Music | ONCE | stub |
@@ -139,6 +159,107 @@ One SSOT map of Notion `Channels` (+ distributor storefronts). **Delivery** = wh
 | <img src="docs/assets/logos/once.png" width="18" alt=""> | Amazon Music / Tidal / Deezer / Pandora | ONCE network | Music | ONCE | stub |
 
 Postiz v1 write set (dry-run default): **Discord, Slack, Mastodon, Skool, Twitch, Kick, Warpcast, Nostr, Lemmy, Listmonk**. Other Postiz-mapped Notion options (Tumblr, VK, MeWe, Whop, Dribbble, Medium, …) stay catalog-only. MySkool write stays out of scope.
+
+Listmonk is wired via Postiz **and** listed under Content OS Canales (Email). Delivery in this repo = Postiz. The Canales catalog row stays `discover` until a dedicated connector exists.
+
+---
+
+## Content OS · Canales en discover
+
+Snapshot of **📡 Canales** in Content OS (export 30 Oct + triages 4–5 Nov 2026). These destinos have a public API mapped in Notion. **Estado del conector in Canales ≠ status in this repo.** There is **no** publish webhook here. Delivery = `— / TBD` except Listmonk (also Postiz, dry-run).
+
+Do **not** treat a Canales `discover` row as live. Affines (TryPost, CogSend, Threaduler, Shoutrrr, Content Amplify Hub, Open-Dispatch, Hookpost, PostSider, Social0) are **Directorios**, not Canales.
+
+**Familia `podcast` is not a Notion option yet** — Buzzsprout, Podbean, Spreaker, Transistor.fm are annotated below.
+
+Nov 2–5 priority: Etsy, Flickr, Stack Exchange, Podbean, listmonk, Loops, Resend, Notion (Public API).
+
+### Email
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| ✉️ | Buttondown | [docs](https://docs.buttondown.com/api-emails-create) | — / TBD | discover |
+| ✉️ | Kit (ConvertKit) | [docs](https://developers.kit.com/api-reference/broadcasts/create-a-broadcast) | — / TBD | discover |
+| ✉️ | MailerLite | [docs](https://developers.mailerlite.com/docs/campaigns.html) | — / TBD | discover |
+| ✉️ | beehiiv | [docs](https://developers.beehiiv.com/api-reference/posts/create) | — / TBD | discover |
+| ✉️ | listmonk | — | Postiz (wired · dry-run) | discover (Canales) / live · dry-run (Postiz) |
+| ✉️ | Loops | — | — / TBD | discover |
+| ✉️ | Resend | — | — / TBD | discover |
+
+### Blog
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 📝 | Micro.blog | [docs](https://help.micro.blog/t/posting-api/96) | — / TBD | discover |
+| 📝 | Telegraph (telegra.ph) | [docs](https://telegra.ph/api) | — / TBD | discover |
+| 📝 | Webflow CMS | [docs](https://developers.webflow.com/data/reference/cms) | — / TBD | discover |
+| 📝 | Write.as / WriteFreely | [docs](https://developers.write.as/docs/api/) | — / TBD | discover |
+| 📝 | Notion (Public API) | — | — / TBD | discover |
+
+### Social
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 📣 | Are.na | [docs](https://dev.are.na/) | — / TBD | discover |
+| 📣 | Dailymotion | [docs](https://developers.dailymotion.com/) | — / TBD | discover |
+| 📣 | GIPHY | [docs](https://developers.giphy.com/docs/api/endpoint#upload) | — / TBD | discover |
+| 📣 | Imgur | [docs](https://apidocs.imgur.com/) | — / TBD | discover |
+| 📣 | Misskey | [docs](https://misskey-hub.net/en/docs/for-developers/api/) | — / TBD | discover |
+| 📣 | PeerTube | [docs](https://docs.joinpeertube.org/api-rest-reference.html) | — / TBD | discover |
+| 📣 | Pixelfed | [docs](https://docs.pixelfed.org/) | — / TBD | discover |
+| 📣 | SoundCloud | [docs](https://developers.soundcloud.com/docs/api/guide) | — / TBD | discover |
+| 📣 | Vimeo | [docs](https://developer.vimeo.com/api/upload/videos) | — / TBD | discover |
+| 📣 | Flickr (Upload API) | — | — / TBD | discover |
+
+### Comunidad
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 👥 | Circle | [docs](https://api.circle.so/) | — / TBD | discover |
+| 👥 | Discourse (foros) | [docs](https://docs.discourse.org/) | — / TBD | discover |
+| 👥 | daily.dev (Squads) | [docs](https://docs.daily.dev/public-api/) | — / TBD | discover (public API read-only; write not confirmed) |
+| 👥 | Stack Exchange API | — | — / TBD | discover |
+
+### Mensajería
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 💬 | Google Chat | [docs](https://developers.google.com/workspace/chat/quickstart/webhooks) | — / TBD | discover |
+| 💬 | Matrix | [docs](https://spec.matrix.org/latest/client-server-api/) | — / TBD | discover |
+| 💬 | Mattermost | [docs](https://developers.mattermost.com/integrate/webhooks/incoming/) | — / TBD | discover |
+| 💬 | Microsoft Teams | [docs](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connector) | — / TBD | discover (Office 365 Incoming Webhooks retired May 2026) |
+| 💬 | Viber Channels | [docs](https://developers.viber.com/docs/tools/channels-post-api/) | — / TBD | discover |
+| 💬 | Zulip | [docs](https://zulip.com/api/send-message) | — / TBD | discover |
+
+### Eventos
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 📅 | Meetup | [docs](https://www.meetup.com/graphql/guide/) | — / TBD | discover |
+
+### Productos
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 🛒 | Creem | [docs](https://docs.creem.io/api-reference/endpoint/create-product) | — / TBD | discover |
+| 🛒 | Dodo Payments | [docs](https://docs.dodopayments.com/api-reference/products/post-products) | — / TBD | discover |
+| 🛒 | Polar | [docs](https://polar.sh/docs/api-reference/products/create) | — / TBD | discover |
+| 🛒 | Etsy (Open API v3) | — | — / TBD | discover |
+
+### Código
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 💻 | GitHub Discussions | [docs](https://docs.github.com/en/graphql/guides/using-the-graphql-api-for-discussions) | — / TBD | discover (not GitHub Releases) |
+
+### Podcast *(Familia option missing in Notion)*
+
+| | Channel | Docs | Delivery | Status |
+|---|---|---|---|---|
+| 🎙️ | Buzzsprout | [docs](https://github.com/buzzsprout/buzzsprout-api) | — / TBD | discover |
+| 🎙️ | Podbean API | — | — / TBD | discover |
+| 🎙️ | Spreaker | [docs](https://developers.spreaker.com/api/) | — / TBD | discover |
+| 🎙️ | Transistor.fm | [docs](https://developers.transistor.fm/) | — / TBD | discover |
 
 ---
 
@@ -730,9 +851,10 @@ Matching is by **Canal identity** (name / family), never by Conector alone — a
 
 Full ledger: **[docs/PROGRESS.md](./docs/PROGRESS.md)** · [repo](https://github.com/crafter-station/notion-publisher) · [issues](https://github.com/crafter-station/notion-publisher/issues)
 
-- **Completed:** [#12](https://github.com/crafter-station/notion-publisher/issues/12) Gumroad · [#13](https://github.com/crafter-station/notion-publisher/issues/13) Postly · [#14](https://github.com/crafter-station/notion-publisher/issues/14) Skool discover · [#1](https://github.com/crafter-station/notion-publisher/issues/1) Publisher unify · [#2](https://github.com/crafter-station/notion-publisher/issues/2) Caption · [#5](https://github.com/crafter-station/notion-publisher/issues/5) GitHub · [#9](https://github.com/crafter-station/notion-publisher/issues/9) Luma create · [#3](https://github.com/crafter-station/notion-publisher/issues/3) Notion MCP/CLI · [#16](https://github.com/crafter-station/notion-publisher/issues/16) docs reconcile  
+- **Completed:** [#12](https://github.com/crafter-station/notion-publisher/issues/12) Gumroad · [#13](https://github.com/crafter-station/notion-publisher/issues/13) Postly · [#14](https://github.com/crafter-station/notion-publisher/issues/14) Skool discover · [#1](https://github.com/crafter-station/notion-publisher/issues/1) Publisher unify · [#2](https://github.com/crafter-station/notion-publisher/issues/2) Caption · [#5](https://github.com/crafter-station/notion-publisher/issues/5) GitHub · [#9](https://github.com/crafter-station/notion-publisher/issues/9) Luma create · [#3](https://github.com/crafter-station/notion-publisher/issues/3) Notion MCP/CLI · [#16](https://github.com/crafter-station/notion-publisher/issues/16) docs reconcile · [#21](https://github.com/crafter-station/notion-publisher/pull/21) `WEBHOOK_TOKEN` + `resolveLiveGate`  
 - **Next:** [#17](https://github.com/crafter-station/notion-publisher/issues/17)–[#19](https://github.com/crafter-station/notion-publisher/issues/19) planning (handoff / newsletter / metrics)  
-- **Blocked / later:** [#4](https://github.com/crafter-station/notion-publisher/issues/4) Skool write · Phases C–D stubs  
+- **Blocked / later:** [#4](https://github.com/crafter-station/notion-publisher/issues/4) Skool write · [#6](https://github.com/crafter-station/notion-publisher/issues/6) Typefully keys / `TYPEFULLY_PUBLISH_LIVE` (code already live · dry-run) · [#7](https://github.com/crafter-station/notion-publisher/issues/7) Postiz keys / `POSTIZ_PUBLISH_LIVE` (code already live · dry-run) · [#8](https://github.com/crafter-station/notion-publisher/issues/8) ONCE stub  
+- **Catalog only:** [Content OS · Canales en discover](#content-os--canales-en-discover) — no webhooks
 
 ---
 
