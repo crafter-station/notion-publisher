@@ -48,18 +48,25 @@ Open follow-ups on the live stack (not “not done”, just next polish):
 
 ## Live today
 
+After [#21](https://github.com/crafter-station/notion-publisher/pull/21) every `POST /webhooks/*` requires `Authorization: Bearer $WEBHOOK_TOKEN` (`WEBHOOK_TOKEN` ≥ 32; server will not boot without it). Luma / Gumroad / GitHub / Postly / Composio also go through `resolveLiveGate` → **dry-run** until Ignacio turns the gate + token on the host. Typefully / Postiz stay on their own `*_PUBLISH_LIVE` (keys pending). Restream is dry-run only (never go-live). `*_PUBLISH_LIVE` does not activate live on its own.
+
 | Layer | Surface | Status | Issue |
 |---|---|---|---|
 | CMS | Notion Content OS (Canales / Cuentas / Piezas / Publicaciones / My Templates) | **wired · dry-run default** · optional Canales `Estado del canal` / `Score ⭐`, Publicaciones `Resultado`, Piezas `🎞️ Formato de video` · `processed_rows` + `ignored_columns` · parent `404da243…` under Workspaces `e28e7216-8dc3-4a77-a7ef-e81606bf39c8` | — |
-| CMS | Notion `Publisher` (one DB, aliases) | **live** | [#1](https://github.com/crafter-station/notion-publisher/issues/1) |
-| Products | Gumroad | **live** | [#12](https://github.com/crafter-station/notion-publisher/issues/12) |
-| Social | Postly | **live** | [#13](https://github.com/crafter-station/notion-publisher/issues/13) |
+| CMS | Notion `Publisher` (one DB, aliases) | **live** (SSOT) | [#1](https://github.com/crafter-station/notion-publisher/issues/1) |
+| Products | Gumroad | **live · dry-run** (gate) | [#12](https://github.com/crafter-station/notion-publisher/issues/12) |
+| Social | Postly | **live · dry-run** (gate) | [#13](https://github.com/crafter-station/notion-publisher/issues/13) |
 | Products | Skool / MySkool | **discover** (key in `.env`; smoke 401 until valid `sk_live_…`) | [#14](https://github.com/crafter-station/notion-publisher/issues/14) · write [#4](https://github.com/crafter-station/notion-publisher/issues/4) blocked |
-| Events | Luma | **live** (`POST /webhooks/publish-luma`) | [#9](https://github.com/crafter-station/notion-publisher/issues/9) *(closed · create+cover)* |
-| Products | GitHub | **live** (catalog + Releases under **TheVeller** only) | [#5](https://github.com/crafter-station/notion-publisher/issues/5) |
-| Social / Events | Composio | **live** · Reddit (`POST /webhooks/publish-composio`); Eventbrite pending connect | — |
+| Events | Luma | **live · dry-run** (gate) (`POST /webhooks/publish-luma`) | [#9](https://github.com/crafter-station/notion-publisher/issues/9) *(closed · create+cover)* |
+| Products | GitHub | **live · dry-run** (gate); Releases draft by default (TheVeller only) | [#5](https://github.com/crafter-station/notion-publisher/issues/5) |
+| Social / Events | Composio | **live · dry-run** (gate) · Reddit + Eventbrite (`POST /webhooks/publish-composio`) | — |
+| Social | Typefully | **live · dry-run** (code on main; keys + `TYPEFULLY_PUBLISH_LIVE` pending) | [#6](https://github.com/crafter-station/notion-publisher/issues/6) open |
+| Social | Postiz | **live · dry-run** (code on main; keys + `POSTIZ_PUBLISH_LIVE` pending) | [#7](https://github.com/crafter-station/notion-publisher/issues/7) open |
+| Events | Restream | **live · dry-run only** (never go-live) | — |
+| Music | ONCE.app | stub | [#8](https://github.com/crafter-station/notion-publisher/issues/8) |
+| — | TikHub | read-only / scraper; **do not publish** | — |
 
-Everything else in the kit is **mapped (stub)** — docs + registry, no publish client yet.
+Content OS 📡 Canales destinos with an API but **no connector in this repo** are catalog-only — [README · Canales en discover](../README.md#content-os--canales-en-discover). Do not invent webhooks for them.
 
 ---
 
@@ -68,9 +75,13 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 | Done | Notes |
 |---|---|
 | Capability registry | `src/capabilities/registry.ts` · `npm run capabilities:check` |
-| Discovery HTTP | `GET /capabilities` (+ postly / skool / github / composio) |
+| Discovery HTTP | `GET /capabilities` (+ postly / skool / github / composio / postiz / typefully / restream) |
 | Notion schema inspect | MCP `notion` (OAuth) + `npm run notion:schema` + `ntn` (`NOTION_API_VERSION=2022-06-28`) — see README |
-| Stub maps + logos | Typefully, Postiz, ONCE (+ channel favicons) |
+| Typefully client | `typefully.service` + `POST /webhooks/publish-typefully` · **live · dry-run**; never `publish_at`; host keys still pending ([#6](https://github.com/crafter-station/notion-publisher/issues/6) open) |
+| Postiz client | `postiz.service` + `POST /webhooks/publish-postiz` · **live · dry-run**; Discord/Slack/Mastodon/Skool/Twitch/Kick/Warpcast/Nostr/Lemmy/Listmonk; host keys still pending ([#7](https://github.com/crafter-station/notion-publisher/issues/7) open) |
+| Restream client | `restream.service` + `POST /webhooks/publish-restream` · **live · dry-run only** (never go-live) |
+| Webhook auth + live gate | [#21](https://github.com/crafter-station/notion-publisher/pull/21) — `WEBHOOK_TOKEN` ≥ 32 on every `/webhooks/*`; `resolveLiveGate` dry-run default |
+| Stub map + logos | ONCE (+ channel favicons) |
 | Channel mega-grid | README SSOT: logo · channel · site · layer · delivery · status |
 | Composio Reddit live | `composio.service` + `/webhooks/publish-composio` (self + link) + Notion writeback; Eventbrite deferred |
 | GitHub catalog + Releases | `github.service` + import script + `/webhooks/publish-github` (TheVeller only) |
@@ -114,8 +125,8 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 | Issue | Status | In plain words |
 |---|---|---|
-| [#6](https://github.com/crafter-station/notion-publisher/issues/6) Typefully client | later | Text drafts/threads from shared Caption model |
-| [#7](https://github.com/crafter-station/notion-publisher/issues/7) Postiz client (self-hosted preferred) | later | Widest scheduler surface |
+| [#6](https://github.com/crafter-station/notion-publisher/issues/6) Typefully client | later *(issue still open)* | **Code already live · dry-run on main.** Remaining: host keys + `TYPEFULLY_PUBLISH_LIVE`. Do not treat as stub. |
+| [#7](https://github.com/crafter-station/notion-publisher/issues/7) Postiz client (self-hosted preferred) | later *(issue still open)* | **Code already live · dry-run on main.** Remaining: host keys + `POSTIZ_PUBLISH_LIVE`. Do not treat as stub. |
 | [#10](https://github.com/crafter-station/notion-publisher/issues/10) Postly `audience_group` opt-in | later | Flag off by default |
 | [#11](https://github.com/crafter-station/notion-publisher/issues/11) Expand `POSTLY_TARGET_PLATFORMS` | later | Only when accounts are ready |
 
@@ -124,7 +135,7 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 | Issue | Status | In plain words |
 |---|---|---|
 | [#9](https://github.com/crafter-station/notion-publisher/issues/9) Luma events client | **done** (create + cover) | Create + CDN cover + writeback; update/tickets later (new issue if needed) |
-| [#8](https://github.com/crafter-station/notion-publisher/issues/8) ONCE.app DSP client | later | Audio distribution to major DSPs |
+| [#8](https://github.com/crafter-station/notion-publisher/issues/8) ONCE.app DSP client | later | Audio distribution to major DSPs — **stub** (mapped only) |
 
 ### M0 — Project state cleanup
 
@@ -144,5 +155,5 @@ Everything else in the kit is **mapped (stub)** — docs + registry, no publish 
 
 ## Related docs
 
-- [README.md](../README.md) — architecture, Notion schema, per-source contracts  
-- [CAPABILITIES.md](../CAPABILITIES.md) — status + channel matrices  
+- [README.md](../README.md) — architecture, Status matrix, Channel grid, [Canales en discover](../README.md#content-os--canales-en-discover)  
+- [CAPABILITIES.md](../CAPABILITIES.md) — status + channel matrices (same truth as README)  
